@@ -22,6 +22,7 @@ const SimulateurRetraite = () => {
     const dureeSimulation = Math.max(indexDebutRetraite + anneesRetraite, anneesInvestissement);
     
     let capital = capitalInitial;
+    let capitalSansInterets = capitalInitial;
     const data = [];
     
     const rendementMensuel = tauxRendementAnnuel / 100 / 12;
@@ -44,20 +45,24 @@ const SimulateurRetraite = () => {
         // Ajout de l'investissement mensuel ou retrait pour la retraite
         if (!enPhaseRetraite && annee < anneesInvestissement) {
           capital += investissementMensuel;
+          capitalSansInterets += investissementMensuel;
         } else if (enPhaseRetraite) {
           capital -= retraitMensuelActuel;
+          capitalSansInterets -= retraitMensuelActuel;
           // Ajuster le retrait avec l'inflation pour le mois suivant
           retraitMensuelActuel *= (1 + inflationMensuelle);
         }
         
         // Si le capital devient négatif, le mettre à zéro
         if (capital < 0) capital = 0;
+        if (capitalSansInterets < 0) capitalSansInterets = 0;
       }
       
       // Ajouter les données de l'année au graphique
       data.push({
         annee: anneeSimulee,
         capital: Math.round(capital),
+        capitalSansInterets: Math.round(capitalSansInterets),
         variation: Math.round(capital - capitalDebut),
         retraite: enPhaseRetraite ? "Oui" : "Non"
       });
@@ -106,36 +111,44 @@ const SimulateurRetraite = () => {
         <div className="bg-gray-50 p-4 rounded-lg">
           <h2 className="text-xl font-semibold mb-4">Paramètres</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Capital initial
               </label>
               <input
-                type="number"
-                min="0"
-                value={capitalInitial}
-                onChange={(e) => setCapitalInitial(Number(e.target.value))}
+                type="text"
+                value={capitalInitial.toLocaleString('fr-FR')}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '');
+                  if (/^\d*$/.test(value)) {
+                    setCapitalInitial(Number(value));
+                  }
+                }}
                 className="w-full p-2 border border-gray-300 rounded"
               />
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Investissement mensuel
+                Invest. mensuel
               </label>
               <input
-                type="number"
-                min="0"
-                value={investissementMensuel}
-                onChange={(e) => setInvestissementMensuel(Number(e.target.value))}
+                type="text"
+                value={investissementMensuel.toLocaleString('fr-FR')}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '');
+                  if (/^\d*$/.test(value)) {
+                    setInvestissementMensuel(Number(value));
+                  }
+                }}
                 className="w-full p-2 border border-gray-300 rounded"
               />
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Années d'investissement
+                Années d'invest.
               </label>
               <input
                 type="number"
@@ -148,7 +161,7 @@ const SimulateurRetraite = () => {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Taux de rendement annuel (%)
+                Rendement (%/an)
               </label>
               <input
                 type="number"
@@ -161,7 +174,7 @@ const SimulateurRetraite = () => {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Inflation annuelle (%)
+                Inflation (%/an)
               </label>
               <input
                 type="number"
@@ -187,20 +200,24 @@ const SimulateurRetraite = () => {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Retrait mensuel à la retraite
+                Retrait mensuel
               </label>
               <input
-                type="number"
-                min="0"
-                value={retraitMensuelRetraite}
-                onChange={(e) => setRetraitMensuelRetraite(Number(e.target.value))}
+                type="text"
+                value={retraitMensuelRetraite.toLocaleString('fr-FR')}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\s/g, '').replace(/\./g, '').replace(/,/g, '');
+                  if (/^\d*$/.test(value)) {
+                    setRetraitMensuelRetraite(Number(value));
+                  }
+                }}
                 className="w-full p-2 border border-gray-300 rounded"
               />
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Durée de retraite (années)
+                Durée retraite (ans)
               </label>
               <input
                 type="number"
@@ -282,7 +299,11 @@ const SimulateurRetraite = () => {
               label={{ value: 'Capital (€)', angle: -90, position: 'insideLeft' }} 
             />
             <Tooltip 
-              formatter={(value) => [`${formatMontant(value)}`, '']}
+              formatter={(value, name) => {
+                if (name === "Capital") return [`${formatMontant(value)}`, 'Capital avec intérêts'];
+                if (name === "Capital sans intérêts") return [`${formatMontant(value)}`, 'Capital sans intérêts'];
+                return [`${formatMontant(value)}`, name];
+              }}
               labelFormatter={(value) => `Année: ${value}`}
               contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
             />
@@ -295,6 +316,16 @@ const SimulateurRetraite = () => {
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 8 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="capitalSansInterets"
+              stroke="#94a3b8"
+              name="Capital sans intérêts"
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 6 }}
+              strokeDasharray="5 5"
             />
           </LineChart>
         </ResponsiveContainer>
