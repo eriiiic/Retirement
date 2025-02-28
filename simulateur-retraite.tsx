@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const RetirementSimulator = () => {
@@ -18,165 +18,203 @@ const RetirementSimulator = () => {
   const [graphData, setGraphData] = useState([]);
   const [showSchedule, setShowSchedule] = useState(false);
   const [showRetirementAnalysis, setShowRetirementAnalysis] = useState(false);
-
-  // Calculate birth year from current age
-  const getBirthYear = () => {
+  
+  // Format numbers for display based on currency
+  const formatAmount = useCallback((amount) => {
+    if (currency === "EUR") {
+      return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
+    } else {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    }
+  }, [currency]);
+  
+  // Timeline calculations
+  const getBirthYear = useCallback(() => {
     const currentYear = new Date().getFullYear();
     return currentYear - currentAge;
-  };
+  }, [currentAge]);
   
-  // Determine if input is age or year
-  const isRetirementInputAge = () => {
+  const isRetirementInputAge = useCallback(() => {
     const input = Number(retirementInput);
-    // Consider it an age if it's between 1 and 120
-    // Consider it a year if it's 4 digits and starts with 20
     return (input > 0 && input < 120 && retirementInput.length <= 2) || 
            !(retirementInput.length === 4 && retirementInput.startsWith('20'));
-  };
+  }, [retirementInput]);
   
-  // Calculate actual retirement year based on input
-  const getRetirementYear = () => {
+  const getRetirementYear = useCallback(() => {
     if (isRetirementInputAge()) {
       return new Date().getFullYear() + (Number(retirementInput) - currentAge);
     } else {
       return Number(retirementInput);
     }
-  };
+  }, [isRetirementInputAge, retirementInput, currentAge]);
   
-  // Function to calculate capital evolution
-  const calculateSimulation = () => {
+  // Calculate simulation data
+  const calculateSimulation = useCallback(() => {
     const currentYear = new Date().getFullYear();
     const birthYear = getBirthYear();
-
-    // Calculate retirement start year based on input
     const calculatedRetirementStartYear = getRetirementYear();
-
-    // Calculate retirement duration based on max age or default
     const targetMaxAge = withdrawalMode === "age" ? maxAge : 95;
     const retirementStartAge = calculatedRetirementStartYear - birthYear;
     const retirementDuration = targetMaxAge - retirementStartAge;
-    
     const retirementStartIndex = calculatedRetirementStartYear - currentYear;
     const simulationDuration = targetMaxAge - currentAge;
     
-    let capital = initialCapital;
-    let capitalWithoutInterest = initialCapital;
     const data = [];
     
+    // Constant rate calculations
     const monthlyReturn = annualReturnRate / 100 / 12;
     const monthlyInflation = inflation / 100 / 12;
+    const yearlyCompoundFactor = (1 + annualReturnRate / 100);
     
-    // If we're in "age" mode, we need to calculate the maximum sustainable withdrawal
+    // Calculate capital at retirement (for age mode)
     let currentMonthlyWithdrawal;
+    let capitalAtRetirement = 0;
     
-    if (withdrawalMode === "age") {
-      // We need to estimate the maximum sustainable monthly withdrawal
-      // This is a simplified approach - find the withdrawal that depletes funds at target age
-      // A more sophisticated approach would use a binary search algorithm
+    // Calculate capital at retirement (optimized)
+    if (inflation === 0) {
+      // Without inflation, use future value formula directly
+      const effectiveYears = retirementStartIndex;
+      capitalAtRetirement = initialCapital * Math.pow(yearlyCompoundFactor, effectiveYears);
       
-      // First get the capital at retirement
+      // Add contributions with compound interest
+      const annualInvestment = monthlyInvestment * 12;
+      if (annualReturnRate !== 0) {
+        capitalAtRetirement += annualInvestment * (Math.pow(yearlyCompoundFactor, effectiveYears) - 1) / (annualReturnRate / 100);
+      } else {
+        capitalAtRetirement += annualInvestment * effectiveYears;
+      }
+    } else {
+      // With inflation, simulate monthly
       let simulatedCapital = initialCapital;
+      let currentMonthlyInv = monthlyInvestment;
+      
       for (let year = 0; year < retirementStartIndex; year++) {
-        let currentMonthlyInvestment = monthlyInvestment;
         for (let month = 0; month < 12; month++) {
-          // Compound interest
           simulatedCapital += simulatedCapital * monthlyReturn;
-          // Add monthly investment
-          simulatedCapital += currentMonthlyInvestment;
-          // Adjust for inflation
-          currentMonthlyInvestment *= (1 + monthlyInflation);
+          simulatedCapital += currentMonthlyInv;
+          currentMonthlyInv *= (1 + monthlyInflation);
         }
       }
       
-      // Now estimate sustainable withdrawal (simplified approximation)
-      // PMT formula: PMT = PV * r / (1 - (1 + r)^-n)
-      // Where:
-      // PMT = monthly payment (withdrawal)
-      // PV = present value (capital at retirement)
-      // r = monthly return adjusted for inflation
-      // n = number of months
-      
-      // Adjust monthly return for inflation
-      const adjustedMonthlyReturn = (monthlyReturn - monthlyInflation) > 0 
-        ? (monthlyReturn - monthlyInflation) 
-        : 0.0001; // Avoid negative or zero values
-      
+      capitalAtRetirement = simulatedCapital;
+    }
+    
+    // Calculate sustainable withdrawal amount in age mode
+    if (withdrawalMode === "age") {
+      const adjustedMonthlyReturn = Math.max((monthlyReturn - monthlyInflation), 0.0001);
       const numberOfMonths = retirementDuration * 12;
-      
-      // Calculate maximum sustainable withdrawal (simplified)
-      // This is an approximation - it doesn't account for compound inflation perfectly
       const denominator = 1 - Math.pow(1 + adjustedMonthlyReturn, -numberOfMonths);
-      let calculatedWithdrawal;
       
+      let calculatedWithdrawal;
       if (denominator <= 0 || numberOfMonths <= 0) {
-        // Fallback for edge cases
-        calculatedWithdrawal = simulatedCapital / numberOfMonths;
+        calculatedWithdrawal = capitalAtRetirement / numberOfMonths;
       } else {
-        calculatedWithdrawal = simulatedCapital * adjustedMonthlyReturn / denominator;
+        calculatedWithdrawal = capitalAtRetirement * adjustedMonthlyReturn / denominator;
       }
       
-      // Ensure a reasonable value and set it
       currentMonthlyWithdrawal = Math.max(calculatedWithdrawal, 10);
       
-      // Update the state variable for UI display
       if (!isNaN(currentMonthlyWithdrawal) && isFinite(currentMonthlyWithdrawal)) {
         setMonthlyRetirementWithdrawal(Math.round(currentMonthlyWithdrawal));
       }
     } else {
-      // In amount mode, use the specified withdrawal
       currentMonthlyWithdrawal = monthlyRetirementWithdrawal;
     }
     
-    // Now proceed with the main simulation
+    // Main simulation
+    let capital = initialCapital;
+    // Start with initial capital for both versions
+    let principalOnly = initialCapital; // Tracks only the principal (no interest)
     let currentMonthlyInvestment = monthlyInvestment;
+    let totalInvested = initialCapital; // Track total money invested
+    let totalWithdrawn = 0; // Track total withdrawals
     
     for (let year = 0; year <= simulationDuration; year++) {
       const simulatedYear = currentYear + year;
       const age = currentAge + year;
       const inRetirementPhase = simulatedYear >= calculatedRetirementStartYear;
+      
+      // Fast path: If capital is already zero, just add zero data points
+      if (capital <= 0) {
+        data.push({
+          year: simulatedYear,
+          age: age,
+          capital: 0,
+          capitalWithoutInterest: 0,
+          variation: 0,
+          retirement: inRetirementPhase ? "Yes" : "No",
+          annualInvestment: 0,
+          annualWithdrawal: 0,
+          annualInterest: 0,
+          netVariationExcludingInterest: 0,
+          finalMonthlyInvestment: Math.round(currentMonthlyInvestment),
+          finalMonthlyWithdrawal: Math.round(currentMonthlyWithdrawal),
+          totalInvested,
+          totalWithdrawn
+        });
+        continue;
+      }
+      
+      // If we're at retirement exactly, update the capital but process the year normally
+      if (simulatedYear === calculatedRetirementStartYear && year > 0) {
+        // Update capital to the calculated retirement capital
+        const capitalAtStart = capital;
+        capital = capitalAtRetirement;
+        
+        // Don't continue - we need to process this year with withdrawals
+      }
+      
       let capitalAtStart = capital;
       let annualInvestment = 0;
       let annualWithdrawal = 0;
       let annualInterest = 0;
       
-      // Month by month calculation for the year
+      // Monthly simulation - this provides accurate results with inflation changes
       for (let month = 0; month < 12; month++) {
-        // Monthly compound interest
+        // Early termination check
+        if (capital <= 0) {
+          capital = 0;
+          principalOnly = Math.max(0, totalInvested - totalWithdrawn);
+          break;
+        }
+        
+        // Monthly interest (only applied to the interest-bearing capital)
         const interest = capital * monthlyReturn;
         annualInterest += interest;
         capital += interest;
         
-        // Add monthly investment or withdraw for retirement
         if (!inRetirementPhase) {
+          // Add investment to both capitals
           capital += currentMonthlyInvestment;
-          capitalWithoutInterest += currentMonthlyInvestment;
           annualInvestment += currentMonthlyInvestment;
+          totalInvested += currentMonthlyInvestment;
           
-          // Adjust investment with inflation for next month
+          // Update monthly investment for inflation
           currentMonthlyInvestment *= (1 + monthlyInflation);
-        } else if (inRetirementPhase) {
+        } else {
+          // Withdraw from both capitals
           capital -= currentMonthlyWithdrawal;
-          capitalWithoutInterest -= currentMonthlyWithdrawal;
           annualWithdrawal += currentMonthlyWithdrawal;
+          totalWithdrawn += currentMonthlyWithdrawal;
           
-          // Adjust withdrawal with inflation for next month
+          // Update monthly withdrawal for inflation
           currentMonthlyWithdrawal *= (1 + monthlyInflation);
         }
         
-        // If capital becomes negative, set it to zero
         if (capital < 0) capital = 0;
-        if (capitalWithoutInterest < 0) capitalWithoutInterest = 0;
       }
+      
+      // Calculate the principal-only capital (initial + investments - withdrawals)
+      principalOnly = Math.max(0, totalInvested - totalWithdrawn);
       
       const capitalVariation = capital - capitalAtStart;
       const netVariationExcludingInterest = inRetirementPhase ? -annualWithdrawal : annualInvestment;
       
-      // Add year data to the chart
       data.push({
         year: simulatedYear,
         age: age,
         capital: Math.round(capital),
-        capitalWithoutInterest: Math.round(capitalWithoutInterest),
+        capitalWithoutInterest: Math.round(principalOnly),
         variation: Math.round(capitalVariation),
         retirement: inRetirementPhase ? "Yes" : "No",
         annualInvestment: Math.round(annualInvestment),
@@ -184,556 +222,885 @@ const RetirementSimulator = () => {
         annualInterest: Math.round(annualInterest),
         netVariationExcludingInterest: Math.round(netVariationExcludingInterest),
         finalMonthlyInvestment: Math.round(currentMonthlyInvestment),
-        finalMonthlyWithdrawal: Math.round(currentMonthlyWithdrawal)
+        finalMonthlyWithdrawal: Math.round(currentMonthlyWithdrawal),
+        totalInvested,
+        totalWithdrawn
       });
       
-      // If capital is depleted, stop simulation
       if (capital <= 0) break;
     }
     
-    setGraphData(data);
-  };
-  
-  // Recalculate simulation whenever a parameter changes
-  useEffect(() => {
-    calculateSimulation();
+    return data;
   }, [
     initialCapital, 
     monthlyInvestment, 
     annualReturnRate, 
     inflation, 
-    withdrawalMode === "amount" ? monthlyRetirementWithdrawal : null, 
     currentAge,
-    retirementInput,
     withdrawalMode,
-    withdrawalMode === "age" ? maxAge : null
+    withdrawalMode === "amount" ? monthlyRetirementWithdrawal : null,
+    withdrawalMode === "age" ? maxAge : null,
+    retirementInput,
+    getBirthYear,
+    getRetirementYear,
+    isRetirementInputAge,
+    setMonthlyRetirementWithdrawal
   ]);
   
-  // Format numbers for display
-  const formatAmount = (amount) => {
-    if (currency === "EUR") {
-      return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
-    } else {
-      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-    }
-  };
+  // Calculate inflation-adjusted investment
+  const calculateInflationAdjustedInvestment = useCallback((totalAmount, timespan) => {
+    const avgInflationFactor = Math.pow(1 + (inflation / 100), timespan / 2);
+    return totalAmount / avgInflationFactor;
+  }, [inflation]);
   
-  // Calculate some statistics for the summary
-  const finalCapital = graphData.length > 0 ? graphData[graphData.length - 1].capital : 0;
-  
-  // Calculate retirement start year and age
-  const calculatedRetirementStartYear = getRetirementYear();
-  const birthYear = getBirthYear();
-  const retirementStartAge = calculatedRetirementStartYear - birthYear;
-  
-  // Calculate exhaustion year and age
-  const isCapitalExhausted = graphData.length > 0 && graphData[graphData.length - 1].capital <= 0;
-  const exhaustionYear = isCapitalExhausted ? graphData[graphData.length - 1].year : "Not exhausted";
-  const exhaustionAge = isCapitalExhausted ? graphData[graphData.length - 1].age : null;
-  
-  // Calculate total invested amount (from now until retirement)
-  const totalInvestedAmount = initialCapital + (monthlyInvestment * 12 * (calculatedRetirementStartYear - new Date().getFullYear()));
-  
-  // Calculate amount for retirement bar chart
-  const lifeExpectancy = withdrawalMode === "age" ? maxAge : 95;
-  const retirementDuration = lifeExpectancy - retirementStartAge;
-  
-  // Find capital at retirement
-  const capitalAtRetirementIndex = graphData.findIndex(item => item.year >= calculatedRetirementStartYear);
-  const capitalAtRetirement = capitalAtRetirementIndex !== -1 
-    ? graphData[capitalAtRetirementIndex].capital 
-    : 0;
-  
-  // Estimate needed capital (conservative approach with inflation)
-  const avgInflationFactor = Math.pow(1 + (inflation / 100), retirementDuration / 2);
-  const neededMonthlyWithdrawal = monthlyRetirementWithdrawal * avgInflationFactor;
-  const totalNeededCapital = neededMonthlyWithdrawal * 12 * retirementDuration;
-  
-  // Calculate inflation-adjusted total invested amount
-  const calculateInflationAdjustedInvestment = () => {
-    const retirementTimespan = calculatedRetirementStartYear - new Date().getFullYear();
-    // Use half the period for average adjustment (approximation for regular investments)
-    const avgInflationFactor = Math.pow(1 + (inflation / 100), retirementTimespan / 2);
-    return totalInvestedAmount / avgInflationFactor;
-  };
-  
-  const inflationAdjustedInvestment = calculateInflationAdjustedInvestment();
-  
-  // Calculate inflation-adjusted final capital (present value)
-  const calculateInflationAdjustedCapital = () => {
-    if (graphData.length === 0) return 0;
-    
-    const finalYear = graphData[graphData.length - 1].year;
-    const currentYear = new Date().getFullYear();
-    const years = finalYear - currentYear;
-    
-    // Calculate cumulative inflation factor
+  // Calculate inflation-adjusted capital
+  const calculateInflationAdjustedCapital = useCallback((finalCapital, years) => {
     const inflationFactor = Math.pow(1 + (inflation / 100), years);
-    
-    // Return inflation-adjusted value (present value)
     return finalCapital / inflationFactor;
-  };
+  }, [inflation]);
   
-  const inflationAdjustedCapital = calculateInflationAdjustedCapital();
+  // Use memoization for simulation data
+  const calculatedData = useMemo(() => {
+    return calculateSimulation();
+  }, [calculateSimulation]);
   
-  // Calculate max value for proportional bar charts
-  const maxBarValue = Math.max(capitalAtRetirement, totalNeededCapital);
-  const haveBarHeight = maxBarValue > 0 ? (capitalAtRetirement / maxBarValue) * 100 : 0;
-  const needBarHeight = maxBarValue > 0 ? (totalNeededCapital / maxBarValue) * 100 : 0;
+  // Update graph data when calculation changes
+  useEffect(() => {
+    setGraphData(calculatedData);
+  }, [calculatedData]);
   
-  // Find the final monthly investment value (right before retirement)
-  const getPreRetirementData = () => {
-    const preRetirementYearData = graphData.find(item => item.year === calculatedRetirementStartYear - 1);
-    return preRetirementYearData?.finalMonthlyInvestment || monthlyInvestment;
-  };
-  
-  // Get final monthly investment value
-  const finalMonthlyInvestment = graphData.length > 0 ? getPreRetirementData() : monthlyInvestment;
-  
-  // Get final monthly withdrawal value
-  const finalMonthlyWithdrawalValue = graphData.length > 0 
-    ? graphData[graphData.length - 1].finalMonthlyWithdrawal 
-    : monthlyRetirementWithdrawal;
+  // Use memoization for derived statistics
+  const statistics = useMemo(() => {
+    // Basic timeline calculations
+    const birthYear = getBirthYear();
+    const calculatedRetirementStartYear = getRetirementYear();
+    const retirementStartAge = calculatedRetirementStartYear - birthYear;
+    const lifeExpectancy = withdrawalMode === "age" ? maxAge : 95;
+    const retirementDuration = lifeExpectancy - retirementStartAge;
+    
+    // Capital calculations
+    const finalCapital = graphData.length > 0 ? graphData[graphData.length - 1].capital : 0;
+    const isCapitalExhausted = graphData.length > 0 && graphData[graphData.length - 1].capital <= 0;
+    const exhaustionYear = isCapitalExhausted ? graphData[graphData.length - 1].year : "Not exhausted";
+    const exhaustionAge = isCapitalExhausted ? graphData[graphData.length - 1].age : null;
+    
+    // Investment calculations
+    const totalInvestedAmount = initialCapital + (monthlyInvestment * 12 * (calculatedRetirementStartYear - new Date().getFullYear()));
+    
+    // Find capital at retirement
+    const capitalAtRetirementIndex = graphData.findIndex(item => item.year >= calculatedRetirementStartYear);
+    const capitalAtRetirement = capitalAtRetirementIndex !== -1 
+      ? graphData[capitalAtRetirementIndex].capital 
+      : 0;
+    
+    // Estimate needed capital using Present Value of Annuity formula
+    // This accounts for interest earned during retirement
+    const calculateNeededCapital = () => {
+      // Determine retirement duration
+      let effectiveRetirementDuration = retirementDuration;
+      
+      // For amount mode with capital depletion, use the actual depletion timespan
+      if (withdrawalMode === "amount" && isCapitalExhausted) {
+        const retirementYearIndex = graphData.findIndex(item => item.retirement === "Yes");
+        const exhaustionIndex = graphData.length - 1;
+        
+        if (retirementYearIndex !== -1) {
+          effectiveRetirementDuration = exhaustionIndex - retirementYearIndex + 1;
+        }
+      }
+      
+      // Number of months in retirement
+      const numberOfMonths = effectiveRetirementDuration * 12;
+      
+      // Account for inflation on withdrawals (use average inflation adjustment)
+      const avgInflationFactor = Math.pow(1 + (inflation / 100), effectiveRetirementDuration / 2);
+      const inflationAdjustedMonthlyWithdrawal = monthlyRetirementWithdrawal * avgInflationFactor;
+      
+      // Calculate real monthly return rate (adjusted for inflation)
+      const monthlyReturn = annualReturnRate / 100 / 12;
+      const monthlyInflation = inflation / 100 / 12;
+      const realMonthlyReturn = (monthlyReturn - monthlyInflation) > 0 
+        ? (monthlyReturn - monthlyInflation) 
+        : 0.0001; // Avoid negative or zero rates
+        
+      // Use Present Value of Annuity formula: PV = PMT * (1 - (1+r)^-n) / r
+      // This gives the amount needed today to fund the withdrawals, accounting for interest
+      if (realMonthlyReturn <= 0 || numberOfMonths <= 0) {
+        // Fallback for edge cases - simple multiplication
+        return inflationAdjustedMonthlyWithdrawal * numberOfMonths;
+      } else {
+        const denominator = 1 - Math.pow(1 + realMonthlyReturn, -numberOfMonths);
+        if (denominator <= 0) {
+          return inflationAdjustedMonthlyWithdrawal * numberOfMonths;
+        }
+        return inflationAdjustedMonthlyWithdrawal * denominator / realMonthlyReturn;
+      }
+    };
+    
+    const totalNeededCapital = calculateNeededCapital();
+    
+    // Inflation-adjusted values
+    const retirementTimespan = calculatedRetirementStartYear - new Date().getFullYear();
+    const inflationAdjustedInvestment = calculateInflationAdjustedInvestment(totalInvestedAmount, retirementTimespan);
+    
+    let inflationAdjustedCapital = 0;
+    if (graphData.length > 0 && finalCapital > 0) {
+      const finalYear = graphData[graphData.length - 1].year;
+      const currentYear = new Date().getFullYear();
+      const years = finalYear - currentYear;
+      inflationAdjustedCapital = calculateInflationAdjustedCapital(finalCapital, years);
+    }
+    
+    // Chart values
+    const maxBarValue = Math.max(capitalAtRetirement, totalNeededCapital);
+    const haveBarHeight = maxBarValue > 0 ? (capitalAtRetirement / maxBarValue) * 100 : 0;
+    const needBarHeight = maxBarValue > 0 ? (totalNeededCapital / maxBarValue) * 100 : 0;
+    
+    // Monthly values
+    const getPreRetirementData = () => {
+      const preRetirementYearData = graphData.find(item => item.year === calculatedRetirementStartYear - 1);
+      return preRetirementYearData?.finalMonthlyInvestment || monthlyInvestment;
+    };
+    
+    const finalMonthlyInvestment = graphData.length > 0 ? getPreRetirementData() : monthlyInvestment;
+    const finalMonthlyWithdrawalValue = graphData.length > 0 
+      ? graphData[graphData.length - 1].finalMonthlyWithdrawal 
+      : monthlyRetirementWithdrawal;
+    
+    return {
+      birthYear,
+      calculatedRetirementStartYear,
+      retirementStartAge,
+      finalCapital,
+      isCapitalExhausted,
+      exhaustionYear,
+      exhaustionAge,
+      totalInvestedAmount,
+      lifeExpectancy,
+      retirementDuration,
+      capitalAtRetirement,
+      totalNeededCapital,
+      inflationAdjustedInvestment,
+      inflationAdjustedCapital,
+      maxBarValue,
+      haveBarHeight,
+      needBarHeight,
+      finalMonthlyInvestment,
+      finalMonthlyWithdrawalValue
+    };
+  }, [
+    graphData, 
+    initialCapital, 
+    monthlyInvestment, 
+    inflation, 
+    monthlyRetirementWithdrawal,
+    withdrawalMode,
+    maxAge,
+    calculateInflationAdjustedInvestment,
+    calculateInflationAdjustedCapital,
+    getBirthYear,
+    getRetirementYear
+  ]);
   
   return (
     <div className="p-3 sm:p-6 max-w-6xl mx-auto bg-white rounded-lg shadow-md">
       <h1 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">Retirement Investment Simulator</h1>
       
-      {/* Simulation parameters - Now full width */}
-      <div className="bg-gray-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
-        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Parameters</h2>
+      {/* Parameters section - iOS Style */}
+      <div className="p-4 bg-gray-50 rounded-2xl shadow mb-5">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Parameters</h2>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-          {/* Left column */}
-          <div className="space-y-3 sm:space-y-4">
-            {/* Currency selector */}
-            <div className="bg-white p-2 sm:p-3 rounded shadow-sm">
-              <div className="flex items-center">
-                <h3 className="text-sm sm:text-md font-medium text-gray-700 mr-3 sm:mr-4">Currency</h3>
-                <div className="flex items-center ml-auto">
-                  <span className={`mr-2 text-xs sm:text-sm ${currency === "USD" ? "font-medium" : "text-gray-500"}`}>USD ($)</span>
-                  <div 
-                    className="relative inline-block w-10 sm:w-12 h-5 sm:h-6 transition duration-200 ease-in-out rounded-full cursor-pointer"
-                    onClick={() => setCurrency(currency === "USD" ? "EUR" : "USD")}
-                  >
-                    <div 
-                      className={`absolute left-0 top-0 w-10 sm:w-12 h-5 sm:h-6 rounded-full transition-colors duration-200 ease-in-out ${currency === "EUR" ? "bg-blue-500" : "bg-gray-300"}`}
-                    ></div>
-                    <div 
-                      className={`absolute left-0 top-0 w-5 sm:w-6 h-5 sm:h-6 bg-white rounded-full transition-transform duration-200 ease-in-out transform shadow-md ${currency === "EUR" ? "translate-x-5 sm:translate-x-6" : "translate-x-0"}`}
-                    ></div>
-                  </div>
-                  <span className={`ml-2 text-xs sm:text-sm ${currency === "EUR" ? "font-medium" : "text-gray-500"}`}>EUR (€)</span>
-                </div>
-              </div>
+        {/* Currency Selector - iOS Style */}
+        <div className="mb-4">
+          <div className="flex justify-between items-center mb-2">
+            <label className="text-sm font-medium text-gray-700">Currency</label>
+            <div className="bg-gray-200 rounded-lg p-0.5 flex">
+              <button 
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${currency === "USD" ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-700'}`}
+                onClick={() => setCurrency("USD")}
+              >
+                USD
+              </button>
+              <button 
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${currency === "EUR" ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-700'}`}
+                onClick={() => setCurrency("EUR")}
+              >
+                EUR
+              </button>
             </div>
-            
-            {/* Initial values */}
-            <div className="bg-white p-2 sm:p-3 rounded shadow-sm">
-              <h3 className="text-sm sm:text-md font-medium text-gray-700 border-b pb-1 sm:pb-2 mb-2 sm:mb-3">Initial Values</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                <div className="bg-blue-50 rounded p-2">
-                  <label className="block text-xs sm:text-sm text-gray-600 mb-1">
-                    Initial Capital
-                  </label>
-                  <input
-                    type="text"
-                    value={initialCapital.toLocaleString('en-US')}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\s/g, '').replace(/,/g, '');
-                      if (/^\d*$/.test(value)) {
-                        setInitialCapital(Number(value));
-                      }
-                    }}
-                    className="w-full p-1 sm:p-2 border border-gray-300 rounded shadow-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-500 focus:outline-none text-sm"
-                  />
-                </div>
-                
-                <div className="bg-blue-50 rounded p-2">
-                  <label className="block text-xs sm:text-sm text-gray-600 mb-1">
-                    Monthly Investment
-                  </label>
-                  <input
-                    type="text"
-                    value={monthlyInvestment.toLocaleString('en-US')}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\s/g, '').replace(/,/g, '');
-                      if (/^\d*$/.test(value)) {
-                        setMonthlyInvestment(Number(value));
-                      }
-                    }}
-                    className="w-full p-1 sm:p-2 border border-gray-300 rounded shadow-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-500 focus:outline-none text-sm"
-                  />
-                </div>
-              </div>
+          </div>
+        </div>
+        
+        {/* Initial Values Group */}
+        <div className="mb-5 bg-white rounded-xl shadow-sm p-4">
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">Initial Values</h3>
+          
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-xs font-medium text-gray-600">Initial Capital</label>
+              <span className="text-xs text-blue-600 font-medium">{formatAmount(initialCapital)}</span>
             </div>
-            
-            {/* Market conditions */}
-            <div className="bg-white p-2 sm:p-3 rounded shadow-sm">
-              <h3 className="text-sm sm:text-md font-medium text-gray-700 border-b pb-1 sm:pb-2 mb-2 sm:mb-3">Market Conditions</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                <div className="bg-yellow-50 rounded p-2">
-                  <label className="block text-xs sm:text-sm text-gray-600 mb-1">
-                    Return (%/year)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={annualReturnRate}
-                    onChange={(e) => setAnnualReturnRate(Number(e.target.value))}
-                    className="w-full p-1 sm:p-2 border border-gray-300 rounded shadow-sm focus:ring-2 focus:ring-yellow-300 focus:border-yellow-500 focus:outline-none text-sm"
-                  />
-                </div>
-                
-                <div className="bg-yellow-50 rounded p-2">
-                  <label className="block text-xs sm:text-sm text-gray-600 mb-1">
-                    Inflation (%/year)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={inflation}
-                    onChange={(e) => setInflation(Number(e.target.value))}
-                    className="w-full p-1 sm:p-2 border border-gray-300 rounded shadow-sm focus:ring-2 focus:ring-yellow-300 focus:border-yellow-500 focus:outline-none text-sm"
-                  />
-                </div>
-              </div>
+            <input
+              type="range"
+              min="0"
+              max="1000000"
+              step="1000"
+              value={initialCapital}
+              onChange={(e) => setInitialCapital(Number(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+            />
+            <div className="flex justify-between items-center mt-1">
+              <input
+                type="text"
+                value={initialCapital.toLocaleString('en-US')}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\s/g, '').replace(/,/g, '');
+                  if (/^\d*$/.test(value)) {
+                    setInitialCapital(Number(value));
+                  }
+                }}
+                className="w-24 p-2 bg-gray-100 rounded-lg text-sm border-0 focus:ring-1 focus:ring-blue-500 focus:outline-none text-right"
+              />
+              <span className="text-xs text-gray-500">Starting amount</span>
             </div>
           </div>
           
-          {/* Right column */}
-          <div className="space-y-3 sm:space-y-4">
-            {/* Retirement timeline */}
-            <div className="bg-white p-2 sm:p-3 rounded shadow-sm">
-              <h3 className="text-sm sm:text-md font-medium text-gray-700 border-b pb-1 sm:pb-2 mb-2 sm:mb-3">Retirement Timeline</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                <div className="bg-green-50 rounded p-2">
-                  <label className="block text-xs sm:text-sm text-gray-600 mb-1">
-                    Current Age
-                  </label>
-                  <input
-                    type="number"
-                    min="18"
-                    max="100"
-                    value={currentAge}
-                    onChange={(e) => setCurrentAge(Number(e.target.value))}
-                    className="w-full p-1 sm:p-2 border border-gray-300 rounded shadow-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 focus:outline-none text-sm"
-                  />
-                </div>
-                
-                <div className="bg-green-50 rounded p-2">
-                  <label className="block text-xs sm:text-sm text-gray-600 mb-1">
-                    Retirement (age/year)
-                  </label>
-                  <div className="flex items-center">
-                    <input
-                      type="text"
-                      value={retirementInput}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '');
-                        setRetirementInput(value);
-                      }}
-                      className="w-full p-1 sm:p-2 border border-gray-300 rounded shadow-sm focus:ring-2 focus:ring-green-300 focus:border-green-500 focus:outline-none text-sm"
-                    />
-                    <span className="ml-1 sm:ml-2 text-xs text-gray-500">
-                      {isRetirementInputAge() ? 'age' : 'year'}
-                    </span>
-                  </div>
-                </div>
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-xs font-medium text-gray-600">Monthly Investment</label>
+              <span className="text-xs text-blue-600 font-medium">{formatAmount(monthlyInvestment)}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="10000"
+              step="100"
+              value={monthlyInvestment}
+              onChange={(e) => setMonthlyInvestment(Number(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+            />
+            <div className="flex justify-between items-center mt-1">
+              <input
+                type="text"
+                value={monthlyInvestment.toLocaleString('en-US')}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\s/g, '').replace(/,/g, '');
+                  if (/^\d*$/.test(value)) {
+                    setMonthlyInvestment(Number(value));
+                  }
+                }}
+                className="w-24 p-2 bg-gray-100 rounded-lg text-sm border-0 focus:ring-1 focus:ring-blue-500 focus:outline-none text-right"
+              />
+              <span className="text-xs text-gray-500">Monthly contribution</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Market Conditions Group */}
+        <div className="mb-5 bg-white rounded-xl shadow-sm p-4">
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">Market Conditions</h3>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-xs font-medium text-gray-600">Return (%)</label>
+                <span className="text-xs text-blue-600 font-medium">{annualReturnRate}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="15"
+                step="0.1"
+                value={annualReturnRate}
+                onChange={(e) => setAnnualReturnRate(Number(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+              <div className="flex justify-between mt-1">
+                <span className="text-xs text-gray-500">0%</span>
+                <span className="text-xs text-gray-500">15%</span>
               </div>
             </div>
             
-            {/* Withdrawal settings */}
-            <div className="bg-white p-2 sm:p-3 rounded shadow-sm">
-              <h3 className="text-sm sm:text-md font-medium text-gray-700 border-b pb-1 sm:pb-2 mb-2 sm:mb-3">Withdrawal Settings</h3>
-              
-              <div className="mb-2 sm:mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <label className="block text-xs sm:text-sm text-gray-600 mb-1 sm:mb-0">Planning Mode:</label>
-                <div className="flex border rounded overflow-hidden shadow-sm">
-                  <button
-                    type="button"
-                    className={`px-2 sm:px-3 py-1 text-xs sm:text-sm transition-colors duration-200 ${withdrawalMode === 'amount' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-                    onClick={() => setWithdrawalMode('amount')}
-                  >
-                    Set Withdrawal
-                  </button>
-                  <button
-                    type="button"
-                    className={`px-2 sm:px-3 py-1 text-xs sm:text-sm transition-colors duration-200 ${withdrawalMode === 'age' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
-                    onClick={() => setWithdrawalMode('age')}
-                  >
-                    Set Target Age
-                  </button>
-                </div>
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-xs font-medium text-gray-600">Inflation (%)</label>
+                <span className="text-xs text-blue-600 font-medium">{inflation}%</span>
               </div>
-              
-              <div className="bg-purple-50 rounded p-2">
-                {withdrawalMode === 'amount' ? (
-                  <div>
-                    <label className="block text-xs sm:text-sm text-gray-600 mb-1">
-                      Monthly Withdrawal
-                    </label>
-                    <input
-                      type="text"
-                      value={monthlyRetirementWithdrawal.toLocaleString('en-US')}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\s/g, '').replace(/,/g, '');
-                        if (/^\d*$/.test(value)) {
-                          setMonthlyRetirementWithdrawal(Number(value));
-                        }
-                      }}
-                      className="w-full p-1 sm:p-2 border border-gray-300 rounded shadow-sm focus:ring-2 focus:ring-purple-300 focus:border-purple-500 focus:outline-none text-sm"
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <label className="block text-xs sm:text-sm text-gray-600 mb-1">
-                      Target Max Age
-                    </label>
-                    <input
-                      type="number"
-                      min={retirementStartAge + 1}
-                      max="120"
-                      value={maxAge}
-                      onChange={(e) => setMaxAge(Number(e.target.value))}
-                      className="w-full p-1 sm:p-2 border border-gray-300 rounded shadow-sm focus:ring-2 focus:ring-purple-300 focus:border-purple-500 focus:outline-none text-sm"
-                    />
-                  </div>
-                )}
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="0.1"
+                value={inflation}
+                onChange={(e) => setInflation(Number(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+              <div className="flex justify-between mt-1">
+                <span className="text-xs text-gray-500">0%</span>
+                <span className="text-xs text-gray-500">10%</span>
               </div>
             </div>
           </div>
+        </div>
+        
+        {/* Retirement Timeline Group */}
+        <div className="mb-5 bg-white rounded-xl shadow-sm p-4">
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">Retirement Timeline</h3>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-xs font-medium text-gray-600">Current Age</label>
+                <span className="text-xs text-blue-600 font-medium">{currentAge}</span>
+              </div>
+              <input
+                type="range"
+                min="18"
+                max="80"
+                value={currentAge}
+                onChange={(e) => setCurrentAge(Number(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+              <div className="flex justify-between mt-1">
+                <span className="text-xs text-gray-500">18</span>
+                <span className="text-xs text-gray-500">80</span>
+              </div>
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-xs font-medium text-gray-600">Retirement Age</label>
+                <span className="text-xs text-blue-600 font-medium">
+                  {isRetirementInputAge() ? retirementInput : `${statistics.retirementStartAge}`}
+                </span>
+              </div>
+              <input
+                type="range"
+                min={currentAge + 1}
+                max="90"
+                value={isRetirementInputAge() ? Number(retirementInput) : statistics.retirementStartAge}
+                onChange={(e) => setRetirementInput(e.target.value)}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+              <div className="flex justify-between mt-1">
+                <input
+                  type="text"
+                  value={retirementInput}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    setRetirementInput(value);
+                  }}
+                  className="w-16 p-1 bg-gray-100 rounded-lg text-sm border-0 focus:ring-1 focus:ring-blue-500 focus:outline-none text-center"
+                />
+                <span className="text-xs text-gray-500">
+                  {isRetirementInputAge() ? 'age' : 'year'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Withdrawal Settings Group */}
+        <div className="bg-white rounded-xl shadow-sm p-4">
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">Withdrawal Settings</h3>
+          
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-xs font-medium text-gray-600">Planning Mode</label>
+              <div className="bg-gray-200 rounded-lg p-0.5 flex">
+                <button 
+                  className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${withdrawalMode === "amount" ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-700'}`}
+                  onClick={() => setWithdrawalMode("amount")}
+                >
+                  Set Amount
+                </button>
+                <button 
+                  className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${withdrawalMode === "age" ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-700'}`}
+                  onClick={() => setWithdrawalMode("age")}
+                >
+                  Set Target Age
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 italic mb-3">
+              {withdrawalMode === "amount" 
+                ? "Set your monthly withdrawal amount and see how long your money will last." 
+                : "Set a target age and see how much you can withdraw monthly."}
+            </p>
+          </div>
+          
+          {withdrawalMode === 'amount' ? (
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-xs font-medium text-gray-600">Monthly Withdrawal</label>
+                <span className="text-xs text-blue-600 font-medium">{formatAmount(monthlyRetirementWithdrawal)}</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="10000"
+                step="100"
+                value={monthlyRetirementWithdrawal}
+                onChange={(e) => setMonthlyRetirementWithdrawal(Number(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+              <div className="flex justify-between items-center mt-1">
+                <input
+                  type="text"
+                  value={monthlyRetirementWithdrawal.toLocaleString('en-US')}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\s/g, '').replace(/,/g, '');
+                    if (/^\d*$/.test(value)) {
+                      setMonthlyRetirementWithdrawal(Number(value));
+                    }
+                  }}
+                  className="w-24 p-2 bg-gray-100 rounded-lg text-sm border-0 focus:ring-1 focus:ring-blue-500 focus:outline-none text-right"
+                />
+                <span className="text-xs text-gray-500">Monthly withdrawal</span>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="text-xs font-medium text-gray-600">Target Age</label>
+                <span className="text-xs text-blue-600 font-medium">{maxAge}</span>
+              </div>
+              <input
+                type="range"
+                min={statistics.retirementStartAge + 1}
+                max="120"
+                value={maxAge}
+                onChange={(e) => setMaxAge(Number(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+              <div className="flex justify-between mt-1">
+                <span className="text-xs text-gray-500">{statistics.retirementStartAge + 1}</span>
+                <span className="text-xs text-gray-500">120</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
-      {/* Results summary - Now full width */}
-      <div className="bg-gray-50 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
-        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Summary</h2>
+      {/* Results summary - iOS Style */}
+      <div className="p-4 bg-gray-50 rounded-2xl shadow mb-5">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Summary</h2>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-          {/* Left column */}
-          <div className="space-y-3 sm:space-y-4">
-            {/* Timeline section */}
-            <div className="bg-white p-2 sm:p-3 rounded shadow-sm">
-              <h3 className="text-sm sm:text-md font-medium text-gray-700 border-b pb-1 sm:pb-2 mb-2 sm:mb-3">Timeline</h3>
-              <div className="grid grid-cols-2 gap-x-2 sm:gap-x-3 gap-y-1 sm:gap-y-2">
-                <div className="text-xs sm:text-sm text-gray-600">Current Age:</div>
-                <div className="text-xs sm:text-sm font-medium">{currentAge}</div>
-                
-                <div className="text-xs sm:text-sm text-gray-600">Birth Year:</div>
-                <div className="text-xs sm:text-sm font-medium">{getBirthYear()}</div>
-                
-                <div className="text-xs sm:text-sm text-gray-600">Retirement Start:</div>
-                <div className="text-xs sm:text-sm font-medium">{`${calculatedRetirementStartYear} (Age ${retirementStartAge})`}</div>
-                
-                <div className="text-xs sm:text-sm text-gray-600">Life Expectancy:</div>
-                <div className="text-xs sm:text-sm font-medium">Age {withdrawalMode === "age" ? maxAge : "95"} {withdrawalMode === "age" ? "(Target)" : "(Est.)"}</div>
+        {/* Overview Card */}
+        <div className="bg-white rounded-xl shadow-sm p-4 mb-5">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-sm font-semibold text-gray-800">Overview</h3>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statistics.finalCapital > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              {statistics.finalCapital > 0 ? 'On Track' : 'At Risk'}
+            </span>
+          </div>
+          
+          <div className="mt-3 flex">
+            <div className="border-r border-gray-200 pr-3 w-1/2">
+              <div className="text-xs text-gray-500 mb-1">Retirement Start</div>
+              <div className="text-lg font-semibold text-gray-800">{statistics.calculatedRetirementStartYear}</div>
+              <div className="text-xs text-gray-500">Age {statistics.retirementStartAge}</div>
+            </div>
+            <div className="pl-3 w-1/2">
+              <div className="text-xs text-gray-500 mb-1">Life Expectancy</div>
+              <div className="text-lg font-semibold text-gray-800">Age {statistics.lifeExpectancy}</div>
+              <div className="text-xs text-gray-500">{withdrawalMode === "age" ? "Target" : "Estimated"}</div>
+            </div>
+          </div>
+          
+          {/* Capital Timeline Visualization */}
+          <div className="mt-4">
+            <div className="h-8 w-full bg-gray-100 rounded-lg overflow-hidden flex">
+              <div 
+                className="h-full bg-blue-500 flex items-center justify-center text-xs text-white font-medium"
+                style={{ width: `${statistics.retirementStartAge / statistics.lifeExpectancy * 100}%` }}
+              >
+                Working
               </div>
+              {statistics.isCapitalExhausted ? (
+                <>
+                  <div 
+                    className="h-full bg-green-500 flex items-center justify-center text-xs text-white font-medium"
+                    style={{ width: `${(statistics.exhaustionAge - statistics.retirementStartAge) / statistics.lifeExpectancy * 100}%` }}
+                  >
+                    Retirement
+                  </div>
+                  <div 
+                    className="h-full bg-red-500 flex items-center justify-center text-xs text-white font-medium"
+                    style={{ width: `${(statistics.lifeExpectancy - statistics.exhaustionAge) / statistics.lifeExpectancy * 100}%` }}
+                  >
+                    Depleted
+                  </div>
+                </>
+              ) : (
+                <div 
+                  className="h-full bg-green-500 flex items-center justify-center text-xs text-white font-medium"
+                  style={{ width: `${(statistics.lifeExpectancy - statistics.retirementStartAge) / statistics.lifeExpectancy * 100}%` }}
+                >
+                  Retirement
+                </div>
+              )}
+            </div>
+            <div className="flex justify-between mt-1 text-xs text-gray-500">
+              <div>Age {currentAge}</div>
+              <div>Age {statistics.lifeExpectancy}</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Capital Card */}
+        <div className="bg-white rounded-xl shadow-sm p-4 mb-5">
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">Capital</h3>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="border rounded-xl p-3 bg-gray-50">
+              <div className="text-xs text-gray-500 mb-1">At Retirement</div>
+              <div className="text-xl font-semibold text-blue-600">{formatAmount(statistics.capitalAtRetirement)}</div>
+              <div className="text-xs text-gray-500">Age {statistics.retirementStartAge}</div>
             </div>
             
-            {/* Investment section */}
-            <div className="bg-white p-2 sm:p-3 rounded shadow-sm">
-              <h3 className="text-sm sm:text-md font-medium text-gray-700 border-b pb-1 sm:pb-2 mb-2 sm:mb-3">Investment</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                <div className="bg-blue-50 p-2 rounded">
-                  <div className="text-xs sm:text-sm text-gray-600">Total Invested (Nominal):</div>
-                  <div className="text-sm sm:text-md font-medium">{formatAmount(totalInvestedAmount)}</div>
-                </div>
-                
-                <div className="bg-blue-50 p-2 rounded">
-                  <div className="text-xs sm:text-sm text-gray-600">Total Invested (Inflation Adjusted):</div>
-                  <div className="text-sm sm:text-md font-medium">{formatAmount(inflationAdjustedInvestment)}</div>
-                </div>
+            <div className={`border rounded-xl p-3 ${statistics.finalCapital <= 0 ? 'bg-red-50 border-red-200' : 'bg-green-50'}`}>
+              <div className="text-xs text-gray-500 mb-1">Final Capital</div>
+              <div className={`text-xl font-semibold ${statistics.finalCapital <= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                {formatAmount(statistics.finalCapital)}
+              </div>
+              <div className="text-xs text-gray-500">
+                {statistics.exhaustionYear === "Not exhausted" 
+                  ? `At age ${statistics.lifeExpectancy}` 
+                  : `Depleted at age ${statistics.exhaustionAge}`}
               </div>
             </div>
           </div>
           
-          {/* Right column */}
-          <div className="space-y-3 sm:space-y-4">
-            {/* Capital section */}
-            <div className="bg-white p-2 sm:p-3 rounded shadow-sm">
-              <h3 className="text-sm sm:text-md font-medium text-gray-700 border-b pb-1 sm:pb-2 mb-2 sm:mb-3">Capital</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-2 sm:mb-3">
-                <div className="bg-green-50 p-2 rounded">
-                  <div className="text-xs sm:text-sm text-gray-600">Capital at Retirement:</div>
-                  <div className="text-sm sm:text-md font-medium">{formatAmount(capitalAtRetirement)}</div>
-                </div>
-                
-                <div className={`p-2 rounded ${finalCapital <= 0 ? 'bg-red-50' : 'bg-green-50'}`}>
-                  <div className="text-xs sm:text-sm text-gray-600">Final Capital (Nominal):</div>
-                  <div className={`text-sm sm:text-md font-medium ${finalCapital <= 0 ? 'text-red-600' : ''}`}>
-                    {formatAmount(finalCapital)}
-                  </div>
-                </div>
-                
-                {finalCapital > 0 && (
-                  <div className="bg-green-50 p-2 rounded sm:col-span-2">
-                    <div className="text-xs sm:text-sm text-gray-600">Final Capital (Today's Value - Inflation Adjusted):</div>
-                    <div className="text-sm sm:text-md font-medium">{formatAmount(inflationAdjustedCapital)}</div>
-                  </div>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-2 gap-x-2 sm:gap-x-3">
-                <div className="text-xs sm:text-sm text-gray-600">Exhaustion Year:</div>
-                <div className="text-xs sm:text-sm font-medium">
-                  {exhaustionYear === "Not exhausted" 
-                    ? exhaustionYear 
-                    : `${exhaustionYear} (Age ${exhaustionAge})`
-                  }
-                </div>
-              </div>
+          {/* Capital/Investment Comparison */}
+          <div className="mt-4">
+            <div className="flex justify-between mb-1">
+              <div className="text-xs text-gray-500">Total Invested</div>
+              <div className="text-xs font-medium text-gray-800">{formatAmount(statistics.totalInvestedAmount)}</div>
+            </div>
+            <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-blue-500"
+                style={{ width: `100%` }}
+              ></div>
             </div>
             
-            {/* Monthly values section */}
-            <div className="bg-white p-2 sm:p-3 rounded shadow-sm">
-              <h3 className="text-sm sm:text-md font-medium text-gray-700 border-b pb-1 sm:pb-2 mb-2 sm:mb-3">Monthly Amounts</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                <div className="bg-blue-50 p-2 rounded">
-                  <div className="text-xs sm:text-sm text-gray-600">Final Monthly Investment:</div>
-                  <div className="text-sm sm:text-md font-medium">{formatAmount(finalMonthlyInvestment)}</div>
-                </div>
-                
-                <div className="bg-blue-50 p-2 rounded">
-                  <div className="text-xs sm:text-sm text-gray-600">Final Monthly Withdrawal:</div>
-                  <div className="text-sm sm:text-md font-medium">{formatAmount(finalMonthlyWithdrawalValue)}</div>
-                </div>
-                
-                {withdrawalMode === "age" && (
-                  <div className="bg-purple-50 p-2 rounded sm:col-span-2">
-                    <div className="text-xs sm:text-sm text-gray-600">Max Monthly Withdrawal:</div>
-                    <div className="text-sm sm:text-md font-medium">{formatAmount(monthlyRetirementWithdrawal)}</div>
-                  </div>
-                )}
+            <div className="flex justify-between mb-1 mt-3">
+              <div className="text-xs text-gray-500">Capital at Retirement</div>
+              <div className="text-xs font-medium text-gray-800">{formatAmount(statistics.capitalAtRetirement)}</div>
+            </div>
+            <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-green-500"
+                style={{ width: `${(statistics.capitalAtRetirement / statistics.totalInvestedAmount) * 100}%` }}
+              ></div>
+            </div>
+            
+            <div className="flex justify-between items-center mt-3">
+              <div className="text-xs text-blue-600">Investment Growth</div>
+              <div className="text-xs font-medium text-blue-600">
+                {formatAmount(statistics.capitalAtRetirement - statistics.totalInvestedAmount)}
               </div>
             </div>
           </div>
         </div>
         
-        {/* Performance summary - Full width */}
-        {finalCapital > 0 ? (
-          <div className="mt-4 bg-green-50 p-3 border border-green-200 rounded shadow-sm">
-            <p className="font-medium text-green-800">
-              Your capital should last throughout your expected lifetime.
-            </p>
+        {/* Monthly Amounts Card */}
+        <div className="bg-white rounded-xl shadow-sm p-4 mb-5">
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">Monthly Amounts</h3>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-blue-50 rounded-lg p-3">
+              <div className="text-xs text-gray-600 mb-1">Monthly Investment</div>
+              <div className="text-lg font-semibold text-blue-600">{formatAmount(monthlyInvestment)}</div>
+              <div className="text-xs text-gray-500 mt-1">Current</div>
+              <div className="text-sm font-medium text-gray-600 mt-1">{formatAmount(statistics.finalMonthlyInvestment)}</div>
+              <div className="text-xs text-gray-500">Final (inflation adjusted)</div>
+            </div>
+            
+            <div className="bg-purple-50 rounded-lg p-3">
+              <div className="text-xs text-gray-600 mb-1">Monthly Withdrawal</div>
+              <div className="text-lg font-semibold text-purple-600">{formatAmount(monthlyRetirementWithdrawal)}</div>
+              <div className="text-xs text-gray-500 mt-1">Current</div>
+              <div className="text-sm font-medium text-gray-600 mt-1">{formatAmount(statistics.finalMonthlyWithdrawalValue)}</div>
+              <div className="text-xs text-gray-500">Final (inflation adjusted)</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Analysis Card */}
+        {statistics.finalCapital > 0 ? (
+          <div className="bg-green-50 rounded-xl shadow-sm p-4 border border-green-200">
+            <div className="flex">
+              <div className="flex-shrink-0 mr-3">
+                <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-green-800 mb-2">Your Plan Is On Track</h3>
+                <p className="text-xs text-green-700">
+                  Based on your current investment strategy, your capital should last throughout your expected lifetime until age {statistics.lifeExpectancy}.
+                </p>
+              </div>
+            </div>
           </div>
         ) : (
-          <div className="mt-4 bg-red-50 p-3 border border-red-200 rounded shadow-sm">
-            <p className="font-medium text-red-800">
-              Your capital will be depleted before reaching age 95. 
-              {exhaustionAge && ` Expected depletion at age ${exhaustionAge}.`}
-            </p>
+          <div className="bg-red-50 rounded-xl shadow-sm p-4 border border-red-200">
+            <div className="flex">
+              <div className="flex-shrink-0 mr-3">
+                <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-red-800 mb-2">Adjustment Needed</h3>
+                <p className="text-xs text-red-700">
+                  Your capital will be depleted by age {statistics.exhaustionAge}, before reaching your life expectancy of {statistics.lifeExpectancy}. Consider increasing your savings, adjusting your retirement age, or reducing your planned withdrawals.
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </div>
       
-      {/* Retirement Funding Comparison */}
-      <div className="mt-8 bg-white p-4 rounded-lg border border-gray-200">
+      {/* Retirement Funding Analysis - iOS Style */}
+      <div className="p-4 bg-gray-50 rounded-2xl shadow mb-5">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Retirement Funding Analysis</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Retirement Funding Analysis</h2>
           <button 
-            className={`px-4 py-2 rounded text-white ${showRetirementAnalysis ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${showRetirementAnalysis ? 'bg-gray-300 text-gray-700' : 'bg-blue-500 text-white'}`}
             onClick={() => setShowRetirementAnalysis(!showRetirementAnalysis)}
           >
-            {showRetirementAnalysis ? 'Hide Analysis' : 'Show Analysis'}
+            {showRetirementAnalysis ? 'Hide Details' : 'View Details'}
           </button>
         </div>
         
-        <p className="text-gray-700 mb-4">
+        {/* Mode Description */}
+        <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
+          <div className="flex items-center mb-2">
+            <div className="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
+            <h3 className="text-sm font-semibold text-gray-800">Planning Strategy</h3>
+          </div>
+          
           {withdrawalMode === 'amount' ? (
-            <>
-              This analysis evaluates whether your retirement strategy will likely provide sufficient 
-              funds to last throughout your expected lifetime.
-              {!showRetirementAnalysis && (
-                <span className="ml-2 text-blue-600">
-                  {capitalAtRetirement >= totalNeededCapital 
-                    ? "Your strategy appears on track!" 
-                    : "Your strategy may need adjustment."}
-                </span>
-              )}
-            </>
+            <div className="flex items-center">
+              <div className="flex-shrink-0 mr-3 bg-blue-100 rounded-full p-2">
+                <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm text-gray-700">
+                  You've set a monthly withdrawal amount of <span className="font-semibold text-blue-600">{formatAmount(monthlyRetirementWithdrawal)}</span>.
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {!showRetirementAnalysis && (
+                    <span>
+                      {statistics.capitalAtRetirement >= statistics.totalNeededCapital 
+                        ? "Your strategy appears on track for your lifetime." 
+                        : "Your strategy may need adjustment to last your lifetime."}
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
           ) : (
-            <>
-              This analysis calculates the maximum monthly withdrawal amount that will make your savings 
-              last until your target age of {maxAge}.
-              {!showRetirementAnalysis && (
-                <span className="ml-2 text-blue-600">
-                  Maximum sustainable withdrawal: {formatAmount(monthlyRetirementWithdrawal)}/month
-                </span>
-              )}
-            </>
+            <div className="flex items-center">
+              <div className="flex-shrink-0 mr-3 bg-purple-100 rounded-full p-2">
+                <svg className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm text-gray-700">
+                  You've set a target age of <span className="font-semibold text-purple-600">{maxAge}</span>.
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {!showRetirementAnalysis && (
+                    <span>
+                      With your current plan, you can withdraw up to <span className="font-semibold">{formatAmount(monthlyRetirementWithdrawal)}</span> monthly.
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
           )}
-        </p>
+        </div>
         
         {showRetirementAnalysis && (
           <>
             {withdrawalMode === 'amount' ? (
-              // Show comparison charts only in amount mode
-              <div className="flex mt-6 space-x-8">
-                <div className="flex-1 flex flex-col items-center">
-                  <h3 className="font-medium text-lg mb-2">You Will Have</h3>
-                  <div className="w-full bg-gray-100 rounded-lg relative h-64 flex items-end justify-center p-2">
-                    <div 
-                      className="bg-blue-500 w-3/4 rounded-t-lg text-white flex flex-col items-center justify-end transition-all duration-500 ease-in-out"
-                      style={{ height: `${haveBarHeight}%` }}
-                    >
-                      <span className="font-bold text-lg mb-1">{formatAmount(capitalAtRetirement)}</span>
-                      <span className="mb-2 text-sm">At Retirement</span>
+              // Capital Comparison Card - iOS Style
+              <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
+                <h3 className="text-sm font-semibold text-gray-800 mb-3">Capital Analysis</h3>
+                
+                <div className="flex mb-6">
+                  <div className="w-1/2 px-2">
+                    <div className="bg-blue-50 rounded-xl p-3 h-full flex flex-col items-center justify-center">
+                      <div className="text-xs text-gray-500 mb-2">You Will Have</div>
+                      <div className="text-xl font-semibold text-blue-600">{formatAmount(statistics.capitalAtRetirement)}</div>
+                      <div className="text-xs text-gray-500 mt-1">At Retirement</div>
+                      <div className="mt-3 w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center">
+                        <div 
+                          className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold"
+                          style={{ 
+                            transform: `scale(${Math.min(statistics.capitalAtRetirement / statistics.totalNeededCapital, 1)})`,
+                            transition: 'transform 0.3s ease-in-out'
+                          }}
+                        >
+                          {Math.round(statistics.capitalAtRetirement / statistics.totalNeededCapital * 100)}%
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="w-1/2 px-2">
+                    <div className="bg-gray-50 rounded-xl p-3 h-full flex flex-col items-center justify-center">
+                      <div className="text-xs text-gray-500 mb-2">Required Capital</div>
+                      <div className="text-xl font-semibold text-gray-700">{formatAmount(statistics.totalNeededCapital)}</div>
+                      <div className="text-xs text-gray-500 mt-1">For {statistics.effectiveRetirementDuration || statistics.retirementDuration} Years</div>
+                      <div className="mt-3 w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
+                        <div className="w-16 h-16 rounded-full bg-gray-400 flex items-center justify-center text-white font-bold">
+                          100%
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
                 
-                <div className="flex-1 flex flex-col items-center">
-                  <h3 className="font-medium text-lg mb-2">You Will Need</h3>
-                  <div className="w-full bg-gray-100 rounded-lg relative h-64 flex items-end justify-center p-2">
+                {/* Capital Sufficiency Bar */}
+                <div className="mt-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs text-gray-500">Capital Sufficiency</span>
+                    <span className="text-xs font-medium text-gray-700">
+                      {Math.min(Math.round(statistics.capitalAtRetirement / statistics.totalNeededCapital * 100), 100)}%
+                    </span>
+                  </div>
+                  <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
                     <div 
-                      className="bg-red-400 w-3/4 rounded-t-lg text-white flex flex-col items-center justify-end transition-all duration-500 ease-in-out"
-                      style={{ height: `${needBarHeight}%` }}
-                    >
-                      <span className="font-bold text-lg mb-1">{formatAmount(totalNeededCapital)}</span>
-                      <span className="mb-2 text-sm">For {retirementDuration} Years</span>
-                    </div>
+                      className={`h-full ${statistics.capitalAtRetirement >= statistics.totalNeededCapital ? 'bg-green-500' : 'bg-orange-500'}`} 
+                      style={{ width: `${Math.min(statistics.capitalAtRetirement / statistics.totalNeededCapital * 100, 100)}%` }}
+                    ></div>
                   </div>
                 </div>
               </div>
             ) : (
-              // In age mode, show explanation of target age mode instead of charts
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
-                <h3 className="font-medium mb-2">Target Age Mode</h3>
-                <p>
-                  In this mode, the simulator calculates the maximum monthly withdrawal amount 
-                  that would allow your funds to last exactly until age {maxAge}.
-                </p>
-                <p className="mt-2">
-                  Based on your current savings, investment strategy, and retirement age, 
-                  you can withdraw up to <span className="font-bold">{formatAmount(monthlyRetirementWithdrawal)}</span> per month.
-                </p>
+              // Target Age Mode Explanation - iOS Style
+              <div className="bg-white rounded-xl shadow-sm p-4 mb-4">
+                <h3 className="text-sm font-semibold text-gray-800 mb-3">Monthly Withdrawal Analysis</h3>
+                
+                <div className="bg-purple-50 p-4 rounded-xl mb-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0 mr-3">
+                      <svg className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-700">
+                        In this mode, the simulator calculates the maximum monthly withdrawal amount 
+                        that would allow your funds to last exactly until age {maxAge}.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Sustainable Withdrawal */}
+                <div className="rounded-xl bg-white border border-purple-200 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-purple-800">Sustainable Monthly Withdrawal</h4>
+                    <div className="text-lg font-bold text-purple-700">{formatAmount(monthlyRetirementWithdrawal)}</div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-2 mt-2">
+                    <div className="flex-shrink-0">
+                      <svg className="h-4 w-4 text-gray-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      This calculation uses time value of money principles, accounting for your investment 
+                      returns ({annualReturnRate}%), inflation ({inflation}%), and target age ({maxAge}).
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
             
+            {/* Conclusion/Recommendation Card - iOS Style */}
             <div 
-              className={`mt-6 p-4 rounded-lg ${
+              className={`rounded-xl shadow-sm p-4 ${
                 withdrawalMode === 'amount' 
-                  ? (capitalAtRetirement >= totalNeededCapital ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200')
-                  : 'bg-gray-50 border border-gray-200'
+                  ? (statistics.capitalAtRetirement >= statistics.totalNeededCapital ? 'bg-green-50 border border-green-100' : 'bg-orange-50 border border-orange-100')
+                  : 'bg-blue-50 border border-blue-100'
               }`}
             >
-              <h3 className="font-bold mb-2">
+              <h3 className="text-sm font-semibold mb-2 flex items-center">
                 {withdrawalMode === 'amount'
-                  ? (capitalAtRetirement >= totalNeededCapital 
-                      ? "Your Retirement Strategy Appears Sufficient" 
-                      : "Your Retirement Strategy May Need Adjustment")
-                  : "Sustainable Withdrawal Plan"
+                  ? (statistics.capitalAtRetirement >= statistics.totalNeededCapital 
+                      ? (
+                        <>
+                          <svg className="h-5 w-5 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-green-800">Your Retirement Strategy Appears Sufficient</span>
+                        </>
+                      ) 
+                      : (
+                        <>
+                          <svg className="h-5 w-5 text-orange-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          <span className="text-orange-800">Your Retirement Strategy May Need Adjustment</span>
+                        </>
+                      ))
+                  : (
+                    <>
+                      <svg className="h-5 w-5 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-blue-800">Sustainable Withdrawal Plan</span>
+                    </>
+                  )
                 }
               </h3>
+              
               <p className="text-sm">
                 {withdrawalMode === 'amount'
-                  ? (capitalAtRetirement >= totalNeededCapital 
-                      ? `Based on your current plan, you are projected to have ${formatAmount(capitalAtRetirement)} at retirement, which exceeds the estimated ${formatAmount(totalNeededCapital)} needed to maintain your desired lifestyle to age 95.` 
-                      : `Your current strategy is projected to provide ${formatAmount(capitalAtRetirement)} at retirement, which is ${formatAmount(totalNeededCapital - capitalAtRetirement)} less than the estimated ${formatAmount(totalNeededCapital)} needed to maintain your desired lifestyle to age 95. ${exhaustionAge ? `Your funds will be depleted at age ${exhaustionAge}.` : ''} Consider increasing your monthly contributions, extending your investment timeline, or adjusting your expected retirement spending.`)
+                  ? (statistics.capitalAtRetirement >= statistics.totalNeededCapital 
+                      ? `Based on your current plan, you are projected to have ${formatAmount(statistics.capitalAtRetirement)} at retirement, which exceeds the estimated ${formatAmount(statistics.totalNeededCapital)} needed to maintain your desired lifestyle to age ${statistics.lifeExpectancy}.` 
+                      : `Your current strategy is projected to provide ${formatAmount(statistics.capitalAtRetirement)} at retirement, which is ${formatAmount(statistics.totalNeededCapital - statistics.capitalAtRetirement)} less than the estimated ${formatAmount(statistics.totalNeededCapital)} needed to maintain your desired lifestyle to age ${statistics.lifeExpectancy}. ${statistics.exhaustionAge ? `Your funds will be depleted at age ${statistics.exhaustionAge}.` : ''} Consider increasing your monthly contributions, extending your investment timeline, or adjusting your expected retirement spending.`)
                   : `This withdrawal amount is calculated using time value of money principles, accounting for your investment returns (${annualReturnRate}%), inflation (${inflation}%), and desired target age (${maxAge}). Adjusting any of these factors will change the maximum sustainable withdrawal amount.`
                 }
               </p>
+              
+              {withdrawalMode === 'amount' && statistics.capitalAtRetirement < statistics.totalNeededCapital && (
+                <div className="mt-3 bg-white rounded-lg p-3">
+                  <h4 className="text-sm font-medium text-orange-800 mb-2">Recommended Actions</h4>
+                  <ul className="text-xs text-gray-700 space-y-2">
+                    <li className="flex items-start">
+                      <svg className="h-4 w-4 text-orange-500 mr-1 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      <span>Increase your monthly investment by {formatAmount(Math.ceil((statistics.totalNeededCapital - statistics.capitalAtRetirement) / (12 * (statistics.calculatedRetirementStartYear - new Date().getFullYear()))))}.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <svg className="h-4 w-4 text-orange-500 mr-1 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span>Delay retirement by {Math.ceil((statistics.totalNeededCapital - statistics.capitalAtRetirement) / (12 * monthlyInvestment))} months.</span>
+                    </li>
+                    <li className="flex items-start">
+                      <svg className="h-4 w-4 text-orange-500 mr-1 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      <span>Reduce monthly withdrawal needs by {formatAmount(Math.ceil((statistics.totalNeededCapital - statistics.capitalAtRetirement) / (12 * statistics.retirementDuration)))}.</span>
+                    </li>
+                  </ul>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -780,7 +1147,7 @@ const RetirementSimulator = () => {
               type="monotone"
               dataKey="capitalWithoutInterest"
               stroke="#94a3b8"
-              name="Capital without Interest"
+              name="Principal Only (No Interest)"
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 6 }}
@@ -790,12 +1157,12 @@ const RetirementSimulator = () => {
         </ResponsiveContainer>
       </div>
       
-      {/* Detailed data table */}
-      <div className="mt-4 sm:mt-6 bg-white p-2 sm:p-4 rounded-lg border border-gray-200">
-        <div className="flex justify-between items-center mb-2 sm:mb-4">
-          <h2 className="text-lg sm:text-xl font-semibold">Show Schedule</h2>
+      {/* Data table */}
+      <div className="mt-8 bg-white p-4 rounded-lg border border-gray-200">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Schedule Details</h2>
           <button 
-            className={`px-3 py-1 sm:px-4 sm:py-2 rounded text-white text-xs sm:text-sm ${showSchedule ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`}
+            className={`px-4 py-2 rounded text-white ${showSchedule ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`}
             onClick={() => setShowSchedule(!showSchedule)}
           >
             {showSchedule ? 'Hide Schedule' : 'Show Schedule'}
@@ -803,63 +1170,61 @@ const RetirementSimulator = () => {
         </div>
         
         {showSchedule && (
-          <div className="overflow-x-auto -mx-2 sm:mx-0">
-            <div className="inline-block min-w-full align-middle">
-              <table className="min-w-full divide-y divide-gray-200 border-collapse">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-2 sm:px-6 py-1 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Year
-                    </th>
-                    <th className="px-2 sm:px-6 py-1 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Age
-                    </th>
-                    <th className="px-2 sm:px-6 py-1 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Capital
-                    </th>
-                    <th className="px-2 sm:px-6 py-1 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Change
-                    </th>
-                    <th className="px-2 sm:px-6 py-1 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                      Interest
-                    </th>
-                    <th className="px-2 sm:px-6 py-1 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                      I/W
-                    </th>
-                    <th className="px-2 sm:px-6 py-1 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Phase
-                    </th>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Year
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Age
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Capital
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Variation
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Interest
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Inv/Withdraw
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Phase
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {graphData.map((entry, index) => (
+                  <tr key={index} className={entry.retirement === "Yes" ? "bg-orange-50" : ""}>
+                    <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {entry.year}
+                    </td>
+                    <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {entry.age}
+                    </td>
+                    <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {formatAmount(entry.capital)}
+                    </td>
+                    <td className={`px-6 py-2 whitespace-nowrap text-sm ${entry.variation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {entry.variation >= 0 ? '+' : ''}{formatAmount(entry.variation)}
+                    </td>
+                    <td className="px-6 py-2 whitespace-nowrap text-sm text-green-600">
+                      +{formatAmount(entry.annualInterest)}
+                    </td>
+                    <td className={`px-6 py-2 whitespace-nowrap text-sm ${entry.netVariationExcludingInterest >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                      {entry.netVariationExcludingInterest >= 0 ? '+' : ''}{formatAmount(entry.netVariationExcludingInterest)}
+                    </td>
+                    <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {entry.retirement === "Yes" ? "Retirement" : "Investment"}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
-                  {graphData.map((entry, index) => (
-                    <tr key={index} className={entry.retirement === "Yes" ? "bg-orange-50" : ""}>
-                      <td className="px-2 sm:px-6 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900">
-                        {entry.year}
-                      </td>
-                      <td className="px-2 sm:px-6 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900">
-                        {entry.age}
-                      </td>
-                      <td className="px-2 sm:px-6 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900">
-                        {formatAmount(entry.capital)}
-                      </td>
-                      <td className={`px-2 sm:px-6 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm ${entry.variation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {entry.variation >= 0 ? '+' : ''}{formatAmount(entry.variation)}
-                      </td>
-                      <td className="px-2 sm:px-6 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm text-green-600 hidden sm:table-cell">
-                        +{formatAmount(entry.annualInterest)}
-                      </td>
-                      <td className={`px-2 sm:px-6 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm ${entry.netVariationExcludingInterest >= 0 ? 'text-blue-600' : 'text-red-600'} hidden sm:table-cell`}>
-                        {entry.netVariationExcludingInterest >= 0 ? '+' : ''}{formatAmount(entry.netVariationExcludingInterest)}
-                      </td>
-                      <td className="px-2 sm:px-6 py-1 sm:py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900">
-                        {entry.retirement === "Yes" ? "Ret." : "Inv."}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
