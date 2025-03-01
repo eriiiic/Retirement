@@ -301,14 +301,14 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
             <input
               type="range"
               min={statistics.retirementStartAge + 1}
-              max="120"
+              max="100"
               value={maxAge}
               onChange={(e) => onParamChange('maxAge', Number(e.target.value))}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
             <div className="flex justify-between mt-1">
               <span className="text-xs text-gray-500">{statistics.retirementStartAge + 1}</span>
-              <span className="text-xs text-gray-500">120</span>
+              <span className="text-xs text-gray-500">100</span>
             </div>
           </div>
         )}

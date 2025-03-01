@@ -1,10 +1,59 @@
-import React from 'react';
-import { Statistics, SimulatorParams, FormatAmountFunction } from './types';
+import React, { useReducer, useEffect } from 'react';
+import { Statistics, SimulatorParams, FormatAmountFunction, TimelineWidths, CapitalComparison, StatusInfo, WithdrawalMode, GraphDataPoint } from './types';
+import { useWorker } from '../../hooks/useWorker';
+import { WorkerMessageType, WorkerResponse } from '../../types/worker';
 
 interface ResultsSummaryProps {
   statistics: Statistics;
   params: SimulatorParams;
   formatAmount: FormatAmountFunction;
+}
+
+interface SummaryState {
+  timelineWidths: TimelineWidths;
+  capitalComparison: {
+    investedPercentage: number;
+    returnPercentage: number;
+  };
+  status: {
+    isOnTrack: boolean;
+    statusText: string;
+    statusClass: string;
+  };
+}
+
+type SummaryAction =
+  | { type: 'UPDATE_TIMELINE_WIDTHS'; payload: TimelineWidths }
+  | { type: 'UPDATE_CAPITAL_COMPARISON'; payload: CapitalComparison }
+  | { type: 'UPDATE_STATUS'; payload: StatusInfo };
+
+function summaryReducer(state: SummaryState, action: SummaryAction): SummaryState {
+  switch (action.type) {
+    case 'UPDATE_TIMELINE_WIDTHS':
+      return {
+        ...state,
+        timelineWidths: action.payload
+      };
+    case 'UPDATE_CAPITAL_COMPARISON':
+      return {
+        ...state,
+        capitalComparison: {
+          investedPercentage: 100,
+          returnPercentage: ((action.payload.atRetirement - action.payload.invested) / action.payload.invested) * 100
+        }
+      };
+    case 'UPDATE_STATUS':
+      return {
+        ...state,
+        status: {
+          isOnTrack: action.payload.isOnTrack,
+          statusText: action.payload.isOnTrack ? 'On Track' : 'At Risk',
+          statusClass: action.payload.isOnTrack ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }
+      };
+    default:
+      return state;
+  }
 }
 
 export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
@@ -14,6 +63,122 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
 }) => {
   const { withdrawalMode } = params;
 
+  const [summaryState, dispatch] = useReducer(summaryReducer, {
+    timelineWidths: {
+      working: 0,
+      retirement: 0,
+      depleted: 0
+    },
+    capitalComparison: {
+      investedPercentage: 100,
+      returnPercentage: 0
+    },
+    status: {
+      isOnTrack: true,
+      statusText: 'On Track',
+      statusClass: 'bg-green-100 text-green-800'
+    }
+  });
+
+  const { postWorkerMessage } = useWorker('resultsSummary');
+
+  useEffect(() => {
+    // Generate graph data from statistics
+    const graphData: GraphDataPoint[] = [];
+    
+    // Calculate start and end years
+    const startYear = new Date().getFullYear();
+    const startAge = params.currentAge;
+    const retirementYear = statistics.calculatedRetirementStartYear;
+    const retirementAge = statistics.retirementStartAge;
+    const endAge = statistics.isCapitalExhausted ? statistics.exhaustionAge : statistics.lifeExpectancy;
+    const endYear = startYear + (endAge - startAge);
+    
+    // Generate data points for each year
+    for (let year = startYear; year <= endYear; year++) {
+      const age = startAge + (year - startYear);
+      const isRetirementYear = year >= retirementYear;
+      
+      // Create a data point
+      const dataPoint: GraphDataPoint = {
+        year,
+        age,
+        capital: year === retirementYear ? statistics.capitalAtRetirement : 
+                (year === endYear ? statistics.finalCapital : 0),
+        capitalWithoutInterest: 0, // We don't have this data
+        variation: 0, // We don't have year-by-year variation
+        retirement: isRetirementYear ? "Yes" : "No",
+        annualInvestment: isRetirementYear ? 0 : params.monthlyInvestment * 12,
+        annualWithdrawal: isRetirementYear ? params.monthlyRetirementWithdrawal * 12 : 0,
+        annualInterest: 0, // We don't have year-by-year interest
+        netVariationExcludingInterest: isRetirementYear ? 
+          -(params.monthlyRetirementWithdrawal * 12) : (params.monthlyInvestment * 12),
+        finalMonthlyInvestment: statistics.finalMonthlyInvestment,
+        finalMonthlyWithdrawal: statistics.finalMonthlyWithdrawalValue,
+        totalInvested: year === retirementYear ? statistics.totalInvestedAmount : 0,
+        totalWithdrawn: 0, // We don't have this data
+        targetAge: age === endAge
+      };
+      
+      graphData.push(dataPoint);
+    }
+    
+    postWorkerMessage({
+      type: WorkerMessageType.CALCULATE_SUMMARY,
+      payload: {
+        graphData
+      }
+    }, (response: WorkerResponse) => {
+      if (response.type === WorkerMessageType.ERROR) {
+        console.error('Worker error:', response.error);
+        return;
+      }
+
+      if (response.type === WorkerMessageType.SUMMARY_RESULT && response.data) {
+        // Calculate timeline widths based on retirement duration and life expectancy
+        const retirementDuration = response.data.retirementDuration;
+        const totalYears = statistics.lifeExpectancy - params.currentAge;
+        const workingYears = statistics.retirementStartAge - params.currentAge;
+        
+        // Calculate timeline widths as percentages
+        const workingWidth = (workingYears / totalYears) * 100;
+        const retirementWidth = (retirementDuration / totalYears) * 100;
+        const depletedWidth = statistics.isCapitalExhausted ? 
+          ((statistics.lifeExpectancy - statistics.exhaustionAge) / totalYears) * 100 : 0;
+        
+        // Create timeline widths object
+        const timelineWidths: TimelineWidths = {
+          working: workingWidth,
+          retirement: retirementWidth,
+          depleted: depletedWidth
+        };
+        
+        // Create capital comparison object
+        const capitalComparison: CapitalComparison = {
+          invested: response.data.totalContributions,
+          atRetirement: statistics.capitalAtRetirement
+        };
+        
+        // Create status info object
+        const status: StatusInfo = {
+          isOnTrack: !statistics.isCapitalExhausted
+        };
+        
+        // Dispatch updates
+        dispatch({ type: 'UPDATE_TIMELINE_WIDTHS', payload: timelineWidths });
+        dispatch({ type: 'UPDATE_CAPITAL_COMPARISON', payload: capitalComparison });
+        dispatch({ type: 'UPDATE_STATUS', payload: status });
+      } else {
+        console.error('Invalid worker response type:', response.type);
+      }
+    });
+  }, [statistics, withdrawalMode, postWorkerMessage, params.currentAge, params.monthlyInvestment, params.monthlyRetirementWithdrawal]);
+
+  const { timelineWidths, status } = summaryState;
+  const workingWidth = `${timelineWidths.working}%`;
+  const retirementWidth = `${timelineWidths.retirement}%`;
+  const depletedWidth = `${timelineWidths.depleted}%`;
+
   return (
     <div className="p-4 bg-gray-50 rounded-2xl shadow mb-5">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">Summary</h2>
@@ -22,8 +187,8 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
       <div className="bg-white rounded-xl shadow-sm p-4 mb-5">
         <div className="flex justify-between items-center mb-2">
           <h3 className="text-sm font-semibold text-gray-800">Overview</h3>
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${statistics.finalCapital > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-            {statistics.finalCapital > 0 ? 'On Track' : 'At Risk'}
+          <span className={`px-3 py-1 rounded-full text-xs font-medium ${status.statusClass}`}>
+            {status.statusText}
           </span>
         </div>
         
@@ -45,38 +210,22 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
           <div className="h-8 w-full bg-gray-100 rounded-lg overflow-hidden flex">
             <div 
               className="h-full bg-blue-500 flex items-center justify-center text-xs text-white font-medium"
-              style={{ width: `${statistics.retirementStartAge / statistics.lifeExpectancy * 100}%` }}
+              style={{ width: workingWidth }}
             >
               Working
             </div>
-            {statistics.isCapitalExhausted && withdrawalMode === "amount" ? (
+            <div 
+              className="h-full bg-green-500 flex items-center justify-center text-xs text-white font-medium"
+              style={{ width: retirementWidth }}
+            >
+              Retirement
+            </div>
+            {timelineWidths.depleted > 0 && (
               <div 
-                className="h-full bg-green-500 flex items-center justify-center text-xs text-white font-medium"
-                style={{ width: `${(statistics.exhaustionAge - statistics.retirementStartAge) / statistics.lifeExpectancy * 100}%` }}
+                className="h-full bg-red-500 flex items-center justify-center text-xs text-white font-medium"
+                style={{ width: depletedWidth }}
               >
-                Retirement
-              </div>
-            ) : statistics.isCapitalExhausted ? (
-              <>
-                <div 
-                  className="h-full bg-green-500 flex items-center justify-center text-xs text-white font-medium"
-                  style={{ width: `${(statistics.exhaustionAge - statistics.retirementStartAge) / statistics.lifeExpectancy * 100}%` }}
-                >
-                  Retirement
-                </div>
-                <div 
-                  className="h-full bg-red-500 flex items-center justify-center text-xs text-white font-medium"
-                  style={{ width: `${(statistics.lifeExpectancy - statistics.exhaustionAge) / statistics.lifeExpectancy * 100}%` }}
-                >
-                  Depleted
-                </div>
-              </>
-            ) : (
-              <div 
-                className="h-full bg-green-500 flex items-center justify-center text-xs text-white font-medium"
-                style={{ width: `${(statistics.lifeExpectancy - statistics.retirementStartAge) / statistics.lifeExpectancy * 100}%` }}
-              >
-                Retirement
+                Depleted
               </div>
             )}
           </div>
