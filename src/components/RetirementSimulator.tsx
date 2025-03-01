@@ -59,23 +59,23 @@ const RetirementSimulator = () => {
   }, [isRetirementInputAnAge, params.retirementInput, params.currentAge]);
 
   // Refactor calculateSimulation into smaller functions
-  const calculateCapitalAtRetirement = (retirementStartIndex: number, monthlyReturn: number, monthlyInflation: number): number => {
+  const calculateCapitalAtRetirement = (retirementStartIndex: number, annualRate: number, inflation: number): number => {
     // Use the financial calculation utility for more accurate results
     return calculateFutureValue(
       params.initialCapital,
-      params.annualReturnRate,
+      annualRate,
       retirementStartIndex,
       params.monthlyInvestment
     );
   };
 
-  const calculateWithdrawal = (capitalAtRetirement: number, retirementDuration: number, monthlyReturn: number, monthlyInflation: number): number => {
+  const calculateWithdrawal = (capitalAtRetirement: number, retirementDuration: number, annualRate: number, inflation: number): number => {
     // Use the financial calculation utility for more accurate results
     return calculateWithdrawalAmount(
       capitalAtRetirement,
-      params.annualReturnRate,
+      annualRate,
       retirementDuration,
-      params.inflation
+      inflation
     );
   };
 
@@ -92,12 +92,12 @@ const RetirementSimulator = () => {
     
     const data: GraphDataPoint[] = [];
     
-    // Constant rate calculations
-    const monthlyReturn = params.annualReturnRate / 100 / 12;
-    const monthlyInflation = params.inflation / 100 / 12;
+    // Constant rate calculations - convert annual rates to monthly
+    const monthlyReturn = (Math.pow(1 + params.annualReturnRate / 100, 1/12) - 1);
+    const monthlyInflation = (Math.pow(1 + params.inflation / 100, 1/12) - 1);
     
     // Calculate capital at retirement using financial utility
-    let capitalAtRetirement = calculateCapitalAtRetirement(retirementStartIndex, monthlyReturn, monthlyInflation);
+    let capitalAtRetirement = calculateCapitalAtRetirement(retirementStartIndex, params.annualReturnRate, params.inflation);
     
     // Main simulation
     let capital = params.initialCapital;
@@ -175,7 +175,7 @@ const RetirementSimulator = () => {
           break;
         }
         
-        // Calculate interest for the month
+        // Calculate interest for the month (compound interest)
         const interest = capital * monthlyReturn;
         annualInterest += interest;
         capital += interest;
@@ -192,33 +192,36 @@ const RetirementSimulator = () => {
             capital += currentMonthlyInvestment;
             annualInvestment += currentMonthlyInvestment;
             totalInvested += currentMonthlyInvestment;
-            // Adjust for inflation
-            currentMonthlyInvestment *= (1 + monthlyInflation);
           } else {
             // Switched to retirement phase
             capital -= currentMonthlyWithdrawal;
             annualWithdrawal += currentMonthlyWithdrawal;
             totalWithdrawn += currentMonthlyWithdrawal;
-            // Adjust for inflation
-            currentMonthlyWithdrawal *= (1 + monthlyInflation);
           }
         } else if (!inRetirementPhase) {
           // Regular investment phase
           capital += currentMonthlyInvestment;
           annualInvestment += currentMonthlyInvestment;
           totalInvested += currentMonthlyInvestment;
-          // Adjust for inflation
-          currentMonthlyInvestment *= (1 + monthlyInflation);
         } else {
           // Regular retirement phase
           capital -= currentMonthlyWithdrawal;
           annualWithdrawal += currentMonthlyWithdrawal;
           totalWithdrawn += currentMonthlyWithdrawal;
-          // Adjust for inflation
-          currentMonthlyWithdrawal *= (1 + monthlyInflation);
         }
         
         if (capital < 0) capital = 0;
+      }
+      
+      // Apply inflation adjustment at the end of each year
+      if (!inRetirementPhase || isTransitionYear) {
+        // Adjust monthly investment for inflation (annually)
+        currentMonthlyInvestment *= (1 + params.inflation / 100);
+      }
+      
+      if (inRetirementPhase || isTransitionYear) {
+        // Adjust monthly withdrawal for inflation (annually)
+        currentMonthlyWithdrawal *= (1 + params.inflation / 100);
       }
       
       principalOnly = Math.max(0, totalInvested - totalWithdrawn);
@@ -324,25 +327,13 @@ const RetirementSimulator = () => {
         }
       }
       
-      const numberOfMonths = effectiveRetirementDuration * 12;
-      const avgInflationFactor = Math.pow(1 + (params.inflation / 100), effectiveRetirementDuration / 2);
-      const inflationAdjustedMonthlyWithdrawal = params.monthlyRetirementWithdrawal * avgInflationFactor;
-      
-      const monthlyReturn = params.annualReturnRate / 100 / 12;
-      const monthlyInflation = params.inflation / 100 / 12;
-      const realMonthlyReturn = (monthlyReturn - monthlyInflation) > 0 
-        ? (monthlyReturn - monthlyInflation) 
-        : 0.0001;
-        
-      if (realMonthlyReturn <= 0 || numberOfMonths <= 0) {
-        return inflationAdjustedMonthlyWithdrawal * numberOfMonths;
-      } else {
-        const denominator = 1 - Math.pow(1 + realMonthlyReturn, -numberOfMonths);
-        if (denominator <= 0) {
-          return inflationAdjustedMonthlyWithdrawal * numberOfMonths;
-        }
-        return inflationAdjustedMonthlyWithdrawal * denominator / realMonthlyReturn;
-      }
+      // Use the financial calculation utility for more accurate results
+      return calculateCapitalNeeded(
+        params.monthlyRetirementWithdrawal,
+        params.annualReturnRate,
+        effectiveRetirementDuration,
+        params.inflation
+      );
     };
     
     const totalNeededCapital = calculateNeededCapital();
@@ -448,7 +439,7 @@ const RetirementSimulator = () => {
         setParams(prev => ({ ...prev, monthlyRetirementWithdrawal: Math.round(calculatedWithdrawal) }));
       }
     }
-  }, [params.withdrawalMode, params.monthlyRetirementWithdrawal, params.maxAge, params.annualReturnRate, 
+  }, [params.withdrawalMode, params.maxAge, params.annualReturnRate, 
       params.inflation, params.currentAge, params.retirementInput, params.initialCapital, 
       params.monthlyInvestment, getBirthYear, getRetirementYear]);
 

@@ -8,7 +8,7 @@ import * as financial from 'financial';
 /**
  * Calculate future value of an investment with regular contributions
  * @param principal Initial investment amount
- * @param annualRate Annual interest rate (as decimal, e.g., 0.05 for 5%)
+ * @param annualRate Annual interest rate (as percentage, e.g., 5 for 5%)
  * @param years Number of years
  * @param monthlyContribution Monthly contribution amount
  * @returns Future value
@@ -23,15 +23,11 @@ export const calculateFutureValue = (
   const rate = annualRate / 100;
   
   // Calculate future value of initial principal
-  const principalFV = financial.fv(rate, years, 0, -principal);
+  const principalFV = principal * Math.pow(1 + rate, years);
   
   // Calculate future value of regular contributions (annuity)
-  const contributionFV = financial.fv(
-    rate / 12,
-    years * 12,
-    -monthlyContribution,
-    0
-  );
+  // Using the formula for future value of an annuity
+  const contributionFV = monthlyContribution * ((Math.pow(1 + rate/12, years * 12) - 1) / (rate/12));
   
   return principalFV + contributionFV;
 };
@@ -39,9 +35,9 @@ export const calculateFutureValue = (
 /**
  * Calculate withdrawal amount for a given retirement duration
  * @param principal Capital at retirement
- * @param annualRate Annual interest rate (as decimal, e.g., 0.05 for 5%)
+ * @param annualRate Annual interest rate (as percentage, e.g., 5 for 5%)
  * @param years Number of years in retirement
- * @param inflation Annual inflation rate (as decimal)
+ * @param inflation Annual inflation rate (as percentage)
  * @returns Monthly withdrawal amount
  */
 export const calculateWithdrawalAmount = (
@@ -54,12 +50,8 @@ export const calculateWithdrawalAmount = (
   const realRate = (1 + annualRate / 100) / (1 + inflation / 100) - 1;
   
   // Calculate monthly payment (PMT) that will exhaust the principal over the retirement period
-  const monthlyWithdrawal = -financial.pmt(
-    realRate / 12,
-    years * 12,
-    principal,
-    0
-  );
+  // Using the formula for payment of an annuity
+  const monthlyWithdrawal = principal * (realRate / 12) / (1 - Math.pow(1 + realRate / 12, -(years * 12)));
   
   return monthlyWithdrawal;
 };
@@ -67,9 +59,9 @@ export const calculateWithdrawalAmount = (
 /**
  * Calculate capital needed for a specific monthly withdrawal
  * @param monthlyWithdrawal Desired monthly withdrawal amount
- * @param annualRate Annual interest rate (as decimal, e.g., 0.05 for 5%)
+ * @param annualRate Annual interest rate (as percentage, e.g., 5 for 5%)
  * @param years Number of years in retirement
- * @param inflation Annual inflation rate (as decimal)
+ * @param inflation Annual inflation rate (as percentage)
  * @returns Capital needed at retirement
  */
 export const calculateCapitalNeeded = (
@@ -82,12 +74,8 @@ export const calculateCapitalNeeded = (
   const realRate = (1 + annualRate / 100) / (1 + inflation / 100) - 1;
   
   // Calculate present value (PV) of the annuity
-  const capitalNeeded = -financial.pv(
-    realRate / 12,
-    years * 12,
-    monthlyWithdrawal,
-    0
-  );
+  // Using the formula for present value of an annuity
+  const capitalNeeded = monthlyWithdrawal * (1 - Math.pow(1 + realRate / 12, -(years * 12))) / (realRate / 12);
   
   return capitalNeeded;
 };
@@ -129,5 +117,6 @@ export const calculatePresentValue = (
   annualRate: number,
   years: number
 ): number => {
-  return financial.pv(annualRate / 100, years, 0, -futureValue);
+  const rate = annualRate / 100;
+  return futureValue / Math.pow(1 + rate, years);
 }; 
