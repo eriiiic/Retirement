@@ -1,7 +1,8 @@
-import React, { useReducer, useState, useEffect } from 'react';
+import React, { useReducer, useState, useEffect, useRef } from 'react';
 import { GraphDataPoint, FormatAmountFunction, SortConfig, FilterPhase } from './types';
 import { useWorker } from '../../hooks/useWorker';
 import { WorkerMessageType, WorkerResponse } from '../../types/worker';
+import { FixedSizeList as List } from 'react-window';
 
 interface ScheduleDetailsProps {
   graphData: GraphDataPoint[];
@@ -53,6 +54,50 @@ function scheduleReducer(state: ScheduleState, action: ScheduleAction): Schedule
   }
 }
 
+// Row renderer component for virtualized list
+interface RowProps {
+  index: number;
+  style: React.CSSProperties;
+  data: {
+    items: GraphDataPoint[];
+    formatAmount: FormatAmountFunction;
+  };
+}
+
+const Row: React.FC<RowProps> = ({ index, style, data }) => {
+  const { items, formatAmount } = data;
+  const entry = items[index];
+  
+  return (
+    <div 
+      style={style} 
+      className={`flex divide-x divide-gray-200 ${entry.retirement === "Yes" ? "bg-orange-50" : "bg-white"} ${index % 2 === 0 ? "" : "bg-opacity-50"}`}
+    >
+      <div className="px-6 py-2 whitespace-nowrap text-sm text-gray-900 w-1/7 flex-shrink-0">
+        {entry.year}
+      </div>
+      <div className="px-6 py-2 whitespace-nowrap text-sm text-gray-900 w-1/7 flex-shrink-0">
+        {entry.age}
+      </div>
+      <div className="px-6 py-2 whitespace-nowrap text-sm text-gray-900 w-1/7 flex-shrink-0">
+        {formatAmount(entry.capital)}
+      </div>
+      <div className={`px-6 py-2 whitespace-nowrap text-sm w-1/7 flex-shrink-0 ${entry.variation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+        {entry.variation >= 0 ? '+' : ''}{formatAmount(entry.variation)}
+      </div>
+      <div className="px-6 py-2 whitespace-nowrap text-sm text-green-600 w-1/7 flex-shrink-0">
+        +{formatAmount(entry.annualInterest)}
+      </div>
+      <div className={`px-6 py-2 whitespace-nowrap text-sm w-1/7 flex-shrink-0 ${entry.netVariationExcludingInterest >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+        {entry.netVariationExcludingInterest >= 0 ? '+' : ''}{formatAmount(entry.netVariationExcludingInterest)}
+      </div>
+      <div className="px-6 py-2 whitespace-nowrap text-sm text-gray-900 w-1/7 flex-shrink-0">
+        {entry.retirement === "Yes" ? "Retirement" : "Investment"}
+      </div>
+    </div>
+  );
+};
+
 export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
   graphData,
   formatAmount,
@@ -68,6 +113,8 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
 
   const [processedData, setProcessedData] = useState<GraphDataPoint[]>([]);
   const { postWorkerMessage } = useWorker('scheduleDetails');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
 
   useEffect(() => {
     // Only process data if we have graph data and the schedule is visible
@@ -101,6 +148,22 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
       }
     });
   }, [graphData, state.filteredPhase, state.sortConfig, state.isVisible, processedData.length, postWorkerMessage]);
+
+  // Update container width when visible
+  useEffect(() => {
+    if (state.isVisible && containerRef.current) {
+      setContainerWidth(containerRef.current.offsetWidth);
+      
+      const handleResize = () => {
+        if (containerRef.current) {
+          setContainerWidth(containerRef.current.offsetWidth);
+        }
+      };
+      
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, [state.isVisible]);
 
   const handleSort = (key: keyof GraphDataPoint) => {
     const direction = 
@@ -145,98 +208,81 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
       </div>
       
       {state.isVisible && (
-        <div className="overflow-x-auto">
+        <div className="overflow-hidden" ref={containerRef}>
           {processedData.length > 0 ? (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('year')}
-                  >
-                    Year
-                    {state.sortConfig.key === 'year' && (
-                      <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-                    )}
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('age')}
-                  >
-                    Age
-                    {state.sortConfig.key === 'age' && (
-                      <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-                    )}
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('capital')}
-                  >
-                    Capital
-                    {state.sortConfig.key === 'capital' && (
-                      <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-                    )}
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('variation')}
-                  >
-                    Variation
-                    {state.sortConfig.key === 'variation' && (
-                      <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-                    )}
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('annualInterest')}
-                  >
-                    Interest
-                    {state.sortConfig.key === 'annualInterest' && (
-                      <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-                    )}
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort('netVariationExcludingInterest')}
-                  >
-                    Inv/Withdraw
-                    {state.sortConfig.key === 'netVariationExcludingInterest' && (
-                      <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-                    )}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phase
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {processedData.map((entry, index) => (
-                  <tr key={index} className={entry.retirement === "Yes" ? "bg-orange-50" : ""}>
-                    <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {entry.year}
-                    </td>
-                    <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {entry.age}
-                    </td>
-                    <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {formatAmount(entry.capital)}
-                    </td>
-                    <td className={`px-6 py-2 whitespace-nowrap text-sm ${entry.variation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {entry.variation >= 0 ? '+' : ''}{formatAmount(entry.variation)}
-                    </td>
-                    <td className="px-6 py-2 whitespace-nowrap text-sm text-green-600">
-                      +{formatAmount(entry.annualInterest)}
-                    </td>
-                    <td className={`px-6 py-2 whitespace-nowrap text-sm ${entry.netVariationExcludingInterest >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                      {entry.netVariationExcludingInterest >= 0 ? '+' : ''}{formatAmount(entry.netVariationExcludingInterest)}
-                    </td>
-                    <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {entry.retirement === "Yes" ? "Retirement" : "Investment"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div>
+              {/* Table Header */}
+              <div className="flex bg-gray-50 border-b border-gray-200 font-medium text-xs text-gray-500 uppercase tracking-wider">
+                <div 
+                  className="px-6 py-3 text-left cursor-pointer w-1/7 flex-shrink-0"
+                  onClick={() => handleSort('year')}
+                >
+                  Year
+                  {state.sortConfig.key === 'year' && (
+                    <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                  )}
+                </div>
+                <div 
+                  className="px-6 py-3 text-left cursor-pointer w-1/7 flex-shrink-0"
+                  onClick={() => handleSort('age')}
+                >
+                  Age
+                  {state.sortConfig.key === 'age' && (
+                    <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                  )}
+                </div>
+                <div 
+                  className="px-6 py-3 text-left cursor-pointer w-1/7 flex-shrink-0"
+                  onClick={() => handleSort('capital')}
+                >
+                  Capital
+                  {state.sortConfig.key === 'capital' && (
+                    <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                  )}
+                </div>
+                <div 
+                  className="px-6 py-3 text-left cursor-pointer w-1/7 flex-shrink-0"
+                  onClick={() => handleSort('variation')}
+                >
+                  Variation
+                  {state.sortConfig.key === 'variation' && (
+                    <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                  )}
+                </div>
+                <div 
+                  className="px-6 py-3 text-left cursor-pointer w-1/7 flex-shrink-0"
+                  onClick={() => handleSort('annualInterest')}
+                >
+                  Interest
+                  {state.sortConfig.key === 'annualInterest' && (
+                    <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                  )}
+                </div>
+                <div 
+                  className="px-6 py-3 text-left cursor-pointer w-1/7 flex-shrink-0"
+                  onClick={() => handleSort('netVariationExcludingInterest')}
+                >
+                  Inv/Withdraw
+                  {state.sortConfig.key === 'netVariationExcludingInterest' && (
+                    <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                  )}
+                </div>
+                <div className="px-6 py-3 text-left w-1/7 flex-shrink-0">
+                  Phase
+                </div>
+              </div>
+              
+              {/* Virtualized List */}
+              <List
+                height={500}
+                width={containerWidth || "100%"}
+                itemCount={processedData.length}
+                itemSize={40}
+                itemData={{ items: processedData, formatAmount }}
+              >
+                {Row}
+              </List>
+            </div>
           ) : (
             <div className="text-center py-8 text-gray-500">
               Loading schedule data...
