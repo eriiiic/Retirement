@@ -150,8 +150,19 @@ const RetirementSimulator = () => {
         // by calculating the natural growth from the previous year
         if (data.length > 0) {
           const previousYearCapital = data[data.length - 1].capital;
-          const growthRate = (1 + params.annualReturnRate / 100);
-          const naturalGrowth = previousYearCapital * growthRate;
+          // Calculate one year of growth with monthly compounding
+          let naturalGrowth = previousYearCapital;
+          const monthlyGrowthRate = monthlyReturn;
+          
+          // Apply monthly growth for 12 months
+          for (let month = 0; month < 12; month++) {
+            // Add monthly investment for pre-retirement months
+            if (month < 6) {
+              naturalGrowth += currentMonthlyInvestment;
+            }
+            // Apply interest
+            naturalGrowth *= (1 + monthlyGrowthRate);
+          }
           
           // Use the natural growth value if it's greater than the calculated retirement capital
           // This prevents any sudden drops in capital

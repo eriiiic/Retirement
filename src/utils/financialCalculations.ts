@@ -19,15 +19,15 @@ export const calculateFutureValue = (
   years: number,
   monthlyContribution: number
 ): number => {
-  // Convert annual rate to decimal
-  const rate = annualRate / 100;
+  // Convert annual rate to monthly rate
+  const monthlyRate = Math.pow(1 + annualRate / 100, 1/12) - 1;
+  const totalMonths = years * 12;
   
-  // Calculate future value of initial principal
-  const principalFV = principal * Math.pow(1 + rate, years);
+  // Calculate future value of initial principal with monthly compounding
+  const principalFV = principal * Math.pow(1 + monthlyRate, totalMonths);
   
-  // Calculate future value of regular contributions (annuity)
-  // Using the formula for future value of an annuity
-  const contributionFV = monthlyContribution * ((Math.pow(1 + rate/12, years * 12) - 1) / (rate/12));
+  // Calculate future value of regular contributions with monthly compounding
+  const contributionFV = monthlyContribution * ((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate);
   
   return principalFV + contributionFV;
 };
@@ -46,12 +46,23 @@ export const calculateWithdrawalAmount = (
   years: number,
   inflation: number
 ): number => {
-  // Adjust interest rate for inflation
-  const realRate = (1 + annualRate / 100) / (1 + inflation / 100) - 1;
+  // Calculate real rate (adjusted for inflation) using the Fisher equation
+  const nominalRate = annualRate / 100;
+  const inflationRate = inflation / 100;
+  const realAnnualRate = (1 + nominalRate) / (1 + inflationRate) - 1;
+  
+  // Convert to monthly rate
+  const realMonthlyRate = Math.pow(1 + realAnnualRate, 1/12) - 1;
+  const totalMonths = years * 12;
   
   // Calculate monthly payment (PMT) that will exhaust the principal over the retirement period
-  // Using the formula for payment of an annuity
-  const monthlyWithdrawal = principal * (realRate / 12) / (1 - Math.pow(1 + realRate / 12, -(years * 12)));
+  // Using the formula for payment of an annuity with monthly compounding
+  if (realMonthlyRate <= 0) {
+    // If real rate is zero or negative, use simple division
+    return principal / totalMonths;
+  }
+  
+  const monthlyWithdrawal = principal * realMonthlyRate / (1 - Math.pow(1 + realMonthlyRate, -totalMonths));
   
   return monthlyWithdrawal;
 };
@@ -70,12 +81,22 @@ export const calculateCapitalNeeded = (
   years: number,
   inflation: number
 ): number => {
-  // Adjust interest rate for inflation
-  const realRate = (1 + annualRate / 100) / (1 + inflation / 100) - 1;
+  // Calculate real rate (adjusted for inflation) using the Fisher equation
+  const nominalRate = annualRate / 100;
+  const inflationRate = inflation / 100;
+  const realAnnualRate = (1 + nominalRate) / (1 + inflationRate) - 1;
   
-  // Calculate present value (PV) of the annuity
-  // Using the formula for present value of an annuity
-  const capitalNeeded = monthlyWithdrawal * (1 - Math.pow(1 + realRate / 12, -(years * 12))) / (realRate / 12);
+  // Convert to monthly rate
+  const realMonthlyRate = Math.pow(1 + realAnnualRate, 1/12) - 1;
+  const totalMonths = years * 12;
+  
+  // Calculate present value (PV) of the annuity with monthly compounding
+  if (realMonthlyRate <= 0) {
+    // If real rate is zero or negative, use simple multiplication
+    return monthlyWithdrawal * totalMonths;
+  }
+  
+  const capitalNeeded = monthlyWithdrawal * (1 - Math.pow(1 + realMonthlyRate, -totalMonths)) / realMonthlyRate;
   
   return capitalNeeded;
 };
@@ -117,6 +138,10 @@ export const calculatePresentValue = (
   annualRate: number,
   years: number
 ): number => {
-  const rate = annualRate / 100;
-  return futureValue / Math.pow(1 + rate, years);
+  // Convert annual rate to monthly rate
+  const monthlyRate = Math.pow(1 + annualRate / 100, 1/12) - 1;
+  const totalMonths = years * 12;
+  
+  // Calculate present value with monthly compounding
+  return futureValue / Math.pow(1 + monthlyRate, totalMonths);
 }; 
