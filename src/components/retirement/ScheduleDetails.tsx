@@ -1,4 +1,4 @@
-import React, { useReducer, useState, useEffect, useRef, useMemo } from 'react';
+import { useReducer, useState, useEffect, useRef, useMemo } from 'react';
 import { GraphDataPoint, FormatAmountFunction, SortConfig, FilterPhase } from './types';
 import { useWorker } from '../../hooks/useWorker';
 import { WorkerMessageType, WorkerResponse } from '../../types/worker';

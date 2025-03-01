@@ -1,4 +1,4 @@
-import React, { useReducer, useMemo, useCallback } from 'react';
+import { useReducer, useMemo, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { GraphDataPoint, FormatAmountFunction, Currency, ChartSeriesVisibility } from './types';
 

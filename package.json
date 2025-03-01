@@ -4,6 +4,7 @@
     "financial": "^0.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-icons": "^5.5.0",
     "react-scripts": "^5.0.1",
     "react-window": "^1.8.11",
     "recharts": "^2.15.1"

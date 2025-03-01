@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect } from 'react';
+import { useReducer, useEffect } from 'react';
 import { Statistics, SimulatorParams, FormatAmountFunction, TimelineWidths, CapitalComparison, StatusInfo, WithdrawalMode, GraphDataPoint } from './types';
 import { useWorker } from '../../hooks/useWorker';
 import { WorkerMessageType, WorkerResponse } from '../../types/worker';
@@ -343,7 +343,7 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
         </div>
         
         {/* Financial details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Capital Section */}
           <div className={components.container.card}>
             <div className={cx("bg-blue-50 px-4 py-3 border-b border-gray-200")}>
@@ -413,57 +413,73 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
             </div>
           </div>
           
+          {/* Inflation Impact - New dedicated tile */}
+          <div className={components.container.card}>
+            <div className={cx("bg-orange-50 px-4 py-3 border-b border-gray-200")}>
+              <h3 className={typography.style.sectionTitle}>Inflation Impact</h3>
+              <div className="text-xs text-gray-500 -mt-1">{params.inflation.toFixed(1)}% annual inflation over time</div>
+            </div>
+            <div className="p-3">
+              <div className="mb-4">
+                <div className="flex justify-between items-center mb-1">
+                  <div className={cx(typography.size.sm, "text-gray-700")}>Monthly Investment</div>
+                  <div className={cx(typography.size.sm, typography.weight.medium, "text-gray-700")}>
+                    <span className={colors.phases.investment.text}>{formatAmount(params.monthlyInvestment)}</span>
+                    <span className="mx-1 text-gray-400">→</span>
+                    <span className="text-red-600">{formatAmount(statistics.finalMonthlyInvestment)}</span>
+                  </div>
+                </div>
+                <div className="h-8 w-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200 relative">
+                  <div 
+                    className="h-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-end px-2"
+                    style={{ width: `${(params.monthlyInvestment / statistics.finalMonthlyInvestment) * 100}%` }}
+                  >
+                    <span className="text-xs font-medium text-white">Today</span>
+                  </div>
+                  <div className="absolute top-0 right-2 h-full flex items-center">
+                    <span className="text-xs font-medium text-gray-800">Future Value</span>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Inflation will effectively increase your investment needs by {((statistics.finalMonthlyInvestment / params.monthlyInvestment - 1) * 100).toFixed(0)}% over time
+                </div>
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <div className={cx(typography.size.sm, "text-gray-700")}>Monthly Withdrawal</div>
+                  <div className={cx(typography.size.sm, typography.weight.medium, "text-gray-700")}>
+                    <span className={colors.phases.retirement.text}>{formatAmount(params.monthlyRetirementWithdrawal)}</span>
+                    <span className="mx-1 text-gray-400">→</span>
+                    <span className="text-red-600">{formatAmount(statistics.finalMonthlyWithdrawalValue)}</span>
+                  </div>
+                </div>
+                <div className="h-8 w-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200 relative">
+                  <div 
+                    className="h-full bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-end px-2"
+                    style={{ width: `${(params.monthlyRetirementWithdrawal / statistics.finalMonthlyWithdrawalValue) * 100}%` }}
+                  >
+                    <span className="text-xs font-medium text-white">Today</span>
+                  </div>
+                  <div className="absolute top-0 right-2 h-full flex items-center">
+                    <span className="text-xs font-medium text-gray-800">Future Value</span>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Your purchasing power will decrease by {((statistics.finalMonthlyWithdrawalValue / params.monthlyRetirementWithdrawal - 1) * 100).toFixed(0)}% due to inflation
+                </div>
+              </div>
+            </div>
+          </div>
+          
           {/* Retirement Details */}
           <div className={components.container.card}>
             <div className={cx("bg-green-50 px-4 py-3 border-b border-gray-200")}>
               <h3 className={typography.style.sectionTitle}>Retirement Details</h3>
             </div>
             <div className="p-3">
-              <div className="grid grid-cols-2 gap-4 mb-5">
-                <div className={cx(components.container.highlight, "p-3 text-center bg-indigo-50")}>
-                  <div className={cx(typography.size.sm, "text-gray-600 mb-1")}>Working Period</div>
-                  <div className={cx(typography.size.xl, typography.weight.bold, colors.phases.investment.dark)}>{statistics.retirementStartAge - params.currentAge} years</div>
-                </div>
-                
-                <div className={cx(components.container.highlight, "p-3 text-center bg-green-50")}>
-                  <div className={cx(typography.size.sm, "text-gray-600 mb-1")}>Retirement Period</div>
-                  <div className={cx(typography.size.xl, typography.weight.bold, "text-green-700")}>{statistics.retirementDuration} years</div>
-                </div>
-              </div>
-              
-              {/* Inflation impact */}
-              <div className="mb-5">
-                <h4 className={cx(typography.size.sm, typography.weight.semibold, "text-gray-700 mb-3")}>Inflation Impact</h4>
-                
-                <div className="mb-3">
-                  <div className="flex justify-between items-center mb-1">
-                    <div className={cx(typography.size.sm, "text-gray-700")}>Monthly Investment</div>
-                    <div className={cx(typography.size.sm, typography.weight.medium, colors.phases.investment.text)}>{formatAmount(params.monthlyInvestment)} → {formatAmount(statistics.finalMonthlyInvestment)}</div>
-                  </div>
-                  <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-600"
-                      style={{ width: `${(params.monthlyInvestment / statistics.finalMonthlyInvestment) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <div className={cx(typography.size.sm, "text-gray-700")}>Monthly Withdrawal</div>
-                    <div className={cx(typography.size.sm, typography.weight.medium, colors.phases.retirement.text)}>{formatAmount(params.monthlyRetirementWithdrawal)} → {formatAmount(statistics.finalMonthlyWithdrawalValue)}</div>
-                  </div>
-                  <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-purple-600"
-                      style={{ width: `${(params.monthlyRetirementWithdrawal / statistics.finalMonthlyWithdrawalValue) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-              
               {/* Key metrics */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="flex flex-col">
                   <div className={cx(typography.size.sm, "text-gray-600")}>Withdrawal Rate</div>
                   <div className={cx(typography.size.lg, typography.weight.bold, "text-green-600")}>{withdrawalRate.toFixed(1)}%</div>
@@ -474,6 +490,12 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
                   <div className={cx(typography.size.sm, "text-gray-600")}>Retirement:Working Ratio</div>
                   <div className={cx(typography.size.lg, typography.weight.bold, colors.phases.retirement.text)}>{(statistics.retirementDuration / (statistics.retirementStartAge - params.currentAge)).toFixed(1)}x</div>
                   <div className={typography.style.caption}>years retired per year worked</div>
+                </div>
+                
+                <div className="flex flex-col">
+                  <div className={cx(typography.size.sm, "text-gray-600")}>Retirement Duration</div>
+                  <div className={cx(typography.size.lg, typography.weight.bold, "text-indigo-600")}>{statistics.retirementDuration} years</div>
+                  <div className={typography.style.caption}>from age {statistics.retirementStartAge} to {statistics.lifeExpectancy}</div>
                 </div>
               </div>
             </div>

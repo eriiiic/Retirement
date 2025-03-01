@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { SimulatorParams, Statistics, GraphDataPoint } from './retirement/types';
 import ParametersSection from './retirement/ParametersSection';
 import ResultsSummary from './retirement/ResultsSummary';
+import Analyses from './retirement/Analyses';
 import CapitalEvolutionChart from './retirement/CapitalEvolutionChart';
 import ScheduleDetails from './retirement/ScheduleDetails';
 import Footer from './common/Footer';
@@ -683,7 +684,13 @@ const RetirementSimulator = () => {
         onParamChange={handleParamChange}
       />
 
-      <ResultsSummary 
+      <ResultsSummary
+        statistics={statistics}
+        params={params}
+        formatAmount={formatAmount}
+      />
+      
+      <Analyses
         statistics={statistics}
         params={params}
         formatAmount={formatAmount}
