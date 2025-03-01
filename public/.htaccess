@@ -1,0 +1,46 @@
+# Enable RewriteEngine
+RewriteEngine On
+RewriteBase /
+
+# Don't rewrite files or directories
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Rewrite everything else to index.html to allow SPA routing
+RewriteRule ^ index.html [L]
+
+# Set security headers
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-XSS-Protection "1; mode=block"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Enable GZIP compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Set browser caching
+<IfModule mod_expires.c>
+  ExpiresActive On
+  
+  # Images
+  ExpiresByType image/jpeg "access plus 1 year"
+  ExpiresByType image/gif "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+  ExpiresByType image/x-icon "access plus 1 year"
+  
+  # CSS, JavaScript
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType text/javascript "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  
+  # Others
+  ExpiresByType application/pdf "access plus 1 month"
+  ExpiresByType application/x-shockwave-flash "access plus 1 month"
+</IfModule> 
