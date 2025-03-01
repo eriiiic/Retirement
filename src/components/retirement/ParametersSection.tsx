@@ -31,6 +31,15 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   
   // References to input elements for maintaining focus
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  
+  // References to slider elements for drag handling
+  const sliderRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  
+  // State to track current slider being dragged
+  const [draggingSlider, setDraggingSlider] = useState<string | null>(null);
+  
+  // State to track slider container dimensions for calculations
+  const sliderContainerRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Update local input values when params change, but only if the field is not currently focused
   useEffect(() => {
@@ -59,6 +68,117 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
       return newValues;
     });
   }, [params, focusedField]);
+
+  // Set up global mouse move and mouse up event listeners for drag handling
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (draggingSlider && sliderRefs.current[draggingSlider] && sliderContainerRefs.current[draggingSlider]) {
+        const id = draggingSlider as keyof SimulatorParams;
+        // Get slider element and its properties
+        const slider = sliderRefs.current[draggingSlider] as HTMLInputElement;
+        const container = sliderContainerRefs.current[draggingSlider] as HTMLDivElement;
+        
+        const rect = container.getBoundingClientRect();
+        
+        // Calculate position as percentage of container width
+        let percent = (e.clientX - rect.left) / rect.width;
+        // Clamp between 0 and 1
+        percent = Math.max(0, Math.min(1, percent));
+        
+        // Get min/max/step values from slider
+        const min = parseFloat(slider.min);
+        const max = parseFloat(slider.max);
+        const step = parseFloat(slider.step) || 1;
+        
+        // Calculate new value based on percentage and step
+        let newValue = min + percent * (max - min);
+        // Round to nearest step
+        newValue = Math.round(newValue / step) * step;
+        // Ensure value is within bounds
+        newValue = Math.max(min, Math.min(max, newValue));
+        
+        // Update UI and state
+        slider.value = newValue.toString();
+        
+        // Update state with the new value
+        onParamChange(id, newValue);
+        
+        // Check if this is a monetary value
+        const isMonetary = id === 'initialCapital' || id === 'monthlyInvestment' || id === 'monthlyRetirementWithdrawal';
+        
+        setInputValues(prev => ({ ...prev, [id]: newValue.toString() }));
+      }
+    };
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      if (draggingSlider && sliderRefs.current[draggingSlider] && sliderContainerRefs.current[draggingSlider]) {
+        const id = draggingSlider as keyof SimulatorParams;
+        // Prevent scrolling while dragging
+        e.preventDefault();
+        
+        // Get the touch position
+        const touch = e.touches[0];
+        
+        // Get slider element and its properties
+        const slider = sliderRefs.current[draggingSlider] as HTMLInputElement;
+        const container = sliderContainerRefs.current[draggingSlider] as HTMLDivElement;
+        
+        const rect = container.getBoundingClientRect();
+        
+        // Calculate position as percentage of container width
+        let percent = (touch.clientX - rect.left) / rect.width;
+        // Clamp between 0 and 1
+        percent = Math.max(0, Math.min(1, percent));
+        
+        // Get min/max/step values from slider
+        const min = parseFloat(slider.min);
+        const max = parseFloat(slider.max);
+        const step = parseFloat(slider.step) || 1;
+        
+        // Calculate new value based on percentage and step
+        let newValue = min + percent * (max - min);
+        // Round to nearest step
+        newValue = Math.round(newValue / step) * step;
+        // Ensure value is within bounds
+        newValue = Math.max(min, Math.min(max, newValue));
+        
+        // Update UI and state
+        slider.value = newValue.toString();
+        
+        // Update state with the new value
+        onParamChange(id, newValue);
+        
+        // Check if this is a monetary value
+        const isMonetary = id === 'initialCapital' || id === 'monthlyInvestment' || id === 'monthlyRetirementWithdrawal';
+        
+        setInputValues(prev => ({ ...prev, [id]: newValue.toString() }));
+      }
+    };
+    
+    const handleMouseUp = () => {
+      setDraggingSlider(null);
+    };
+    
+    const handleTouchEnd = () => {
+      setDraggingSlider(null);
+    };
+    
+    if (draggingSlider) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
+      document.addEventListener('touchcancel', handleTouchEnd);
+    }
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [draggingSlider, onParamChange]);
 
   // Maintain focus after state updates
   useEffect(() => {
@@ -273,11 +393,15 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   const getSliderConfig = (id: keyof SimulatorParams) => {
     switch (id) {
       case 'initialCapital':
-        return { min: 0, max: 1000000, step: 1000 };
+        // For very large values, adjust max based on current value
+        const initialCapitalMax = Math.max(1000000, params.initialCapital * 2);
+        return { min: 0, max: initialCapitalMax, step: 1000 };
       case 'currentAge':
         return { min: 20, max: 80, step: 1 };
       case 'monthlyInvestment':
-        return { min: 0, max: 10000, step: 100 };
+        // For very large values, adjust max based on current value
+        const monthlyInvestmentMax = Math.max(10000, params.monthlyInvestment * 2);
+        return { min: 0, max: monthlyInvestmentMax, step: 100 };
       case 'retirementInput':
         return { 
           min: params.currentAge + 1, 
@@ -285,7 +409,9 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
           step: 1 
         };
       case 'monthlyRetirementWithdrawal':
-        return { min: 0, max: 20000, step: 100 };
+        // For very large values, adjust max based on current value
+        const monthlyWithdrawalMax = Math.max(20000, params.monthlyRetirementWithdrawal * 2);
+        return { min: 0, max: monthlyWithdrawalMax, step: 100 };
       case 'annualReturnRate':
         return { min: 0, max: 20, step: 0.1 };
       case 'inflation':
@@ -296,6 +422,83 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         return { min: 80, max: 105, step: 1 };
       default:
         return { min: 0, max: 100, step: 1 };
+    }
+  };
+
+  // Handle slider mousedown for enhanced drag behavior
+  const handleSliderMouseDown = (id: keyof SimulatorParams, e: React.MouseEvent) => {
+    setDraggingSlider(id as string);
+    
+    // Immediately update slider position based on initial click
+    if (sliderContainerRefs.current[id as string]) {
+      const container = sliderContainerRefs.current[id as string] as HTMLDivElement;
+      const rect = container.getBoundingClientRect();
+      
+      // Calculate position as percentage of container width
+      let percent = (e.clientX - rect.left) / rect.width;
+      // Clamp between 0 and 1
+      percent = Math.max(0, Math.min(1, percent));
+      
+      // Get min/max/step values
+      const slider = sliderRefs.current[id as string];
+      if (slider) {
+        const min = parseFloat(slider.min);
+        const max = parseFloat(slider.max);
+        const step = parseFloat(slider.step) || 1;
+        
+        // Calculate new value based on percentage and step
+        let newValue = min + percent * (max - min);
+        // Round to nearest step
+        newValue = Math.round(newValue / step) * step;
+        // Ensure value is within bounds
+        newValue = Math.max(min, Math.min(max, newValue));
+        
+        // Update UI and state
+        slider.value = newValue.toString();
+        
+        // Update state with the new value - handle values consistently
+        onParamChange(id, newValue);
+        setInputValues(prev => ({ ...prev, [id]: newValue.toString() }));
+      }
+    }
+  };
+
+  // Handle touch start for mobile devices
+  const handleSliderTouchStart = (id: keyof SimulatorParams, e: React.TouchEvent) => {
+    setDraggingSlider(id as string);
+    
+    // Immediately update slider position based on initial touch
+    if (sliderContainerRefs.current[id as string]) {
+      const touch = e.touches[0];
+      const container = sliderContainerRefs.current[id as string] as HTMLDivElement;
+      const rect = container.getBoundingClientRect();
+      
+      // Calculate position as percentage of container width
+      let percent = (touch.clientX - rect.left) / rect.width;
+      // Clamp between 0 and 1
+      percent = Math.max(0, Math.min(1, percent));
+      
+      // Get min/max/step values
+      const slider = sliderRefs.current[id as string];
+      if (slider) {
+        const min = parseFloat(slider.min);
+        const max = parseFloat(slider.max);
+        const step = parseFloat(slider.step) || 1;
+        
+        // Calculate new value based on percentage and step
+        let newValue = min + percent * (max - min);
+        // Round to nearest step
+        newValue = Math.round(newValue / step) * step;
+        // Ensure value is within bounds
+        newValue = Math.max(min, Math.min(max, newValue));
+        
+        // Update UI and state
+        slider.value = newValue.toString();
+        
+        // Update state with the new value
+        onParamChange(id, newValue);
+        setInputValues(prev => ({ ...prev, [id]: newValue.toString() }));
+      }
     }
   };
 
@@ -310,8 +513,16 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     suffix?: string,
     includeSlider: boolean = false
   ) => {
-    // Parse value to number for slider
-    const numericValue = parseFloat(value) || 0;
+    // Parse value to number for slider - ensure we have a clean number
+    let numericValue: number;
+    
+    // Special handling for monetary values with thousand separators
+    if (currency && (id === 'initialCapital' || id === 'monthlyInvestment' || id === 'monthlyRetirementWithdrawal')) {
+      // Use the actual param value directly rather than the formatted input value
+      numericValue = params[id] as number;
+    } else {
+      numericValue = parseFloat(value) || 0;
+    }
     
     // Get slider configuration
     const { min, max, step } = getSliderConfig(id);
@@ -327,8 +538,26 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         
         <div className="flex items-center gap-2">
           {includeSlider && (
-            <div className="w-2/3">
+            <div 
+              ref={el => sliderContainerRefs.current[id as string] = el}
+              className="w-2/3 relative" 
+              onMouseDown={(e) => handleSliderMouseDown(id, e)}
+              onTouchStart={(e) => handleSliderTouchStart(id, e)}
+            >
+              <div 
+                className="absolute inset-0 w-full h-2 bg-gray-200 rounded-lg cursor-pointer"
+                style={{ top: '50%', transform: 'translateY(-50%)' }}
+              ></div>
+              <div 
+                className="absolute h-2 bg-indigo-500 rounded-lg"
+                style={{ 
+                  width: `${((numericValue - min) / (max - min)) * 100}%`,
+                  top: '50%',
+                  transform: 'translateY(-50%)'
+                }}
+              ></div>
               <input
+                ref={el => sliderRefs.current[id as string] = el}
                 type="range"
                 min={min}
                 max={max}
@@ -336,11 +565,27 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 value={numericValue}
                 onChange={(e) => {
                   const newValue = e.target.value;
-                  onParamChange(id, parseFloat(newValue));
-                  setInputValues(prev => ({ ...prev, [id]: newValue }));
+                  const numericNewValue = parseFloat(newValue);
+                  onParamChange(id, numericNewValue);
+                  
+                  // For monetary values, ensure we're updating with the correct value format
+                  if (currency && (id === 'initialCapital' || id === 'monthlyInvestment' || id === 'monthlyRetirementWithdrawal')) {
+                    setInputValues(prev => ({ ...prev, [id]: numericNewValue.toString() }));
+                  } else {
+                    setInputValues(prev => ({ ...prev, [id]: newValue }));
+                  }
                 }}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                className="w-full h-2 appearance-none bg-transparent absolute z-10 cursor-pointer opacity-0"
+                style={{ top: '50%', transform: 'translateY(-50%)' }}
               />
+              <div 
+                className={`absolute w-4 h-4 bg-white border border-indigo-500 rounded-full shadow transition-all ${draggingSlider === id ? 'w-5 h-5 border-indigo-600 scale-110' : ''}`}
+                style={{ 
+                  left: `${((numericValue - min) / (max - min)) * 100}%`,
+                  top: '50%',
+                  transform: 'translate(-50%, -50%)'
+                }}
+              ></div>
             </div>
           )}
           
@@ -409,7 +654,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
       {/* Header with Title */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 pb-2 border-b border-gray-200">
         <div>
-          <h2 className="text-lg font-semibold text-gradient">Customize Your Plan</h2>
+          <h2 className="text-lg font-semibold text-gradient">Define Your Plan</h2>
           <p className="text-xs text-gray-600">Tailor your personal path to financial freedom</p>
         </div>
           
@@ -588,6 +833,9 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         {/* Market Assumptions Section - Moved from retirement tab */}
         <div className="mt-3 bg-white rounded-lg border border-gray-100 shadow-sm p-2 overflow-hidden">
           <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider px-2 mb-2 py-1 bg-gray-50 rounded-t-lg">Market Assumptions</h3>
+          <p className="text-xs text-gray-600 italic px-2 mb-3">
+            These settings affect how your investments grow over time and how inflation impacts your withdrawal purchasing power.
+          </p>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             {/* Annual Return Rate */}
@@ -656,10 +904,6 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               </div>
             </div>
           </div>
-          
-          <p className="text-xs text-gray-600 italic mt-3 px-2 py-2 bg-gray-50 rounded-lg">
-            These settings affect how your investments grow over time and how inflation impacts your withdrawal purchasing power.
-          </p>
         </div>
       </div>
     </div>
