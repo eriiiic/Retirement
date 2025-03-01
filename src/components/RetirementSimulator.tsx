@@ -4,6 +4,7 @@ import ParametersSection from './retirement/ParametersSection';
 import ResultsSummary from './retirement/ResultsSummary';
 import CapitalEvolutionChart from './retirement/CapitalEvolutionChart';
 import ScheduleDetails from './retirement/ScheduleDetails';
+import Footer from './common/Footer';
 import { 
   calculateFutureValue, 
   calculateWithdrawalAmount, 
@@ -699,6 +700,8 @@ const RetirementSimulator = () => {
         graphData={graphData}
         formatAmount={formatAmount}
       />
+      
+      <Footer />
     </div>
   );
 };
