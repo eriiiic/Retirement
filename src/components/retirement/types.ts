@@ -88,7 +88,12 @@ export type Currency = "USD" | "EUR";
 /**
  * Withdrawal mode type
  */
-export type WithdrawalMode = "amount" | "age";
+export type WithdrawalMode = "amount" | "age" | "rate";
+
+/**
+ * Compound frequency type
+ */
+export type CompoundFrequency = "monthly" | "annual";
 
 /**
  * Retirement simulator parameters
@@ -114,6 +119,10 @@ export interface SimulatorParams {
   withdrawalMode: WithdrawalMode;
   /** Maximum age for planning */
   maxAge: number;
+  /** Interest compounding frequency */
+  compoundFrequency: CompoundFrequency;
+  /** Withdrawal rate percentage (for rate mode) */
+  withdrawalRate?: number;
 }
 
 /**

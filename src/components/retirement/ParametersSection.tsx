@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SimulatorParams, Statistics, FormatAmountFunction } from './types';
 
 interface ParametersSectionProps {
@@ -14,304 +14,653 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   formatAmount,
   onParamChange,
 }) => {
-  const {
-    currency,
-    initialCapital,
-    monthlyInvestment,
-    annualReturnRate,
-    inflation,
-    currentAge,
-    retirementInput,
-    withdrawalMode,
-    monthlyRetirementWithdrawal,
-    maxAge,
-  } = params;
+  const [inputValues, setInputValues] = useState({
+    initialCapital: params.initialCapital.toString(),
+    monthlyInvestment: params.monthlyInvestment.toString(),
+    currentAge: params.currentAge.toString(),
+    retirementInput: String(params.retirementInput),
+    monthlyRetirementWithdrawal: params.monthlyRetirementWithdrawal.toString(),
+    maxAge: params.maxAge.toString(),
+    annualReturnRate: params.annualReturnRate.toString(),
+    inflation: params.inflation.toString(),
+    withdrawalRate: params.withdrawalRate?.toString() || "4",
+  });
+  
+  // Track the focused input field
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  
+  // References to input elements for maintaining focus
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const isRetirementInputAge = () => {
-    const input = Number(retirementInput);
-    return (input > 0 && input < 120 && retirementInput.length <= 2) || 
-           !(retirementInput.length === 4 && retirementInput.startsWith('20'));
+  // Update local input values when params change, but only if the field is not currently focused
+  useEffect(() => {
+    setInputValues(prev => {
+      const newValues = { ...prev };
+      
+      Object.keys(params).forEach(key => {
+        const paramKey = key as keyof SimulatorParams;
+        const inputKey = paramKey as keyof typeof prev;
+        
+        // Only update fields that are not currently being edited
+        if (key !== focusedField) {
+          if (typeof newValues[inputKey] !== 'undefined') {
+            if (paramKey === 'initialCapital' || paramKey === 'monthlyInvestment' || 
+                paramKey === 'monthlyRetirementWithdrawal') {
+              // For monetary values, format appropriately
+              newValues[inputKey] = params[paramKey].toString();
+            } else {
+              // For other values, just convert to string
+              newValues[inputKey] = String(params[paramKey]);
+            }
+          }
+        }
+      });
+      
+      return newValues;
+    });
+  }, [params, focusedField]);
+
+  // Maintain focus after state updates
+  useEffect(() => {
+    if (focusedField && inputRefs.current[focusedField]) {
+      inputRefs.current[focusedField]?.focus();
+    }
+  }, [inputValues, focusedField]);
+
+  // Set default values for new users or initial load
+  useEffect(() => {
+    // Check if this is the initial load (all values are at defaults)
+    const isInitialLoad = params.initialCapital === 0 &&
+                          params.currentAge === 0 &&
+                          params.monthlyInvestment === 0 &&
+                          String(params.retirementInput) === '0' &&
+                          params.maxAge === 0;
+
+    // If it's the initial load, set all default values
+    if (isInitialLoad) {
+      // Set all default values at once
+      onParamChange('initialCapital', 150000);
+      onParamChange('currentAge', 46);
+      onParamChange('monthlyInvestment', 500);
+      onParamChange('retirementInput', 60);
+      onParamChange('maxAge', 95);
+      onParamChange('annualReturnRate', 7);
+      onParamChange('inflation', 2);
+      onParamChange('compoundFrequency', 'monthly'); // Default to monthly compounding
+    } else {
+      // Set individual values only if they are at the default "0" value
+      if (params.initialCapital === 0) {
+        onParamChange('initialCapital', 150000);
+      }
+      if (params.currentAge === 0) {
+        onParamChange('currentAge', 46);
+      }
+      if (params.monthlyInvestment === 0) {
+        onParamChange('monthlyInvestment', 500);
+      }
+      if (String(params.retirementInput) === '0') {
+        onParamChange('retirementInput', 60);
+      }
+      if (params.maxAge === 0) {
+        onParamChange('maxAge', 95);
+      }
+      if (params.annualReturnRate === 0) {
+        onParamChange('annualReturnRate', 7);
+      }
+      if (params.inflation === 0) {
+        onParamChange('inflation', 2);
+      }
+      if (!params.compoundFrequency) {
+        onParamChange('compoundFrequency', 'monthly'); // Set default if not defined
+      }
+    }
+  }, []);
+
+  // Add thousand separators to a number
+  const addThousandSeparators = (value: string) => {
+    if (!value) return '';
+    // Remove any existing commas or spaces first
+    const cleanValue = value.replace(/[,\s]/g, '');
+    // Use locale string to add thousand separators
+    const num = parseFloat(cleanValue);
+    if (isNaN(num)) return cleanValue;
+    return num.toLocaleString('en-US');
+  };
+
+  // Remove thousand separators for processing
+  const removeThousandSeparators = (value: string) => {
+    if (!value) return '';
+    return value.replace(/[,\s]/g, '');
+  };
+
+  const handleInputChange = (key: keyof SimulatorParams, value: string) => {
+    // Set the focused field to maintain focus
+    setFocusedField(key as string);
+    
+    // Common validation and state update logic
+    const updateInput = (validatedValue: string) => {
+      setInputValues(prev => ({ ...prev, [key]: validatedValue }));
+      
+      if (validatedValue !== '') {
+        const numericValue = parseFloat(validatedValue);
+        if (!isNaN(numericValue)) {
+          onParamChange(key, numericValue);
+        }
+      }
+    };
+    
+    // For monetary inputs, only allow numbers, commas, dots, and spaces
+    if (key === 'initialCapital' || key === 'monthlyInvestment' || key === 'monthlyRetirementWithdrawal') {
+      // Remove non-numeric characters except commas, dots, and spaces
+      const validatedValue = value.replace(/[^\d.,\s]/g, '');
+      // Store the raw value without separators
+      const cleanValue = removeThousandSeparators(validatedValue);
+      updateInput(cleanValue);
+    } 
+    // For percentage inputs, only allow numbers and dots
+    else if (key === 'annualReturnRate' || key === 'inflation' || key === 'withdrawalRate') {
+      // Remove non-numeric characters except dots
+      const validatedValue = value.replace(/[^\d.]/g, '');
+      // Ensure at most one decimal point
+      const parts = validatedValue.split('.');
+      const formattedValue = parts.length > 1 
+        ? `${parts[0]}.${parts.slice(1).join('')}` 
+        : validatedValue;
+      updateInput(formattedValue);
+    }
+    // For age inputs, only allow numbers
+    else if (key === 'currentAge' || key === 'maxAge' || key === 'retirementInput') {
+      // Remove non-numeric characters
+      const validatedValue = value.replace(/\D/g, '');
+      updateInput(validatedValue);
+    }
+    else {
+      setInputValues(prev => ({ ...prev, [key]: value }));
+    }
+  };
+
+  const handleInputBlur = (key: keyof SimulatorParams, value: string) => {
+    // Clear the focused field when input loses focus
+    setFocusedField(null);
+    
+    // Remove thousand separators before parsing
+    const cleanValue = removeThousandSeparators(value);
+    let parsedValue: number;
+    
+    // Define min/max constraints based on parameter type
+    const constraints = {
+      currentAge: { min: 20, max: 80, default: 40 },
+      maxAge: { min: 80, max: 105, default: 95 },
+      retirementInput: { min: 50, max: 80, default: 60 },
+      annualReturnRate: { min: 0, max: 30, default: 7 },
+      inflation: { min: 0, max: 15, default: 2 },
+      withdrawalRate: { min: 0.5, max: 20, default: 4 }
+    };
+    
+    // Handle special cases based on parameter type
+    if (key in constraints) {
+      const constraint = constraints[key as keyof typeof constraints];
+      parsedValue = key === 'retirementInput' 
+        ? parseInt(cleanValue) || constraint.default
+        : parseFloat(cleanValue) || constraint.default;
+      
+      // Apply bounds
+      parsedValue = Math.max(constraint.min, Math.min(constraint.max, parsedValue));
+      
+      // Round to one decimal place for percentage values
+      if (key === 'annualReturnRate' || key === 'inflation' || key === 'withdrawalRate') {
+        parsedValue = Math.round(parsedValue * 10) / 10;
+      }
+    }
+    else {
+      parsedValue = parseFloat(cleanValue) || 0;
+      // Apply minimum of 0 to all monetary values
+      parsedValue = Math.max(0, parsedValue);
+    }
+    
+    onParamChange(key, parsedValue);
+    
+    // Update the input value to reflect the validated value
+    setInputValues(prev => ({ ...prev, [key]: parsedValue.toString() }));
+  };
+
+  const handleInputFocus = (key: string) => {
+    setFocusedField(key);
+  };
+
+  const handleCurrencyChange = (currency: string) => {
+    onParamChange('currency', currency);
+  };
+
+  // Format number for display in input fields
+  const formatNumberInput = (value: string, addSeparators = true) => {
+    if (value === '') return '';
+    if (value === '0') return '0';
+    
+    // First clean and parse the value
+    const cleanValue = removeThousandSeparators(value);
+    const num = parseFloat(cleanValue);
+    if (isNaN(num)) return '';
+    
+    // Add thousand separators if requested
+    if (addSeparators) {
+      return addThousandSeparators(num.toString());
+    }
+    
+    // Otherwise just return the number
+    return num.toString();
+  };
+
+  // Get displayed value for monetary inputs (with thousand separators)
+  const getDisplayValue = (key: keyof SimulatorParams, value: string) => {
+    if (value === '0') return '';
+    
+    if (key === 'initialCapital' || key === 'monthlyInvestment' || key === 'monthlyRetirementWithdrawal') {
+      return formatNumberInput(value, true);
+    }
+    
+    return value;
+  };
+
+  // Helper to determine if retirement input is an age or a year
+  const isRetirementInputAnAge = (): boolean => {
+    const input = Number(params.retirementInput);
+    return (input > 0 && input < 120 && params.retirementInput.length <= 2) || 
+           !(params.retirementInput.length === 4 && params.retirementInput.startsWith('20'));
+  };
+
+  // Get slider min/max/step values based on parameter type
+  const getSliderConfig = (id: keyof SimulatorParams) => {
+    switch (id) {
+      case 'initialCapital':
+        return { min: 0, max: 1000000, step: 1000 };
+      case 'currentAge':
+        return { min: 20, max: 80, step: 1 };
+      case 'monthlyInvestment':
+        return { min: 0, max: 10000, step: 100 };
+      case 'retirementInput':
+        return { 
+          min: params.currentAge + 1, 
+          max: isRetirementInputAnAge() ? 100 : new Date().getFullYear() + 50, 
+          step: 1 
+        };
+      case 'monthlyRetirementWithdrawal':
+        return { min: 0, max: 20000, step: 100 };
+      case 'annualReturnRate':
+        return { min: 0, max: 20, step: 0.1 };
+      case 'inflation':
+        return { min: 0, max: 10, step: 0.1 };
+      case 'withdrawalRate':
+        return { min: 0.5, max: 20, step: 0.1 };
+      case 'maxAge':
+        return { min: 80, max: 105, step: 1 };
+      default:
+        return { min: 0, max: 100, step: 1 };
+    }
+  };
+
+  // Render a parameter input field with slider for specified parameters
+  const renderParameterInput = (
+    label: string,
+    id: keyof SimulatorParams,
+    value: string,
+    placeholder: string,
+    currency?: boolean,
+    percentage?: boolean,
+    suffix?: string,
+    includeSlider: boolean = false
+  ) => {
+    // Parse value to number for slider
+    const numericValue = parseFloat(value) || 0;
+    
+    // Get slider configuration
+    const { min, max, step } = getSliderConfig(id);
+    
+    return (
+      <div className="flex flex-col gap-1 p-2">
+        <label htmlFor={id} className="text-xs font-medium text-gray-600 flex justify-between">
+          <span>{label}</span>
+          <span className="font-semibold text-gray-800">
+            {currency ? formatAmount(parseFloat(value) || 0) : (value || '0')}{percentage ? '%' : ''}{suffix ? ` ${suffix}` : ''}
+          </span>
+        </label>
+        
+        <div className="flex items-center gap-2">
+          {includeSlider && (
+            <div className="w-2/3">
+              <input
+                type="range"
+                min={min}
+                max={max}
+                step={step}
+                value={numericValue}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  onParamChange(id, parseFloat(newValue));
+                  setInputValues(prev => ({ ...prev, [id]: newValue }));
+                }}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              />
+            </div>
+          )}
+          
+          <div className={`relative ${includeSlider ? 'w-1/3' : 'w-full'}`}>
+            <input
+              ref={el => inputRefs.current[id as string] = el}
+              id={id as string}
+              type="text"
+              inputMode={percentage || currency ? "decimal" : "numeric"}
+              value={currency 
+                ? `${params.currency === 'USD' ? '$' : '€'} ${value === '0' ? '' : value}` 
+                : percentage
+                  ? `${value === '0' ? '' : value}`
+                  : (value === '0' ? '' : value)}
+              onChange={(e) => {
+                if (currency) {
+                  // Remove currency symbol before handling change
+                  const valueWithoutCurrency = e.target.value.replace(/^[\$€]\s?/, '');
+                  handleInputChange(id, valueWithoutCurrency);
+                } else if (percentage) {
+                  // Remove percentage symbol before handling change
+                  const valueWithoutPercentage = e.target.value.replace(/%$/, '');
+                  handleInputChange(id, valueWithoutPercentage);
+                } else {
+                  handleInputChange(id, e.target.value);
+                }
+              }}
+              onBlur={(e) => {
+                if (currency) {
+                  // Remove currency symbol before handling blur
+                  const valueWithoutCurrency = e.target.value.replace(/^[\$€]\s?/, '');
+                  handleInputBlur(id, valueWithoutCurrency);
+                } else if (percentage) {
+                  // Remove percentage symbol before handling blur
+                  const valueWithoutPercentage = e.target.value.replace(/%$/, '');
+                  handleInputBlur(id, valueWithoutPercentage);
+                } else {
+                  handleInputBlur(id, e.target.value);
+                }
+              }}
+              onFocus={() => handleInputFocus(id as string)}
+              placeholder={currency 
+                ? `${params.currency === 'USD' ? '$' : '€'} ${placeholder}` 
+                : percentage ? placeholder : placeholder}
+              className={`w-full rounded-lg border border-gray-300 py-1.5 px-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm ${percentage ? 'text-right pr-6' : 'text-left'}`}
+              aria-label={`${label} input`}
+            />
+            {percentage && (
+              <span className="absolute inset-y-0 right-2 flex items-center text-gray-500 pointer-events-none">
+                %
+              </span>
+            )}
+            {suffix && !percentage && (
+              <span className="absolute inset-y-0 right-2 flex items-center text-gray-500 pointer-events-none text-xs">
+                {suffix}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="p-4 bg-gray-50 rounded-2xl shadow mb-5">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">Parameters</h2>
-      
-      {/* Currency Selector */}
-      <div className="mb-4">
-        <div className="flex justify-between items-center mb-2">
-          <label className="text-sm font-medium text-gray-700">Currency</label>
-          <div className="bg-gray-200 rounded-lg p-0.5 flex">
-            <button 
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${currency === "USD" ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-700'}`}
-              onClick={() => onParamChange('currency', "USD")}
-            >
-              USD
-            </button>
-            <button 
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${currency === "EUR" ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-700'}`}
-              onClick={() => onParamChange('currency', "EUR")}
-            >
-              EUR
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Initial Values Group */}
-      <div className="mb-5 bg-white rounded-xl shadow-sm p-4">
-        <h3 className="text-sm font-semibold text-gray-800 mb-3">Initial Values</h3>
-        
-        {/* Initial Capital */}
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-1">
-            <label className="text-xs font-medium text-gray-600">Initial Capital</label>
-            <span className="text-xs text-blue-600 font-medium">{formatAmount(initialCapital)}</span>
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="1000000"
-            step="1000"
-            value={initialCapital}
-            onChange={(e) => onParamChange('initialCapital', Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-          />
-          <div className="flex justify-between items-center mt-1">
-            <input
-              type="text"
-              value={initialCapital.toLocaleString('en-US')}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\s/g, '').replace(/,/g, '');
-                if (/^\d*$/.test(value)) {
-                  onParamChange('initialCapital', Number(value));
-                }
-              }}
-              className="w-24 p-2 bg-gray-100 rounded-lg text-sm border-0 focus:ring-1 focus:ring-blue-500 focus:outline-none text-right"
-            />
-            <span className="text-xs text-gray-500">Starting amount</span>
-          </div>
-        </div>
-
-        {/* Monthly Investment */}
+    <div className="mt-6 bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-200 p-4">
+      {/* Header with Title */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 pb-2 border-b border-gray-200">
         <div>
-          <div className="flex justify-between items-center mb-1">
-            <label className="text-xs font-medium text-gray-600">Monthly Investment</label>
-            <span className="text-xs text-blue-600 font-medium">{formatAmount(monthlyInvestment)}</span>
+          <h2 className="text-lg font-semibold text-gradient">Customize Your Plan</h2>
+          <p className="text-xs text-gray-600">Tailor your personal path to financial freedom</p>
+        </div>
+          
+        {/* Currency selector as toggle button - moved to title bar */}
+        <div className="flex items-center mt-2 sm:mt-0">
+          <div className="text-xs text-gray-600 mr-2">Currency:</div>
+          <div className="flex border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            <button 
+              className={`px-3 py-1 text-xs font-medium transition-all ${
+                params.currency === 'USD'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+              onClick={() => handleCurrencyChange('USD')}
+              aria-label="Switch to US Dollar"
+            >
+              USD ($)
+            </button>
+            <button 
+              className={`px-3 py-1 text-xs font-medium transition-all ${
+                params.currency === 'EUR'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+              onClick={() => handleCurrencyChange('EUR')}
+              aria-label="Switch to Euro"
+            >
+              EUR (€)
+            </button>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="10000"
-            step="100"
-            value={monthlyInvestment}
-            onChange={(e) => onParamChange('monthlyInvestment', Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-          />
-          <div className="flex justify-between items-center mt-1">
-            <input
-              type="text"
-              value={monthlyInvestment.toLocaleString('en-US')}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\s/g, '').replace(/,/g, '');
-                if (/^\d*$/.test(value)) {
-                  onParamChange('monthlyInvestment', Number(value));
-                }
-              }}
-              className="w-24 p-2 bg-gray-100 rounded-lg text-sm border-0 focus:ring-1 focus:ring-blue-500 focus:outline-none text-right"
-            />
-            <span className="text-xs text-gray-500">Monthly contribution</span>
-          </div>
+          <span className="text-[10px] text-gray-500 ml-2 hidden sm:inline">Display only</span>
         </div>
       </div>
 
-      {/* Market Conditions Group */}
-      <div className="mb-5 bg-white rounded-xl shadow-sm p-4">
-        <h3 className="text-sm font-semibold text-gray-800 mb-3">Market Conditions</h3>
-        
-        <div className="grid grid-cols-2 gap-4">
-          {/* Return Rate */}
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-medium text-gray-600">Return (%)</label>
-              <span className="text-xs text-blue-600 font-medium">{annualReturnRate}%</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="15"
-              step="0.1"
-              value={annualReturnRate}
-              onChange={(e) => onParamChange('annualReturnRate', Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-            />
-            <div className="flex justify-between mt-1">
-              <span className="text-xs text-gray-500">0%</span>
-              <span className="text-xs text-gray-500">15%</span>
-            </div>
+      {/* Combined Parameters Section - All inputs on same page */}
+      <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100 mb-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Current Status Section */}
+          <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-2 overflow-hidden">
+            <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider px-2 mb-1 py-1 bg-gray-50 rounded-t-lg">Current Status</h3>
+            
+            {renderParameterInput(
+              "Initial Capital", 
+              "initialCapital", 
+              getDisplayValue('initialCapital', inputValues.initialCapital), 
+              "150,000", 
+              true,
+              false,
+              undefined,
+              true // Include slider
+            )}
+            
+            {renderParameterInput(
+              "Current Age", 
+              "currentAge", 
+              inputValues.currentAge, 
+              "46", 
+              false, 
+              false, 
+              "years",
+              true // Include slider
+            )}
+            
+            {renderParameterInput(
+              "Monthly Investment", 
+              "monthlyInvestment", 
+              getDisplayValue('monthlyInvestment', inputValues.monthlyInvestment), 
+              "500", 
+              true,
+              false,
+              undefined,
+              true // Include slider
+            )}
           </div>
 
-          {/* Inflation */}
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-medium text-gray-600">Inflation (%)</label>
-              <span className="text-xs text-blue-600 font-medium">{inflation}%</span>
+          {/* Retirement Plan Section */}
+          <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-2 overflow-hidden">
+            <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider px-2 mb-1 py-1 bg-gray-50 rounded-t-lg">Retirement Plan</h3>
+
+            {renderParameterInput(
+              "Retirement Age/Year", 
+              "retirementInput", 
+              inputValues.retirementInput, 
+              "65", 
+              false, 
+              false, 
+              isRetirementInputAnAge() ? "years old" : "year",
+              true // Include slider
+            )}
+
+            {/* Withdrawal Strategy */}
+            <div className="mb-3 mt-3 p-2 bg-gray-50 rounded-lg border border-gray-100">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                <div>
+                  <h3 className="text-xs font-medium text-gray-800">Withdrawal Strategy</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {params.withdrawalMode === 'amount'
+                      ? "Specify how much you want to withdraw each month"
+                      : params.withdrawalMode === 'age'
+                        ? "Set a target age and we'll calculate a sustainable withdrawal"
+                        : "Define a withdrawal rate as percentage of your capital"}
+                  </p>
+                </div>
+                <div className="flex border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                  <button 
+                    className={`px-3 py-1 text-xs font-medium transition-all ${
+                      params.withdrawalMode === 'amount'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                    onClick={() => onParamChange('withdrawalMode', 'amount')}
+                  >
+                    Amount
+                  </button>
+                  <button 
+                    className={`px-3 py-1 text-xs font-medium transition-all ${
+                      params.withdrawalMode === 'age'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                    onClick={() => onParamChange('withdrawalMode', 'age')}
+                  >
+                    Age
+                  </button>
+                  <button 
+                    className={`px-3 py-1 text-xs font-medium transition-all ${
+                      params.withdrawalMode === 'rate'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                    onClick={() => onParamChange('withdrawalMode', 'rate')}
+                  >
+                    Rate
+                  </button>
+                </div>
+              </div>
             </div>
-            <input
-              type="range"
-              min="0"
-              max="10"
-              step="0.1"
-              value={inflation}
-              onChange={(e) => onParamChange('inflation', Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-            />
-            <div className="flex justify-between mt-1">
-              <span className="text-xs text-gray-500">0%</span>
-              <span className="text-xs text-gray-500">10%</span>
-            </div>
+
+            {params.withdrawalMode === 'age' ? (
+              renderParameterInput(
+                "Target Age", 
+                "maxAge", 
+                inputValues.maxAge, 
+                "95", 
+                false, 
+                false, 
+                "years",
+                false
+              )
+            ) : params.withdrawalMode === 'amount' ? (
+              renderParameterInput(
+                "Monthly Withdrawal", 
+                "monthlyRetirementWithdrawal", 
+                getDisplayValue('monthlyRetirementWithdrawal', inputValues.monthlyRetirementWithdrawal), 
+                "0", 
+                true,
+                false,
+                undefined,
+                true // Include slider
+              )
+            ) : (
+              renderParameterInput(
+                "Withdrawal Rate", 
+                "withdrawalRate", 
+                inputValues.withdrawalRate, 
+                "4", 
+                false, 
+                true,
+                undefined,
+                false
+              )
+            )}
           </div>
         </div>
-      </div>
-
-      {/* Retirement Timeline Group */}
-      <div className="mb-5 bg-white rounded-xl shadow-sm p-4">
-        <h3 className="text-sm font-semibold text-gray-800 mb-3">Retirement Timeline</h3>
         
-        <div className="grid grid-cols-2 gap-4">
-          {/* Current Age */}
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-medium text-gray-600">Current Age</label>
-              <span className="text-xs text-blue-600 font-medium">{currentAge}</span>
-            </div>
-            <input
-              type="range"
-              min="18"
-              max="80"
-              value={currentAge}
-              onChange={(e) => onParamChange('currentAge', Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-            />
-            <div className="flex justify-between mt-1">
-              <span className="text-xs text-gray-500">18</span>
-              <span className="text-xs text-gray-500">80</span>
-            </div>
-          </div>
+        {/* Market Assumptions Section - Moved from retirement tab */}
+        <div className="mt-3 bg-white rounded-lg border border-gray-100 shadow-sm p-2 overflow-hidden">
+          <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider px-2 mb-2 py-1 bg-gray-50 rounded-t-lg">Market Assumptions</h3>
 
-          {/* Retirement Age */}
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-medium text-gray-600">Retirement Age</label>
-              <span className="text-xs text-blue-600 font-medium">
-                {isRetirementInputAge() ? retirementInput : `${statistics.retirementStartAge}`}
-              </span>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            {/* Annual Return Rate */}
+            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-2">
+              <h4 className="text-xs font-medium text-gray-700 mb-1">Annual Return</h4>
+              {renderParameterInput(
+                "Expected return on investments", 
+                "annualReturnRate", 
+                inputValues.annualReturnRate, 
+                "5", 
+                false, 
+                true,
+                undefined,
+                true // Include slider
+              )}
             </div>
-            <input
-              type="range"
-              min={currentAge + 1}
-              max="90"
-              value={isRetirementInputAge() ? Number(retirementInput) : statistics.retirementStartAge}
-              onChange={(e) => onParamChange('retirementInput', e.target.value)}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-            />
-            <div className="flex justify-between mt-1">
-              <input
-                type="text"
-                value={retirementInput}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '');
-                  onParamChange('retirementInput', value);
-                }}
-                className="w-16 p-1 bg-gray-100 rounded-lg text-sm border-0 focus:ring-1 focus:ring-blue-500 focus:outline-none text-center"
-              />
-              <span className="text-xs text-gray-500">
-                {isRetirementInputAge() ? 'age' : 'year'}
-              </span>
+            
+            {/* Inflation Rate */}
+            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-2">
+              <h4 className="text-xs font-medium text-gray-700 mb-1">Inflation</h4>
+              {renderParameterInput(
+                "Annual inflation rate", 
+                "inflation", 
+                inputValues.inflation, 
+                "2", 
+                false, 
+                true,
+                undefined,
+                true // Include slider
+              )}
+            </div>
+            
+            {/* Compound Frequency */}
+            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-2">
+              <h4 className="text-xs font-medium text-gray-700 mb-1">Compound Frequency</h4>
+              <div className="p-2">
+                <p className="text-xs text-gray-600 mb-2">
+                  {params.compoundFrequency === 'monthly'
+                    ? "Interest compounded monthly (higher returns)"
+                    : "Interest compounded annually"}
+                </p>
+                <div className="flex border border-gray-200 rounded-lg overflow-hidden shadow-sm mt-2">
+                  <button 
+                    className={`px-3 py-1 text-xs font-medium transition-all flex-1 ${
+                      params.compoundFrequency === 'monthly'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                    onClick={() => onParamChange('compoundFrequency', 'monthly')}
+                    aria-label="Set monthly compounding"
+                  >
+                    Monthly
+                  </button>
+                  <button 
+                    className={`px-3 py-1 text-xs font-medium transition-all flex-1 ${
+                      params.compoundFrequency === 'annual'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                    onClick={() => onParamChange('compoundFrequency', 'annual')}
+                    aria-label="Set annual compounding"
+                  >
+                    Annual
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Withdrawal Settings Group */}
-      <div className="bg-white rounded-xl shadow-sm p-4">
-        <h3 className="text-sm font-semibold text-gray-800 mb-3">Withdrawal Settings</h3>
-        
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-xs font-medium text-gray-600">Planning Mode</label>
-            <div className="bg-gray-200 rounded-lg p-0.5 flex">
-              <button 
-                className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${withdrawalMode === "amount" ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-700'}`}
-                onClick={() => onParamChange('withdrawalMode', "amount")}
-              >
-                Set Amount
-              </button>
-              <button 
-                className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${withdrawalMode === "age" ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-700'}`}
-                onClick={() => onParamChange('withdrawalMode', "age")}
-              >
-                Set Target Age
-              </button>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500 italic mb-3">
-            {withdrawalMode === "amount" 
-              ? "Set your monthly withdrawal amount and see how long your money will last." 
-              : "Set a target age and see how much you can withdraw monthly."}
+          
+          <p className="text-xs text-gray-600 italic mt-3 px-2 py-2 bg-gray-50 rounded-lg">
+            These settings affect how your investments grow over time and how inflation impacts your withdrawal purchasing power.
           </p>
         </div>
-        
-        {withdrawalMode === 'amount' ? (
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-medium text-gray-600">Monthly Withdrawal</label>
-              <span className="text-xs text-blue-600 font-medium">{formatAmount(monthlyRetirementWithdrawal)}</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="10000"
-              step="100"
-              value={monthlyRetirementWithdrawal}
-              onChange={(e) => onParamChange('monthlyRetirementWithdrawal', Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-            />
-            <div className="flex justify-between items-center mt-1">
-              <input
-                type="text"
-                value={monthlyRetirementWithdrawal.toLocaleString('en-US')}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\s/g, '').replace(/,/g, '');
-                  if (/^\d*$/.test(value)) {
-                    onParamChange('monthlyRetirementWithdrawal', Number(value));
-                  }
-                }}
-                className="w-24 p-2 bg-gray-100 rounded-lg text-sm border-0 focus:ring-1 focus:ring-blue-500 focus:outline-none text-right"
-              />
-              <span className="text-xs text-gray-500">Monthly withdrawal</span>
-            </div>
-          </div>
-        ) : (
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-medium text-gray-600">Target Age</label>
-              <span className="text-xs text-blue-600 font-medium">{maxAge}</span>
-            </div>
-            <input
-              type="range"
-              min={statistics.retirementStartAge + 1}
-              max="100"
-              value={maxAge}
-              onChange={(e) => onParamChange('maxAge', Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-            />
-            <div className="flex justify-between mt-1">
-              <span className="text-xs text-gray-500">{statistics.retirementStartAge + 1}</span>
-              <span className="text-xs text-gray-500">100</span>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
