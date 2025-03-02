@@ -9,8 +9,8 @@ module.exports = function override(config) {
   // Add an alias for the missing file
   config.resolve.alias = {
     ...config.resolve.alias,
-    // Add an alias to use index.js instead of index.mjs
-    './node_modules/react-router-dom/dist/index.mjs': resolveApp('node_modules/react-router-dom/dist/index.js')
+    // Add an alias to use index.js instead of index.mjs - using the v6.3.0 structure
+    './node_modules/react-router-dom/index.mjs': resolveApp('node_modules/react-router-dom/index.js')
   };
 
   // Find and modify the source-map-loader rule
