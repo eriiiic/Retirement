@@ -1,0 +1,32 @@
+# robots.txt for FIRE Journey Blog
+
+User-agent: *
+Allow: /
+Allow: /blog/
+Allow: /articles/
+Allow: /calculators/
+Allow: /resources/
+
+# Disallow admin and development areas
+Disallow: /admin/
+Disallow: /wp-admin/
+Disallow: /dev/
+Disallow: /drafts/
+Disallow: /test/
+
+# Disallow duplicate content
+Disallow: */tag/
+Disallow: */print/
+Disallow: */feed/
+
+# Disallow certain file types
+Disallow: /*.json$
+Disallow: /*.xml$
+Disallow: /*.txt$
+Allow: /sitemap.xml
+
+# Crawl delay for bots (in seconds)
+Crawl-delay: 10
+
+# Sitemap location
+Sitemap: https://www.yourfirejourney.com/sitemap.xml 
