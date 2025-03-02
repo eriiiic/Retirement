@@ -80,13 +80,34 @@ function scheduleReducer(state: ScheduleState, action: ScheduleAction): Schedule
 
 // Column width constants to ensure consistency
 const COLUMN_WIDTHS = {
-  year: '12%',
-  age: '12%',
-  capital: '15%',
-  variation: '15%',
-  interest: '15%',
-  netVariation: '15%',
-  phase: '16%'
+  year: {
+    mobile: '8%',
+    desktop: '8%'
+  },
+  age: {
+    mobile: '6%',
+    desktop: '7%'
+  },
+  capital: {
+    mobile: '18%',
+    desktop: '16%'
+  },
+  variation: {
+    mobile: '16%',
+    desktop: '15%'
+  },
+  interest: {
+    mobile: '16%',
+    desktop: '15%'
+  },
+  netVariation: {
+    mobile: '18%',
+    desktop: '15%'
+  },
+  phase: {
+    mobile: '10%',
+    desktop: '12%'
+  }
 };
 
 // Row renderer component for virtualized list
@@ -113,27 +134,27 @@ const Row: React.FC<RowProps> = ({ index, style, data }) => {
       }}
       className={`divide-x divide-gray-200 ${entry.retirement === "Yes" ? "bg-purple-50" : "bg-white"} ${index % 2 === 0 ? "" : "bg-opacity-60"} transition-colors duration-150 hover:bg-gray-50`}
     >
-      <div style={{ width: COLUMN_WIDTHS.year }} className="px-6 py-2 whitespace-nowrap text-sm text-gray-900 truncate">
+      <div style={{ width: `var(--col-year, ${COLUMN_WIDTHS.year.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate">
         {entry.year}
       </div>
-      <div style={{ width: COLUMN_WIDTHS.age }} className="px-6 py-2 whitespace-nowrap text-sm text-gray-900 truncate">
+      <div style={{ width: `var(--col-age, ${COLUMN_WIDTHS.age.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate">
         {entry.age}
       </div>
-      <div style={{ width: COLUMN_WIDTHS.capital }} className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900 truncate">
+      <div style={{ width: `var(--col-capital, ${COLUMN_WIDTHS.capital.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 truncate">
         {formatAmount(entry.capital)}
       </div>
-      <div style={{ width: COLUMN_WIDTHS.variation }} className={`px-6 py-2 whitespace-nowrap text-sm font-medium truncate ${entry.variation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+      <div style={{ width: `var(--col-variation, ${COLUMN_WIDTHS.variation.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium truncate ${entry.variation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
         {entry.variation >= 0 ? '+' : ''}{formatAmount(entry.variation)}
       </div>
-      <div style={{ width: COLUMN_WIDTHS.interest }} className="px-6 py-2 whitespace-nowrap text-sm font-medium text-indigo-600 truncate">
+      <div style={{ width: `var(--col-interest, ${COLUMN_WIDTHS.interest.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium text-indigo-600 truncate">
         +{formatAmount(entry.annualInterest)}
       </div>
-      <div style={{ width: COLUMN_WIDTHS.netVariation }} className={`px-6 py-2 whitespace-nowrap text-sm font-medium truncate ${entry.netVariationExcludingInterest >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+      <div style={{ width: `var(--col-netvar, ${COLUMN_WIDTHS.netVariation.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium truncate ${entry.netVariationExcludingInterest >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
         {entry.netVariationExcludingInterest >= 0 ? '+' : ''}{formatAmount(entry.netVariationExcludingInterest)}
       </div>
-      <div style={{ width: COLUMN_WIDTHS.phase }} className="px-6 py-2 whitespace-nowrap text-sm truncate">
-        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${entry.retirement === "Yes" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}`}>
-          {entry.retirement === "Yes" ? "Retirement" : "Investment"}
+      <div style={{ width: `var(--col-phase, ${COLUMN_WIDTHS.phase.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm truncate">
+        <span className={`px-1 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${entry.retirement === "Yes" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}`}>
+          {entry.retirement === "Yes" ? "Ret" : "Inv"}
         </span>
       </div>
     </div>
@@ -322,6 +343,27 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
     }
   }, []);
 
+  // Add CSS variables for responsive column widths based on screen size
+  useEffect(() => {
+    const setCssVars = () => {
+      const root = document.documentElement;
+      const isMobile = window.innerWidth < 640; // sm breakpoint in Tailwind
+      
+      root.style.setProperty('--col-year', isMobile ? COLUMN_WIDTHS.year.mobile : COLUMN_WIDTHS.year.desktop);
+      root.style.setProperty('--col-age', isMobile ? COLUMN_WIDTHS.age.mobile : COLUMN_WIDTHS.age.desktop);
+      root.style.setProperty('--col-capital', isMobile ? COLUMN_WIDTHS.capital.mobile : COLUMN_WIDTHS.capital.desktop);
+      root.style.setProperty('--col-variation', isMobile ? COLUMN_WIDTHS.variation.mobile : COLUMN_WIDTHS.variation.desktop);
+      root.style.setProperty('--col-interest', isMobile ? COLUMN_WIDTHS.interest.mobile : COLUMN_WIDTHS.interest.desktop);
+      root.style.setProperty('--col-netvar', isMobile ? COLUMN_WIDTHS.netVariation.mobile : COLUMN_WIDTHS.netVariation.desktop);
+      root.style.setProperty('--col-phase', isMobile ? COLUMN_WIDTHS.phase.mobile : COLUMN_WIDTHS.phase.desktop);
+    };
+    
+    setCssVars();
+    window.addEventListener('resize', setCssVars);
+    
+    return () => window.removeEventListener('resize', setCssVars);
+  }, []);
+
   // Compute summary data for each phase
   const { investmentSummary, retirementSummary } = useMemo(() => {
     if (!processedData.length) {
@@ -403,108 +445,115 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
     
     return (
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        {/* Table Header */}
-        <div className="flex bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 font-medium text-xs text-gray-600 uppercase tracking-wider">
-          <div 
-            style={{ width: COLUMN_WIDTHS.year }}
-            className="px-6 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
-            onClick={() => handleSort('year')}
-          >
-            Year
-            {state.sortConfig.key === 'year' && (
-              <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-            )}
-          </div>
-          <div 
-            style={{ width: COLUMN_WIDTHS.age }}
-            className="px-6 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
-            onClick={() => handleSort('age')}
-          >
-            Age
-            {state.sortConfig.key === 'age' && (
-              <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-            )}
-          </div>
-          <div 
-            style={{ width: COLUMN_WIDTHS.capital }}
-            className="px-6 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
-            onClick={() => handleSort('capital')}
-          >
-            Capital
-            {state.sortConfig.key === 'capital' && (
-              <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-            )}
-          </div>
-          <div 
-            style={{ width: COLUMN_WIDTHS.variation }}
-            className="px-6 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
-            onClick={() => handleSort('variation')}
-          >
-            Variation
-            {state.sortConfig.key === 'variation' && (
-              <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-            )}
-          </div>
-          <div 
-            style={{ width: COLUMN_WIDTHS.interest }}
-            className="px-6 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
-            onClick={() => handleSort('annualInterest')}
-          >
-            Interest
-            {state.sortConfig.key === 'annualInterest' && (
-              <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-            )}
-          </div>
-          <div 
-            style={{ width: COLUMN_WIDTHS.netVariation }}
-            className="px-6 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
-            onClick={() => handleSort('netVariationExcludingInterest')}
-          >
-            Inv/Withdraw
-            {state.sortConfig.key === 'netVariationExcludingInterest' && (
-              <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-            )}
-          </div>
-          <div 
-            style={{ width: COLUMN_WIDTHS.phase }}
-            className="px-6 py-3 text-left"
-          >
-            Phase
-          </div>
-        </div>
-        
-        {/* Show the entire schedule in a grid instead of virtualized list - removed max-height and overflow */}
-        <div>
-          {processedData.map((entry, index) => (
-            <div 
-              key={`${entry.year}-${entry.age}`}
-              className={`flex divide-x divide-gray-200 ${entry.retirement === "Yes" ? "bg-purple-50" : "bg-white"} ${index % 2 === 0 ? "" : "bg-opacity-60"} hover:bg-gray-50`}
-            >
-              <div style={{ width: COLUMN_WIDTHS.year }} className="px-6 py-2 whitespace-nowrap text-sm text-gray-900 truncate">
-                {entry.year}
+        {/* Table Header - Wrapped in a scrollable container */}
+        <div className="overflow-x-auto custom-scrollbar">
+          <div className="min-w-[800px]"> {/* Minimum width to prevent squishing */}
+            <div className="flex bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 font-medium text-xs text-gray-600 uppercase tracking-wider">
+              <div 
+                style={{ width: `var(--col-year, ${COLUMN_WIDTHS.year.mobile})` }}
+                className="px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
+                onClick={() => handleSort('year')}
+              >
+                Yr
+                {state.sortConfig.key === 'year' && (
+                  <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                )}
               </div>
-              <div style={{ width: COLUMN_WIDTHS.age }} className="px-6 py-2 whitespace-nowrap text-sm text-gray-900 truncate">
-                {entry.age}
+              <div 
+                style={{ width: `var(--col-age, ${COLUMN_WIDTHS.age.mobile})` }}
+                className="px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
+                onClick={() => handleSort('age')}
+              >
+                Age
+                {state.sortConfig.key === 'age' && (
+                  <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                )}
               </div>
-              <div style={{ width: COLUMN_WIDTHS.capital }} className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900 truncate">
-                {formatAmount(entry.capital)}
+              <div 
+                style={{ width: `var(--col-capital, ${COLUMN_WIDTHS.capital.mobile})` }}
+                className="px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
+                onClick={() => handleSort('capital')}
+              >
+                <span className="hidden sm:inline">Capital</span>
+                <span className="sm:hidden">Cap</span>
+                {state.sortConfig.key === 'capital' && (
+                  <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                )}
               </div>
-              <div style={{ width: COLUMN_WIDTHS.variation }} className={`px-6 py-2 whitespace-nowrap text-sm font-medium truncate ${entry.variation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {entry.variation >= 0 ? '+' : ''}{formatAmount(entry.variation)}
+              <div 
+                style={{ width: `var(--col-variation, ${COLUMN_WIDTHS.variation.mobile})` }}
+                className="px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
+                onClick={() => handleSort('variation')}
+              >
+                Var
+                {state.sortConfig.key === 'variation' && (
+                  <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                )}
               </div>
-              <div style={{ width: COLUMN_WIDTHS.interest }} className="px-6 py-2 whitespace-nowrap text-sm font-medium text-indigo-600 truncate">
-                +{formatAmount(entry.annualInterest)}
+              <div 
+                style={{ width: `var(--col-interest, ${COLUMN_WIDTHS.interest.mobile})` }}
+                className="px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
+                onClick={() => handleSort('annualInterest')}
+              >
+                Int
+                {state.sortConfig.key === 'annualInterest' && (
+                  <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                )}
               </div>
-              <div style={{ width: COLUMN_WIDTHS.netVariation }} className={`px-6 py-2 whitespace-nowrap text-sm font-medium truncate ${entry.netVariationExcludingInterest >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                {entry.netVariationExcludingInterest >= 0 ? '+' : ''}{formatAmount(entry.netVariationExcludingInterest)}
+              <div 
+                style={{ width: `var(--col-netvar, ${COLUMN_WIDTHS.netVariation.mobile})` }}
+                className="px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
+                onClick={() => handleSort('netVariationExcludingInterest')}
+              >
+                <span className="hidden sm:inline">Inv/With</span>
+                <span className="sm:hidden">I/W</span>
+                {state.sortConfig.key === 'netVariationExcludingInterest' && (
+                  <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+                )}
               </div>
-              <div style={{ width: COLUMN_WIDTHS.phase }} className="px-6 py-2 whitespace-nowrap text-sm truncate">
-                <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${entry.retirement === "Yes" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}`}>
-                  {entry.retirement === "Yes" ? "Retirement" : "Investment"}
-                </span>
+              <div 
+                style={{ width: `var(--col-phase, ${COLUMN_WIDTHS.phase.mobile})` }}
+                className="px-1 sm:px-2 md:px-3 py-3 text-left"
+              >
+                Ph
               </div>
             </div>
-          ))}
+            
+            {/* Show the entire schedule in a grid instead of virtualized list - removed max-height and overflow */}
+            <div>
+              {processedData.map((entry, index) => (
+                <div 
+                  key={`${entry.year}-${entry.age}`}
+                  className={`flex divide-x divide-gray-200 ${entry.retirement === "Yes" ? "bg-purple-50" : "bg-white"} ${index % 2 === 0 ? "" : "bg-opacity-60"} hover:bg-gray-50`}
+                >
+                  <div style={{ width: `var(--col-year, ${COLUMN_WIDTHS.year.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate">
+                    {entry.year}
+                  </div>
+                  <div style={{ width: `var(--col-age, ${COLUMN_WIDTHS.age.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate">
+                    {entry.age}
+                  </div>
+                  <div style={{ width: `var(--col-capital, ${COLUMN_WIDTHS.capital.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 truncate">
+                    {formatAmount(entry.capital)}
+                  </div>
+                  <div style={{ width: `var(--col-variation, ${COLUMN_WIDTHS.variation.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium truncate ${entry.variation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {entry.variation >= 0 ? '+' : ''}{formatAmount(entry.variation)}
+                  </div>
+                  <div style={{ width: `var(--col-interest, ${COLUMN_WIDTHS.interest.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium text-indigo-600 truncate">
+                    +{formatAmount(entry.annualInterest)}
+                  </div>
+                  <div style={{ width: `var(--col-netvar, ${COLUMN_WIDTHS.netVariation.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium truncate ${entry.netVariationExcludingInterest >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                    {entry.netVariationExcludingInterest >= 0 ? '+' : ''}{formatAmount(entry.netVariationExcludingInterest)}
+                  </div>
+                  <div style={{ width: `var(--col-phase, ${COLUMN_WIDTHS.phase.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm truncate">
+                    <span className={`px-1 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${entry.retirement === "Yes" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}`}>
+                      <span className="hidden sm:inline">{entry.retirement === "Yes" ? "Retire" : "Invest"}</span>
+                      <span className="sm:hidden">{entry.retirement === "Yes" ? "Ret" : "Inv"}</span>
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
         
         {/* Summary Footer */}
@@ -517,7 +566,7 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
 
   const renderSummaryTiles = () => {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Investment Phase Summary */}
         {investmentSummary && (
           <PhaseSummaryTile
@@ -570,10 +619,10 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
   // Filter buttons for full schedule view
   const renderPhaseFilterButtons = () => {
     return (
-      <div className="flex items-center space-x-2">
-        <span className="text-sm text-gray-500 mr-1">Filter:</span>
+      <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+        <span className="text-xs sm:text-sm text-gray-500 mr-1">Filter:</span>
         <button
-          className={`px-3 py-2 text-sm rounded-lg ${state.filteredPhase === 'all' 
+          className={`px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-lg ${state.filteredPhase === 'all' 
             ? 'bg-gray-700 text-white font-medium' 
             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
           onClick={() => handlePhaseFilter('all')}
@@ -581,7 +630,7 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
           All Phases
         </button>
         <button
-          className={`px-3 py-2 text-sm rounded-lg ${state.filteredPhase === 'investment' 
+          className={`px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-lg ${state.filteredPhase === 'investment' 
             ? 'bg-blue-600 text-white font-medium' 
             : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}`}
           onClick={() => handlePhaseFilter('investment')}
@@ -589,7 +638,7 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
           Investment Phase
         </button>
         <button
-          className={`px-3 py-2 text-sm rounded-lg ${state.filteredPhase === 'retirement' 
+          className={`px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-lg ${state.filteredPhase === 'retirement' 
             ? 'bg-purple-600 text-white font-medium' 
             : 'bg-purple-50 text-purple-700 hover:bg-purple-100'}`}
           onClick={() => handlePhaseFilter('retirement')}
@@ -601,17 +650,19 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
   };
 
   return (
-    <div className="mt-8 bg-gray-50 p-6 rounded-2xl shadow-md border border-gray-200">
+    <div className="mt-8 bg-gray-50 p-4 sm:p-6 rounded-2xl shadow-md border border-gray-200">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
         <h2 className="text-xl font-semibold text-gradient mb-2 sm:mb-0">Schedule Details</h2>
         
         <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
           {state.viewMode === 'full-schedule' && (
             <>
-              {renderPhaseFilterButtons()}
+              <div className="overflow-x-auto pb-2 sm:pb-0 -mx-2 px-2">
+                {renderPhaseFilterButtons()}
+              </div>
               
               <button
-                className="px-4 py-2 mt-3 sm:mt-0 rounded-lg text-white font-medium shadow-sm transition-all bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700"
+                className="px-3 py-1 sm:px-4 sm:py-2 text-sm mt-1 sm:mt-0 rounded-lg text-white font-medium shadow-sm transition-all bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700"
                 onClick={handleShowSummary}
               >
                 View Summary
@@ -621,7 +672,7 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
           
           {state.viewMode === 'tiles' && (
             <button
-              className="px-4 py-2 rounded-lg text-white font-medium shadow-sm transition-all bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+              className="px-3 py-1 sm:px-4 sm:py-2 text-sm rounded-lg text-white font-medium shadow-sm transition-all bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
               onClick={handleShowFullSchedule}
             >
               View Full Schedule

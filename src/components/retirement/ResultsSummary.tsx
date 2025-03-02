@@ -287,56 +287,56 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
           </div>
 
           {/* Key milestones - Redesigned to be less tall and more explicit */}
-          <div className="grid grid-cols-4 gap-2 mb-4">
+          <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
             <div className="bg-blue-50 rounded-lg px-3 py-2 border border-blue-100 flex items-center">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                <span className="text-blue-700 font-bold">{params.currentAge}</span>
+              <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center mr-1 sm:mr-2">
+                <span className="text-blue-700 text-sm sm:text-base font-bold">{params.currentAge}</span>
               </div>
               <div>
                 <div className="text-xs font-medium text-gray-600">Starting Age</div>
-                <div className="text-sm font-semibold">{new Date().getFullYear()}</div>
+                <div className="text-xs sm:text-sm font-semibold">{new Date().getFullYear()}</div>
               </div>
             </div>
             
             <div className="bg-indigo-50 rounded-lg px-3 py-2 border border-indigo-100 flex items-center">
-              <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-2">
-                <span className="text-indigo-700 font-bold">{statistics.retirementStartAge}</span>
+              <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-1 sm:mr-2">
+                <span className="text-indigo-700 text-sm sm:text-base font-bold">{statistics.retirementStartAge}</span>
               </div>
               <div>
                 <div className="text-xs font-medium text-gray-600">Retirement Begins</div>
-                <div className="text-sm font-semibold">{statistics.calculatedRetirementStartYear}</div>
+                <div className="text-xs sm:text-sm font-semibold">{statistics.calculatedRetirementStartYear}</div>
               </div>
             </div>
             
             {statistics.isCapitalExhausted ? (
               <div className="bg-red-50 rounded-lg px-3 py-2 border border-red-100 flex items-center">
-                <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-2">
-                  <span className="text-red-700 font-bold">{statistics.exhaustionAge}</span>
+                <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-red-100 rounded-full flex items-center justify-center mr-1 sm:mr-2">
+                  <span className="text-red-700 text-sm sm:text-base font-bold">{statistics.exhaustionAge}</span>
                 </div>
                 <div>
                   <div className="text-xs font-medium text-gray-600">Funds Depleted</div>
-                  <div className="text-sm font-semibold text-red-700">{statistics.exhaustionYear}</div>
+                  <div className="text-xs sm:text-sm font-semibold text-red-700">{statistics.exhaustionYear}</div>
                 </div>
               </div>
             ) : (
               <div className="bg-emerald-50 rounded-lg px-3 py-2 border border-emerald-100 flex items-center">
-                <div className="flex-shrink-0 w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center mr-2">
-                  <span className="text-emerald-700 font-bold">✓</span>
+                <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-emerald-100 rounded-full flex items-center justify-center mr-1 sm:mr-2">
+                  <span className="text-emerald-700 text-sm sm:text-base font-bold">✓</span>
                 </div>
                 <div>
                   <div className="text-xs font-medium text-gray-600">Funds Remaining</div>
-                  <div className="text-sm font-semibold text-emerald-700">{formatAmount(statistics.finalCapital).split('.')[0]}</div>
+                  <div className="text-xs sm:text-sm font-semibold text-emerald-700">{formatAmount(statistics.finalCapital).split('.')[0]}</div>
                 </div>
               </div>
             )}
             
             <div className="bg-purple-50 rounded-lg px-3 py-2 border border-purple-100 flex items-center">
-              <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-2">
-                <span className="text-purple-700 font-bold">{statistics.lifeExpectancy}</span>
+              <div className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 bg-purple-100 rounded-full flex items-center justify-center mr-1 sm:mr-2">
+                <span className="text-purple-700 text-sm sm:text-base font-bold">{statistics.lifeExpectancy}</span>
               </div>
               <div>
                 <div className="text-xs font-medium text-gray-600">Life Expectancy</div>
-                <div className="text-sm font-semibold">{new Date().getFullYear() + (statistics.lifeExpectancy - params.currentAge)}</div>
+                <div className="text-xs sm:text-sm font-semibold">{new Date().getFullYear() + (statistics.lifeExpectancy - params.currentAge)}</div>
               </div>
             </div>
           </div>

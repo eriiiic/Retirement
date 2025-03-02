@@ -148,167 +148,144 @@ export const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
   }, [graphData]);
 
   return (
-    <div className="mt-8 bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-200 p-6">
-      <div className="mb-6">
+    <div className="mt-8 bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-6">
+      <div className="mb-4 sm:mb-6">
         <h2 className="text-xl font-semibold text-gradient mb-2 sm:mb-0">Capital Evolution</h2>
-        <p className="text-sm text-gray-600 mb-5">Track how your investments grow over time and visualize your retirement journey.</p>
+        <p className="text-sm text-gray-600 mb-3 sm:mb-5">Track how your investments grow over time and visualize your retirement journey.</p>
       </div>
       
-      <div className="bg-white rounded-xl shadow-inner p-4 border border-gray-100">
-        <div className="relative">
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart
-              data={graphData}
-              margin={{ top: 10, right: 30, left: 35, bottom: 10 }}
+      <div className="relative -mx-2 sm:mx-0">
+        <ResponsiveContainer width="100%" height={380}>
+          <LineChart
+            data={graphData}
+            margin={{ top: 10, right: 10, left: 5, bottom: 10 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" />
+            <XAxis 
+              dataKey="year" 
+              tick={{ fill: '#4b5563', fontSize: 11 }}
+              tickMargin={8}
+            />
+            <YAxis 
+              tickFormatter={(value: number) => `${(value / 1000).toFixed(0)}k`}
+              tick={{ fill: '#4b5563', fontSize: 11 }}
+              tickMargin={8}
+              width={40}
+            />
+            <Tooltip 
+              content={<CustomTooltip currentAge={currentAge} currentYear={currentYear} formatAmount={formatAmount} />}
+            />
+            <Legend 
+              iconType="circle" 
+              wrapperStyle={{ paddingTop: 5, fontSize: '11px' }}
+            />
+            
+            {/* Capital depletion line (red) */}
+            {zeroCapitalYear && (
+              <ReferenceLine
+                x={zeroCapitalYear}
+                stroke="#ef4444"
+                strokeWidth={2}
+                ifOverflow="extendDomain"
+              />
+            )}
+            
+            {/* Retirement age line (blue dashed) */}
+            {retirementYear && (
+              <ReferenceLine
+                x={retirementYear}
+                stroke="#4f46e5"
+                strokeWidth={2}
+                strokeDasharray="3 3"
+                ifOverflow="extendDomain"
+              />
+            )}
+            
+            {/* Target age line (green) */}
+            {targetAgeYear && (
+              <ReferenceLine
+                x={targetAgeYear}
+                stroke="#16a34a"
+                strokeWidth={2}
+                ifOverflow="extendDomain"
+              />
+            )}
+            
+            {state.visibleSeries.capital && (
+              <Line
+                type="monotone"
+                dataKey="capital"
+                stroke="#4f46e5"
+                name="Capital with Interest"
+                strokeWidth={3}
+                dot={false}
+                activeDot={{ r: 8, fill: '#4f46e5', stroke: '#ffffff', strokeWidth: 2 }}
+              />
+            )}
+            {state.visibleSeries.capitalWithoutInterest && (
+              <Line
+                type="monotone"
+                dataKey="capitalWithoutInterest"
+                stroke="#94a3b8"
+                name="Initial Investment"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 6, fill: '#94a3b8', stroke: '#ffffff', strokeWidth: 2 }}
+                strokeDasharray="5 5"
+              />
+            )}
+          </LineChart>
+        </ResponsiveContainer>
+        
+        {/* Overlay absolute positioned labels for better visibility */}
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Zero capital age label (red) */}
+          {zeroCapitalYear && zeroCapitalAge && (
+            <div 
+              className="absolute flex items-center justify-end"
+              style={{ 
+                right: `calc(100% - ${getLabelPosition(zeroCapitalYear) * 100}%)`, 
+                top: '15%',
+                transform: 'translateY(-50%)'
+              }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f1f1" />
-              <XAxis 
-                dataKey="year" 
-                label={{ 
-                  value: 'Year', 
-                  position: 'insideBottomRight', 
-                  offset: -15,
-                  style: { 
-                    fontWeight: 600,
-                    fill: '#4b5563',
-                    fontSize: '16px'
-                  }
-                }}
-                tick={{ fill: '#4b5563' }}
-                tickMargin={12}
-              />
-              <YAxis 
-                tickFormatter={(value: number) => `${(value / 1000).toFixed(0)}k`}
-                label={{ 
-                  value: `Capital (${currencySymbol})`, 
-                  angle: -90, 
-                  position: 'outside',
-                  style: {
-                    fontWeight: 600,
-                    fill: '#4b5563',
-                    fontSize: '16px',
-                    textAnchor: 'middle'
-                  },
-                  dx: -35
-                }}
-                tick={{ fill: '#4b5563' }}
-                tickMargin={12}
-              />
-              <Tooltip 
-                content={<CustomTooltip currentAge={currentAge} currentYear={currentYear} formatAmount={formatAmount} />}
-              />
-              <Legend 
-                iconType="circle" 
-                wrapperStyle={{ paddingTop: 10 }}
-              />
-              
-              {/* Capital depletion line (red) */}
-              {zeroCapitalYear && (
-                <ReferenceLine
-                  x={zeroCapitalYear}
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                  ifOverflow="extendDomain"
-                />
-              )}
-              
-              {/* Retirement age line (blue dashed) */}
-              {retirementYear && (
-                <ReferenceLine
-                  x={retirementYear}
-                  stroke="#4f46e5"
-                  strokeWidth={2}
-                  strokeDasharray="3 3"
-                  ifOverflow="extendDomain"
-                />
-              )}
-              
-              {/* Target age line (green) */}
-              {targetAgeYear && (
-                <ReferenceLine
-                  x={targetAgeYear}
-                  stroke="#16a34a"
-                  strokeWidth={2}
-                  ifOverflow="extendDomain"
-                />
-              )}
-              
-              {state.visibleSeries.capital && (
-                <Line
-                  type="monotone"
-                  dataKey="capital"
-                  stroke="#4f46e5"
-                  name="Capital with Interest"
-                  strokeWidth={3}
-                  dot={false}
-                  activeDot={{ r: 8, fill: '#4f46e5', stroke: '#ffffff', strokeWidth: 2 }}
-                />
-              )}
-              {state.visibleSeries.capitalWithoutInterest && (
-                <Line
-                  type="monotone"
-                  dataKey="capitalWithoutInterest"
-                  stroke="#94a3b8"
-                  name="Initial Investment"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 6, fill: '#94a3b8', stroke: '#ffffff', strokeWidth: 2 }}
-                  strokeDasharray="5 5"
-                />
-              )}
-            </LineChart>
-          </ResponsiveContainer>
+              <div className="bg-red-500 text-white font-bold py-1 px-3 rounded-lg shadow-md mr-2">
+                Age {zeroCapitalAge}
+              </div>
+            </div>
+          )}
           
-          {/* Overlay absolute positioned labels for better visibility */}
-          <div className="absolute inset-0 pointer-events-none">
-            {/* Zero capital age label (red) */}
-            {zeroCapitalYear && zeroCapitalAge && (
-              <div 
-                className="absolute flex items-center justify-end"
-                style={{ 
-                  right: `calc(100% - ${getLabelPosition(zeroCapitalYear) * 100}%)`, 
-                  top: '15%',
-                  transform: 'translateY(-50%)'
-                }}
-              >
-                <div className="bg-red-500 text-white font-bold py-1 px-3 rounded-lg shadow-md mr-2">
-                  Age {zeroCapitalAge}
-                </div>
+          {/* Retirement age label (blue) */}
+          {retirementYear && retirementAge && (
+            <div 
+              className="absolute flex items-center justify-end"
+              style={{ 
+                right: `calc(100% - ${getLabelPosition(retirementYear) * 100}%)`, 
+                top: '10%',
+                transform: 'translateY(-50%)'
+              }}
+            >
+              <div className="bg-indigo-600 text-white font-bold py-1 px-3 rounded-lg shadow-md mr-2">
+                Age {retirementAge}
               </div>
-            )}
-            
-            {/* Retirement age label (blue) */}
-            {retirementYear && retirementAge && (
-              <div 
-                className="absolute flex items-center justify-end"
-                style={{ 
-                  right: `calc(100% - ${getLabelPosition(retirementYear) * 100}%)`, 
-                  top: '10%',
-                  transform: 'translateY(-50%)'
-                }}
-              >
-                <div className="bg-indigo-600 text-white font-bold py-1 px-3 rounded-lg shadow-md mr-2">
-                  Age {retirementAge}
-                </div>
+            </div>
+          )}
+          
+          {/* Target age label (green) */}
+          {targetAgeYear && targetAge && (
+            <div 
+              className="absolute flex items-center justify-end"
+              style={{ 
+                right: `calc(100% - ${getLabelPosition(targetAgeYear) * 100}%)`, 
+                top: '20%',
+                transform: 'translateY(-50%)'
+              }}
+            >
+              <div className="bg-green-600 text-white font-bold py-1 px-3 rounded-lg shadow-md mr-2">
+                Age {targetAge}
               </div>
-            )}
-            
-            {/* Target age label (green) */}
-            {targetAgeYear && targetAge && (
-              <div 
-                className="absolute flex items-center justify-end"
-                style={{ 
-                  right: `calc(100% - ${getLabelPosition(targetAgeYear) * 100}%)`, 
-                  top: '20%',
-                  transform: 'translateY(-50%)'
-                }}
-              >
-                <div className="bg-green-600 text-white font-bold py-1 px-3 rounded-lg shadow-md mr-2">
-                  Age {targetAge}
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
