@@ -16,7 +16,6 @@ RewriteRule ^ index.html [L]
   Header set X-XSS-Protection "1; mode=block"
   Header set X-Frame-Options "SAMEORIGIN"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
-  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'"
 </IfModule>
 
 # Enable GZIP compression
@@ -44,4 +43,4 @@ RewriteRule ^ index.html [L]
   # Others
   ExpiresByType application/pdf "access plus 1 month"
   ExpiresByType application/x-shockwave-flash "access plus 1 month"
-</IfModule>
+</IfModule> 

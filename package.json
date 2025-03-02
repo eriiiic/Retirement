@@ -25,7 +25,7 @@
   "name": "retraite",
   "version": "1.0.0",
   "main": "postcss.config.js",
-  "homepage": "https://github.com/eriiiic/Retirement",
+  "homepage": "https://retired.ericdelattre.fr",
   "scripts": {
     "test": "react-scripts test",
     "start": "react-scripts start",
