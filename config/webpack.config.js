@@ -6,11 +6,12 @@ const appDirectory = fs.realpathSync(process.cwd());
 const resolveApp = relativePath => path.resolve(appDirectory, relativePath);
 
 module.exports = function override(config) {
-  // Add an alias for the missing file
+  // Add aliases for the missing files
   config.resolve.alias = {
     ...config.resolve.alias,
-    // Add an alias to use index.js instead of index.mjs - using the v6.3.0 structure
-    './node_modules/react-router-dom/index.mjs': resolveApp('node_modules/react-router-dom/index.js')
+    // Add aliases for both the root and dist versions
+    './node_modules/react-router-dom/index.mjs': resolveApp('node_modules/react-router-dom/index.js'),
+    './node_modules/react-router-dom/dist/index.mjs': resolveApp('node_modules/react-router-dom/index.js')
   };
 
   // Find and modify the source-map-loader rule
