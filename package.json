@@ -41,7 +41,8 @@
     "build": "react-app-rewired build",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "postinstall": "node scripts/fix-react-router.js"
   },
   "keywords": [
     "retirement calculator",
