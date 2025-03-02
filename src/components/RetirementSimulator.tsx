@@ -651,7 +651,7 @@ const RetirementSimulator = () => {
       <div className="mb-6 sm:mb-8 text-center">
         <div className="title-container inline-block mb-4 px-4 py-2">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gradient">
-            FIRE Calculator | Financial Independence Retire Early
+            Financial Independence, Retire Early Calculator
           </h1>
         </div>
         <p className="text-gray-800 text-sm sm:text-base max-w-2xl mx-auto font-medium">
