@@ -299,28 +299,26 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
       return;
     }
 
-    postWorkerMessage({
-      type: WorkerMessageType.FILTER_AND_SORT_DATA,
-      payload: {
+    postWorkerMessage(
+      WorkerMessageType.FILTER_AND_SORT_DATA,
+      {
         graphData,
         filteredPhase: state.filteredPhase,
         sortConfig: state.sortConfig
-      }
-    }, (response: WorkerResponse) => {
-      if (response.type === WorkerMessageType.ERROR) {
-        console.error('Worker error:', response.error);
-        return;
-      }
+      },
+      (response) => {
+        if (response.error) {
+          console.error('Worker error:', response.error);
+          return;
+        }
 
-      if (response.type === WorkerMessageType.FILTERED_SORTED_DATA_RESULT && response.data) {
-        setProcessedData(response.data);
+        // Set the filtered data
+        setProcessedData(response);
         
         // Set a reasonable height for the list
-        setListHeight(Math.min(500, response.data.length * 42));
-      } else {
-        console.error('Invalid worker response type:', response.type);
+        setListHeight(Math.min(500, response.length * 42));
       }
-    });
+    );
   }, [graphData, state.filteredPhase, state.sortConfig, postWorkerMessage]);
 
   // Update container width when visible

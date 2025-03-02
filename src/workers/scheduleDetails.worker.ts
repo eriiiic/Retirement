@@ -1,55 +1,57 @@
 import { WorkerMessageType } from '../types/worker';
-import { GraphDataPoint, SortConfig, FilterPhase } from '../components/retirement/types';
+import { handleWorkerError } from './utils';
 
 const ctx: Worker = self as any;
 
 ctx.onmessage = (event: MessageEvent) => {
-  const { type, payload } = event.data;
+  const { type, payload, messageId } = event.data;
 
   switch (type) {
     case WorkerMessageType.FILTER_AND_SORT_DATA:
       try {
-        const { graphData, filteredPhase, sortConfig } = payload;
+        const { graphData, filterKey, filterValue, sortKey, sortDirection } = payload;
         
-        // First filter the data based on the selected phase
+        // Apply filters if provided
         let filteredData = [...graphData];
-        
-        if (filteredPhase !== 'all') {
-          filteredData = filteredData.filter((point: GraphDataPoint) => {
-            if (filteredPhase === 'investment') {
-              return point.retirement === "No";
-            } else if (filteredPhase === 'retirement') {
-              return point.retirement === "Yes";
+        if (filterKey && filterValue !== undefined && filterValue !== null) {
+          filteredData = filteredData.filter(item => {
+            // Handle different filtering scenarios
+            if (typeof filterValue === 'string') {
+              // For string filtering like "Yes"/"No" on retirement
+              return item[filterKey] === filterValue;
+            } else if (typeof filterValue === 'number') {
+              // For numeric filtering
+              return item[filterKey] === filterValue;
+            } else if (typeof filterValue === 'object' && Array.isArray(filterValue)) {
+              // For range filtering like [minYear, maxYear]
+              const [min, max] = filterValue;
+              return item[filterKey] >= min && item[filterKey] <= max;
             }
             return true;
           });
         }
         
-        // Then sort the data if a sort config is provided
-        if (sortConfig.key) {
-          filteredData.sort((a: GraphDataPoint, b: GraphDataPoint) => {
-            const key = sortConfig.key as keyof GraphDataPoint;
+        // Apply sorting if provided
+        if (sortKey) {
+          filteredData.sort((a, b) => {
+            const valueA = a[sortKey];
+            const valueB = b[sortKey];
             
-            if (a[key] < b[key]) {
-              return sortConfig.direction === 'ascending' ? -1 : 1;
+            if (sortDirection === 'asc') {
+              return valueA > valueB ? 1 : -1;
+            } else {
+              return valueA < valueB ? 1 : -1;
             }
-            if (a[key] > b[key]) {
-              return sortConfig.direction === 'ascending' ? 1 : -1;
-            }
-            return 0;
           });
         }
-        
+
         ctx.postMessage({
           type: WorkerMessageType.FILTERED_SORTED_DATA_RESULT,
-          data: filteredData
+          data: filteredData,
+          messageId
         });
       } catch (error) {
-        ctx.postMessage({
-          type: WorkerMessageType.ERROR,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          data: null
-        });
+        handleWorkerError(ctx, error);
       }
       break;
 
@@ -57,7 +59,8 @@ ctx.onmessage = (event: MessageEvent) => {
       ctx.postMessage({
         type: WorkerMessageType.ERROR,
         error: `Unknown message type: ${type}`,
-        data: null
+        data: null,
+        messageId
       });
   }
 }; 

@@ -132,20 +132,21 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
       graphData.push(dataPoint);
     }
     
-    postWorkerMessage({
-      type: WorkerMessageType.CALCULATE_SUMMARY,
-      payload: {
-        graphData
-      }
-    }, (response: WorkerResponse) => {
-      if (response.type === WorkerMessageType.ERROR) {
-        console.error('Worker error:', response.error);
-        return;
-      }
+    postWorkerMessage(
+      WorkerMessageType.CALCULATE_SUMMARY,
+      {
+        graphData,
+        params
+      },
+      (response) => {
+        if (response.error) {
+          console.error('Worker error:', response.error);
+          return;
+        }
 
-      if (response.type === WorkerMessageType.SUMMARY_RESULT && response.data) {
+        // We've changed how worker responses are structured - now successful responses are directly the data object
         // Calculate timeline widths based on retirement duration and life expectancy
-        const retirementDuration = response.data.retirementDuration;
+        const retirementDuration = response.retirementDuration;
         const totalYears = statistics.lifeExpectancy - params.currentAge;
         const workingYears = statistics.retirementStartAge - params.currentAge;
         
@@ -180,23 +181,21 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
         
         // Create capital comparison object
         const capitalComparison: CapitalComparison = {
-          invested: response.data.totalContributions,
-          atRetirement: statistics.capitalAtRetirement
+          invested: response.totalInvestedAmount || statistics.totalInvestedAmount,
+          atRetirement: response.capitalAtRetirement || statistics.capitalAtRetirement
         };
         
         // Create status info object
         const status: StatusInfo = {
-          isOnTrack: !statistics.isCapitalExhausted
+          isOnTrack: !response.isCapitalExhausted
         };
         
         // Dispatch updates
         dispatch({ type: 'UPDATE_TIMELINE_WIDTHS', payload: timelineWidths });
         dispatch({ type: 'UPDATE_CAPITAL_COMPARISON', payload: capitalComparison });
         dispatch({ type: 'UPDATE_STATUS', payload: status });
-      } else {
-        console.error('Invalid worker response type:', response.type);
       }
-    });
+    );
   }, [statistics, withdrawalMode, postWorkerMessage, params.currentAge, params.monthlyInvestment, params.monthlyRetirementWithdrawal]);
 
   const { timelineWidths, status } = summaryState;

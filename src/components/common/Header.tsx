@@ -76,7 +76,7 @@ const Header = () => {
           <div className="px-2 pt-2 pb-3 space-y-1 bg-white shadow-lg rounded-b-lg">
             <Link
               to="/"
-              className={`block px-3 py-2 rounded-md text-base font-medium ${
+              className={`px-3 py-2 rounded-md text-base font-medium ${
                 isActive('/') 
                   ? 'text-indigo-700 bg-indigo-50' 
                   : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
@@ -88,7 +88,7 @@ const Header = () => {
             
             <Link
               to="/blog"
-              className={`block px-3 py-2 rounded-md text-base font-medium flex items-center ${
+              className={`px-3 py-2 rounded-md text-base font-medium flex items-center ${
                 isActive('/blog') 
                   ? 'text-indigo-700 bg-indigo-50' 
                   : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
