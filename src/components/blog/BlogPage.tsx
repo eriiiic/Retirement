@@ -179,6 +179,8 @@ const BlogPage: React.FC = () => {
           </button>
         </form>
       </div>
+      
+      
     </div>
   );
 };
