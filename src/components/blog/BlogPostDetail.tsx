@@ -85,24 +85,6 @@ const BlogPostDetail: React.FC = () => {
           <p className="text-gray-700">{post.excerpt}</p>
         )}
       </div>
-      
-      <div className="mt-12 pt-8 border-t border-gray-200">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">Share this article</h3>
-        <div className="flex gap-4">
-          <button className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700">
-            <span>📱</span>
-          </button>
-          <button className="p-2 bg-blue-400 text-white rounded-full hover:bg-blue-500">
-            <span>💬</span>
-          </button>
-          <button className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700">
-            <span>📧</span>
-          </button>
-          <button className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700">
-            <span>📎</span>
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

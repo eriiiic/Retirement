@@ -139,7 +139,7 @@ Many FIRE achievers emphasize that retirement doesn't mean stopping work entirel
 The FIRE movement ultimately isn't about retiring to a life of leisure—it's about reclaiming ownership of your time and making conscious choices about how you live. By understanding and applying these fundamentals, you're not just working toward financial independence; you're redesigning your relationship with money and work to create a more intentional life.
 
 Whether you achieve FIRE in five years or fifteen, the principles of increased savings, mindful spending, and purposeful investing will improve your financial resilience and expand your options for creating a life aligned with your values.`,
-    date: '2023-12-15',
+    date: '2024-04-15',
     author: 'Emma Richardson',
     topics: ['Financial Independence', 'Early Retirement', 'Savings'],
     image: 'https://images.unsplash.com/photo-1579621970588-a35d0e7ab9b6?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
