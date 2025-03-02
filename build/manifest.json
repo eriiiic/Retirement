@@ -1,6 +1,6 @@
 {
   "short_name": "FIRE Calc",
-  "name": "FIRE Calculator | Financial Independence Retire Early",
+  "name": "FIRECalculator.ai | Financial Independence Retire Early",
   "icons": [
     {
       "src": "favicon.ico",
@@ -15,12 +15,14 @@
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
   "start_url": ".",
+  "scope": "/",
   "display": "standalone",
   "theme_color": "#4f46e5",
   "background_color": "#ffffff",
-  "description": "Plan your path to financial independence and early retirement with our advanced FIRE calculator."
+  "description": "Plan your path to financial independence and early retirement with our advanced FIRE calculator. Comprehensive retirement planning tool."
 } 
