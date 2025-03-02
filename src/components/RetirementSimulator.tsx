@@ -65,6 +65,8 @@ const RetirementSimulator = () => {
   // Refactor calculateSimulation into smaller functions
   const calculateCapitalAtRetirement = (retirementStartIndex: number, annualRate: number, inflation: number): number => {
     // Use the financial calculation utility for more accurate results
+    // For consistent results with the main simulation, we use the same method
+    // without applying any special logic
     return calculateFutureValue(
       params.initialCapital,
       annualRate,
@@ -158,34 +160,9 @@ const RetirementSimulator = () => {
       // Handle transition to retirement year
       const isTransitionYear = simulatedYear === calculatedRetirementStartYear;
       
-      // Only set capital to calculated value at retirement year if we're not in the first year of simulation
-      // This prevents overriding the initial capital in the first year
-      if (isTransitionYear && year > 0) {
-        // Instead of abruptly setting the capital, ensure a smooth transition
-        // by calculating the natural growth from the previous year
-        if (data.length > 0) {
-          const previousYearCapital = data[data.length - 1].capital;
-          // Calculate one year of growth with monthly compounding
-          let naturalGrowth = previousYearCapital;
-          const monthlyGrowthRate = monthlyReturn;
-          
-          // Apply monthly growth for 12 months
-          for (let month = 0; month < 12; month++) {
-            // Add monthly investment for pre-retirement months
-            if (month < 6) {
-              naturalGrowth += currentMonthlyInvestment;
-            }
-            // Apply interest
-            naturalGrowth *= (1 + monthlyGrowthRate);
-          }
-          
-          // Use the natural growth value if it's greater than the calculated retirement capital
-          // This prevents any sudden drops in capital
-          capital = Math.max(naturalGrowth, capitalAtRetirement);
-        } else {
-          capital = capitalAtRetirement;
-        }
-      }
+      // Remove the special transition year capital setting logic entirely
+      // This lets the normal simulation loop handle the transition year naturally
+      // without any artificial adjustments to capital
       
       let capitalAtStart = capital;
       let annualInvestment = 0;
@@ -266,6 +243,7 @@ const RetirementSimulator = () => {
             totalInvested += yearlyInvestment;
           } else if (isTransitionYear) {
             // Transition year - half investment, half withdrawal
+            // For smooth transition, apply the exact same logic every time
             const halfYearInvestment = currentMonthlyInvestment * 6;
             const halfYearWithdrawal = currentMonthlyWithdrawal * 6;
             capital += halfYearInvestment;
@@ -669,11 +647,11 @@ const RetirementSimulator = () => {
       <div className="mb-6 sm:mb-8 text-center">
         <div className="title-container inline-block mb-4 px-4 py-2">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gradient">
-            Secure Your Future: Financial Freedom Calculator
+            FIRE Calculator | Financial Independence Retire Early
           </h1>
         </div>
         <p className="text-gray-800 text-sm sm:text-base max-w-2xl mx-auto font-medium">
-          Plan your perfect retirement with our advanced financial planning tool. Optimize investments, track growth, and achieve your retirement goals.
+          Plan your path to financial independence and early retirement. Calculate exactly how much you need to save and how long until you can achieve FIRE.
         </p>
       </div>
       
