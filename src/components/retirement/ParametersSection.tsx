@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { SimulatorParams, Statistics, FormatAmountFunction } from './types';
+import { SimulatorParams, Statistics, FormatAmountFunction, GraphDataPoint } from './types';
 import FormulaModal from './FormulaModal';
-import { generateRetirementReport } from '../../utils/pdfGenerator';
+import { generateModernRetirementReport } from '../../utils/modernPdfGenerator';
 
 interface ParametersSectionProps {
   params: SimulatorParams;
@@ -9,6 +9,7 @@ interface ParametersSectionProps {
   formatAmount: FormatAmountFunction;
   onParamChange: (key: keyof SimulatorParams, value: any) => void;
   chartRef?: React.RefObject<HTMLDivElement>;
+  graphData?: GraphDataPoint[];
 }
 
 export const ParametersSection: React.FC<ParametersSectionProps> = ({
@@ -16,7 +17,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   statistics,
   formatAmount,
   onParamChange,
-  chartRef
+  chartRef,
+  graphData = []  // Provide a default empty array
 }) => {
   const [inputValues, setInputValues] = useState({
     initialCapital: params.initialCapital.toString(),
@@ -543,20 +545,28 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     setShowPdfSuccess(false);
     
     console.log('PDF generation started in ParametersSection');
+    console.log('Params:', params);
+    console.log('Statistics:', statistics);
+    console.log('GraphData length:', graphData?.length);
+    
     try {
-      console.log('Calling generateRetirementReport with:', {
+      console.log('Calling generateModernRetirementReport with:', {
         paramsProvided: !!params,
         statisticsProvided: !!statistics,
-        chartRefProvided: !!chartRef
+        chartRefProvided: !!chartRef,
+        graphDataProvided: !!graphData && graphData.length > 0,
+        formatAmountTest: formatAmount(1000) // Test formatting function
       });
       
-      await generateRetirementReport({
+      // Generate the full report (removed test PDF generation)
+      await generateModernRetirementReport({
         params,
         statistics: {
           ...statistics,
           ageAtYear: (year: number) => year - statistics.birthYear
         },
         formatAmount,
+        graphData,
         chartRef
       });
       

@@ -14,6 +14,7 @@ import {
   calculateRateBasedWithdrawal
 } from '../utils/financialCalculations';
 import { generateRetirementReport } from '../utils/pdfGenerator';
+import { generateModernRetirementReport } from '../utils/modernPdfGenerator';
 
 const RetirementSimulator = () => {
   // Initialize simulator parameters
@@ -665,6 +666,7 @@ const RetirementSimulator = () => {
         formatAmount={formatAmount}
         onParamChange={handleParamChange}
         chartRef={chartRef}
+        graphData={graphData}
       />
 
       <ResultsSummary

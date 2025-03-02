@@ -9,7 +9,7 @@ applyPlugin(jsPDF);
 // Add TypeScript declarations for autoTable
 declare module 'jspdf' {
   interface jsPDF {
-    autoTable: (options: any) => jsPDF;
+    autoTable: (options: any) => jsPDF & { lastAutoTable: { finalY: number } };
     lastAutoTable: {
       finalY: number;
     };
