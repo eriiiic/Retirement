@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { blogPosts, BlogPost, BlogTopic } from './blogData';
 
 const BlogPage: React.FC = () => {
@@ -97,50 +98,53 @@ const BlogPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
         {filteredPosts.length > 0 ? (
           filteredPosts.map((post: BlogPost) => (
-            <article 
-              key={post.id} 
-              className="flex flex-col bg-white rounded-lg shadow-md overflow-hidden h-full border border-gray-200 transition-transform hover:-translate-y-1 hover:shadow-lg"
+            <Link 
+              key={post.id}
+              to={`/blog/${post.id}`}
+              className="flex flex-col h-full"
             >
-              {post.image && (
-                <div className="relative h-48 overflow-hidden">
-                  <img 
-                    src={post.image} 
-                    alt={post.title} 
-                    className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-              )}
-              <div className="p-6 flex-grow flex flex-col">
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {post.topics.map((topic: BlogTopic) => (
-                    <span 
-                      key={topic} 
-                      className="inline-flex items-center text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-1 rounded"
-                    >
-                      <span className="mr-1">🏷️</span> {topic}
-                    </span>
-                  ))}
-                </div>
-                <h2 className="text-xl font-bold text-gray-900 mb-2 hover:text-indigo-600">
-                  {post.title}
-                </h2>
-                <p className="text-gray-600 mb-4 flex-grow">
-                  {post.excerpt}
-                </p>
-                <div className="mt-auto pt-4 border-t border-gray-100">
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <span className="mr-1">📅</span>
-                      <span>{formatDate(post.date)}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="mr-1">⏱️</span>
-                      <span>{post.readTime} min read</span>
+              <article className="flex flex-col bg-white rounded-lg shadow-md overflow-hidden h-full border border-gray-200 transition-transform hover:-translate-y-1 hover:shadow-lg">
+                {post.image && (
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={post.image} 
+                      alt={post.title} 
+                      className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                )}
+                <div className="p-6 flex-grow flex flex-col">
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {post.topics.map((topic: BlogTopic) => (
+                      <span 
+                        key={topic} 
+                        className="inline-flex items-center text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-1 rounded"
+                      >
+                        <span className="mr-1">🏷️</span> {topic}
+                      </span>
+                    ))}
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2 hover:text-indigo-600">
+                    {post.title}
+                  </h2>
+                  <p className="text-gray-600 mb-4 flex-grow">
+                    {post.excerpt}
+                  </p>
+                  <div className="mt-auto pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <div className="flex items-center">
+                        <span className="mr-1">📅</span>
+                        <span>{formatDate(post.date)}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="mr-1">⏱️</span>
+                        <span>{post.readTime} min read</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </article>
+              </article>
+            </Link>
           ))
         ) : (
           <div className="col-span-full text-center py-12">
