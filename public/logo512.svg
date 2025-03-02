@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="512" height="512">
+  <!-- Shadow Layer -->
+  <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+    <feOffset dx="0" dy="4"/>
+    <feComponentTransfer>
+      <feFuncA type="linear" slope="0.3"/>
+    </feComponentTransfer>
+    <feMerge>
+      <feMergeNode/>
+      <feMergeNode in="SourceGraphic"/>
+    </feMerge>
+  </filter>
+  
+  <!-- Background Circle with Gradient -->
+  <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#f0f4f8"/>
+    <stop offset="100%" stop-color="#d9e2ec"/>
+  </linearGradient>
+  <circle cx="120" cy="120" r="110" fill="url(#bgGradient)"/>
+  
+  <!-- Flame Gradient -->
+  <linearGradient id="flameGradient" x1="30%" y1="0%" x2="70%" y2="100%">
+    <stop offset="0%" stop-color="#FF9500"/>
+    <stop offset="50%" stop-color="#FF5252"/>
+    <stop offset="100%" stop-color="#D81B60"/>
+  </linearGradient>
+  
+  <!-- Inner Flame Gradient -->
+  <linearGradient id="innerFlameGradient" x1="40%" y1="0%" x2="60%" y2="100%">
+    <stop offset="0%" stop-color="#FFCC80"/>
+    <stop offset="60%" stop-color="#FF9500"/>
+    <stop offset="100%" stop-color="#FF5252"/>
+  </linearGradient>
+  
+  <!-- Flame Shape -->
+  <g filter="url(#dropShadow)">
+    <!-- Outer Flame -->
+    <path d="M120,190 
+             C80,190 70,150 70,130 
+             C70,110 80,95 85,85 
+             C90,75 95,60 100,50 
+             C105,60 115,75 117,85 
+             C125,65 130,55 135,45 
+             C140,65 155,85 155,105 
+             C165,95 170,80 172,75 
+             C175,95 180,120 170,145 
+             C160,170 145,190 120,190 Z" 
+          fill="url(#flameGradient)"/>
+    
+    <!-- Inner Flame -->
+    <path d="M120,170 
+             C95,170 90,145 90,130 
+             C90,115 95,105 100,95 
+             C105,85 107,75 110,65 
+             C113,75 118,90 120,95 
+             C125,80 127,75 130,65 
+             C133,75 140,95 140,110 
+             C145,100 148,90 150,85 
+             C152,100 155,115 145,135 
+             C135,155 135,170 120,170 Z" 
+          fill="url(#innerFlameGradient)"/>
+  </g>
+  
+  <!-- Highlight -->
+  <path d="M100,95 C105,85 107,75 110,65 C113,75 118,90 120,95 C118,98 115,100 110,100 C105,100 102,98 100,95 Z" 
+        fill="#FFECB3" opacity="0.7"/>
+</svg> 
