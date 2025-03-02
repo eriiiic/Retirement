@@ -20,8 +20,9 @@ done
 
 echo "🚀 Starting production deployment process for FIRECalculator.ai..."
 
-# Step 1: Install dependencies
-echo "📦 Installing dependencies..."
+# Step 1: Install dependencies and update package-lock.json
+echo "📦 Installing dependencies and updating package-lock.json..."
+npm install --package-lock-only
 npm install
 
 # Step 2: Run tests (if not skipped)
