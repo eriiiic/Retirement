@@ -2,6 +2,9 @@
   "dependencies": {
     "@types/recharts": "^1.8.29",
     "financial": "^0.2.4",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.0",
+    "jspdf-autotable": "^5.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.5.0",
@@ -22,10 +25,10 @@
     "tailwindcss": "^3.3.5",
     "typescript": "^4.9.5"
   },
-  "name": "retraite",
+  "name": "fire-calculator",
   "version": "1.0.0",
   "main": "postcss.config.js",
-  "homepage": "https://retired.ericdelattre.fr",
+  "homepage": "https://FIRECalculator.ai",
   "scripts": {
     "test": "react-scripts test",
     "start": "react-scripts start",
@@ -34,10 +37,19 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "retirement calculator",
+    "investment simulator",
+    "retirement planner",
+    "financial independence calculator",
+    "FIRE calculator",
+    "retirement savings calculator",
+    "financial independence retire early",
+    "retirement planning tool"
+  ],
+  "author": "FIRE Calculator Team",
   "license": "ISC",
-  "description": "",
+  "description": "A comprehensive retirement and financial independence (FIRE) calculator to help users plan their path to early retirement through smart investment strategies.",
   "browserslist": {
     "production": [
       ">0.2%",

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Production Deployment Script for Retirement Planning App
+# Production Deployment Script for FIRECalculator.ai
 # Target: Server with /home root directory
 
 # Parse command line arguments
@@ -18,7 +18,7 @@ do
     esac
 done
 
-echo "🚀 Starting production deployment process for Retirement Planning App..."
+echo "🚀 Starting production deployment process for FIRECalculator.ai..."
 
 # Step 1: Install dependencies
 echo "📦 Installing dependencies..."
@@ -71,7 +71,7 @@ RewriteRule ^ index.html [L]
   Header set X-XSS-Protection "1; mode=block"
   Header set X-Frame-Options "SAMEORIGIN"
   Header set Referrer-Policy "strict-origin-when-cross-origin"
-  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'"
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'"
 </IfModule>
 
 # Enable GZIP compression
@@ -106,6 +106,8 @@ EOL
 cat > build/robots.txt << EOL
 User-agent: *
 Allow: /
+
+Sitemap: https://FIRECalculator.ai/sitemap.xml
 EOL
 
 echo "✅ Build complete! Ready for production deployment."
@@ -113,6 +115,6 @@ echo ""
 echo "To deploy to your production server:"
 echo "1. Upload the contents of the 'build' folder to your server's /home directory"
 echo "2. Ensure Apache is configured with mod_rewrite enabled and AllowOverride All"
-echo "3. Your application should now be accessible at your domain/home"
+echo "3. Your application should now be accessible at FIRECalculator.ai"
 echo ""
 echo "📝 Note: If you're using Nginx instead of Apache, you'll need a different server configuration." 
