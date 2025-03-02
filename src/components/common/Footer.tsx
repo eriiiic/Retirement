@@ -1,15 +1,21 @@
 import { useState, type FC } from 'react';
+import Modal from './Modal';
+import PrivacyPolicy from '../policies/PrivacyPolicy';
+import TermsOfService from '../policies/TermsOfService';
+import CookiePolicy from '../policies/CookiePolicy';
 
 const Footer: FC = () => {
   const currentYear = new Date().getFullYear();
-  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
   
-  const handleTooltipShow = (tooltipId: string) => {
-    setActiveTooltip(tooltipId);
+  // Modal control state
+  const [openModal, setOpenModal] = useState<string | null>(null);
+  
+  const openPolicyModal = (modalId: string) => {
+    setOpenModal(modalId);
   };
   
-  const handleTooltipHide = () => {
-    setActiveTooltip(null);
+  const closeModal = () => {
+    setOpenModal(null);
   };
   
   return (
@@ -63,49 +69,53 @@ const Footer: FC = () => {
           <p className="text-sm text-gray-500 mb-4 md:mb-0">
             © {currentYear} Financial Freedom Calculator. All rights reserved.
           </p>
-          <div className="flex space-x-6">
-            <div className="relative">
-              <a 
-                href="#" 
-                className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                onMouseEnter={() => handleTooltipShow('privacy')}
-                onMouseLeave={handleTooltipHide}
-              >
-                Privacy Policy
-              </a>
-              {activeTooltip === 'privacy' && (
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-800 text-white text-xs p-2 rounded shadow-lg z-10">
-                  <div className="relative">
-                    <p>This calculator respects your privacy. We don't store any of your data. All calculations are performed locally in your browser.</p>
-                    <div className="absolute w-3 h-3 bg-gray-800 transform rotate-45 left-1/2 -ml-1.5 -bottom-1.5"></div>
-                  </div>
-                </div>
-              )}
-            </div>
-            <a href="#" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+          <div className="flex flex-wrap justify-center md:justify-end gap-x-6 gap-y-2">
+            <button 
+              onClick={() => openPolicyModal('privacy')}
+              className="text-sm text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none"
+            >
+              Privacy Policy
+            </button>
+            <button 
+              onClick={() => openPolicyModal('terms')}
+              className="text-sm text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none"
+            >
               Terms of Service
-            </a>
-            <div className="relative">
-              <a 
-                href="#" 
-                className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                onMouseEnter={() => handleTooltipShow('cookie')}
-                onMouseLeave={handleTooltipHide}
-              >
-                Cookie Policy
-              </a>
-              {activeTooltip === 'cookie' && (
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 bg-gray-800 text-white text-xs p-2 rounded shadow-lg z-10">
-                  <div className="relative">
-                    <p>We use only essential cookies required for the application to function. We do not track anything personal or use analytics cookies.</p>
-                    <div className="absolute w-3 h-3 bg-gray-800 transform rotate-45 left-1/2 -ml-1.5 -bottom-1.5"></div>
-                  </div>
-                </div>
-              )}
-            </div>
+            </button>
+            <button 
+              onClick={() => openPolicyModal('cookies')}
+              className="text-sm text-gray-500 hover:text-indigo-600 transition-colors focus:outline-none"
+            >
+              Cookie Policy
+            </button>
           </div>
         </div>
       </div>
+      
+      {/* Modals for policy pages */}
+      <Modal
+        isOpen={openModal === 'privacy'}
+        onClose={closeModal}
+        title="Privacy Policy"
+      >
+        <PrivacyPolicy />
+      </Modal>
+      
+      <Modal
+        isOpen={openModal === 'terms'}
+        onClose={closeModal}
+        title="Terms of Service"
+      >
+        <TermsOfService />
+      </Modal>
+      
+      <Modal
+        isOpen={openModal === 'cookies'}
+        onClose={closeModal}
+        title="Cookie Policy"
+      >
+        <CookiePolicy />
+      </Modal>
     </footer>
   );
 };

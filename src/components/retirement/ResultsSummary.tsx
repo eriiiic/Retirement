@@ -1,8 +1,9 @@
-import { useReducer, useEffect } from 'react';
+import { useReducer, useEffect, useState } from 'react';
 import { Statistics, SimulatorParams, FormatAmountFunction, TimelineWidths, CapitalComparison, StatusInfo, WithdrawalMode, GraphDataPoint } from './types';
 import { useWorker } from '../../hooks/useWorker';
 import { WorkerMessageType, WorkerResponse } from '../../types/worker';
 import { colors, typography, spacing, components, cx } from '../../styles/styleGuide';
+import FormulaModal from './FormulaModal';
 
 interface ResultsSummaryProps {
   statistics: Statistics;
@@ -68,6 +69,7 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
   formatAmount,
 }) => {
   const { withdrawalMode } = params;
+  const [isFormulaModalOpen, setIsFormulaModalOpen] = useState(false);
 
   const [summaryState, dispatch] = useReducer(summaryReducer, {
     timelineWidths: {
@@ -223,20 +225,33 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
           <h2 className="text-xl font-semibold text-gradient mb-1 sm:mb-0">Retirement Summary</h2>
           <p className={typography.style.subtitle}>Analysis of your financial journey</p>
         </div>
-        <div className={cx(
-          "rounded-lg px-4 py-2 mt-3 sm:mt-0 flex items-center gap-2 shadow-sm",
-          status.isOnTrack 
-            ? "bg-green-100 text-green-800 border border-green-200" 
-            : "bg-red-100 text-red-800 border border-red-200 animate-pulse"
-        )}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-3 sm:mt-0">
           <div className={cx(
-            "w-3 h-3 rounded-full",
-            status.isOnTrack ? "bg-green-500" : "bg-red-600"
-          )}></div>
-          <div>
-            <div className={cx(typography.weight.semibold, status.isOnTrack ? "text-green-800" : "text-red-800")}>{status.statusText}</div>
-            <div className={cx(typography.size.xs, status.isOnTrack ? "text-green-700" : "text-red-700")}>{status.message}</div>
+            "rounded-lg px-4 py-2 flex items-center gap-2 shadow-sm",
+            status.isOnTrack 
+              ? "bg-green-100 text-green-800 border border-green-200" 
+              : "bg-red-100 text-red-800 border border-red-200 animate-pulse"
+          )}>
+            <div className={cx(
+              "w-3 h-3 rounded-full",
+              status.isOnTrack ? "bg-green-500" : "bg-red-600"
+            )}></div>
+            <div>
+              <div className={cx(typography.weight.semibold, status.isOnTrack ? "text-green-800" : "text-red-800")}>{status.statusText}</div>
+              <div className={cx(typography.size.xs, status.isOnTrack ? "text-green-700" : "text-red-700")}>{status.message}</div>
+            </div>
           </div>
+          
+          <button 
+            onClick={() => setIsFormulaModalOpen(true)}
+            className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg px-4 py-2 border border-indigo-200 shadow-sm transition-colors flex items-center"
+          >
+            <div className="w-3 h-3 rounded-full bg-indigo-500 mr-2"></div>
+            <div>
+              <div className={cx(typography.weight.semibold, "text-indigo-800")}>Calculation Formulas</div>
+              <div className={cx(typography.size.xs, "text-indigo-700")}>View financial equations used</div>
+            </div>
+          </button>
         </div>
       </div>
       
@@ -502,6 +517,12 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
           </div>
         </div>
       </div>
+      
+      {/* Formula Modal */}
+      <FormulaModal 
+        isOpen={isFormulaModalOpen} 
+        onClose={() => setIsFormulaModalOpen(false)} 
+      />
     </div>
   );
 };

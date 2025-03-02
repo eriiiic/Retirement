@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { SimulatorParams, Statistics, GraphDataPoint } from './retirement/types';
 import ParametersSection from './retirement/ParametersSection';
 import ResultsSummary from './retirement/ResultsSummary';
@@ -13,6 +13,7 @@ import {
   calculateInflationAdjustedValue,
   calculateRateBasedWithdrawal
 } from '../utils/financialCalculations';
+import { generateRetirementReport } from '../utils/pdfGenerator';
 
 const RetirementSimulator = () => {
   // Initialize simulator parameters
@@ -32,6 +33,9 @@ const RetirementSimulator = () => {
 
   // State for chart data
   const [graphData, setGraphData] = useState<GraphDataPoint[]>([]);
+
+  // Create a ref for the chart component to use in PDF generation
+  const chartRef = useRef<HTMLDivElement>(null);
 
   // Format numbers for display based on currency
   const formatAmount = useCallback((amount: number): string => {
@@ -660,6 +664,7 @@ const RetirementSimulator = () => {
         statistics={statistics}
         formatAmount={formatAmount}
         onParamChange={handleParamChange}
+        chartRef={chartRef}
       />
 
       <ResultsSummary
@@ -674,12 +679,14 @@ const RetirementSimulator = () => {
         formatAmount={formatAmount}
       />
 
-      <CapitalEvolutionChart 
-        graphData={graphData}
-        formatAmount={formatAmount}
-        currency={params.currency}
-        currentAge={params.currentAge}
-      />
+      <div ref={chartRef}>
+        <CapitalEvolutionChart 
+          graphData={graphData}
+          formatAmount={formatAmount}
+          currency={params.currency}
+          currentAge={params.currentAge}
+        />
+      </div>
 
       <ScheduleDetails 
         graphData={graphData}

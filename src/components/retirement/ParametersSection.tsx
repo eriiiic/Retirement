@@ -1,11 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { SimulatorParams, Statistics, FormatAmountFunction } from './types';
+import FormulaModal from './FormulaModal';
+import { generateRetirementReport } from '../../utils/pdfGenerator';
 
 interface ParametersSectionProps {
   params: SimulatorParams;
   statistics: Statistics;
   formatAmount: FormatAmountFunction;
   onParamChange: (key: keyof SimulatorParams, value: any) => void;
+  chartRef?: React.RefObject<HTMLDivElement>;
 }
 
 export const ParametersSection: React.FC<ParametersSectionProps> = ({
@@ -13,6 +16,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   statistics,
   formatAmount,
   onParamChange,
+  chartRef
 }) => {
   const [inputValues, setInputValues] = useState({
     initialCapital: params.initialCapital.toString(),
@@ -40,6 +44,10 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   
   // State to track slider container dimensions for calculations
   const sliderContainerRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Add state for PDF generation
+  const [isPdfGenerating, setIsPdfGenerating] = useState<boolean>(false);
+  const [showPdfSuccess, setShowPdfSuccess] = useState<boolean>(false);
 
   // Update local input values when params change, but only if the field is not currently focused
   useEffect(() => {
@@ -97,6 +105,11 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         // Ensure value is within bounds
         newValue = Math.max(min, Math.min(max, newValue));
         
+        // For annual return rate and inflation, limit to one decimal place
+        if (id === 'annualReturnRate' || id === 'inflation') {
+          newValue = Math.round(newValue * 10) / 10;
+        }
+        
         // Update UI and state
         slider.value = newValue.toString();
         
@@ -141,6 +154,11 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         newValue = Math.round(newValue / step) * step;
         // Ensure value is within bounds
         newValue = Math.max(min, Math.min(max, newValue));
+        
+        // For annual return rate and inflation, limit to one decimal place
+        if (id === 'annualReturnRate' || id === 'inflation') {
+          newValue = Math.round(newValue * 10) / 10;
+        }
         
         // Update UI and state
         slider.value = newValue.toString();
@@ -399,9 +417,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
       case 'currentAge':
         return { min: 20, max: 80, step: 1 };
       case 'monthlyInvestment':
-        // For very large values, adjust max based on current value
-        const monthlyInvestmentMax = Math.max(10000, params.monthlyInvestment * 2);
-        return { min: 0, max: monthlyInvestmentMax, step: 100 };
+        // Set fixed maximum value to 10000 as requested
+        return { min: 0, max: 10000, step: 100 };
       case 'retirementInput':
         return { 
           min: params.currentAge + 1, 
@@ -409,17 +426,18 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
           step: 1 
         };
       case 'monthlyRetirementWithdrawal':
-        // For very large values, adjust max based on current value
-        const monthlyWithdrawalMax = Math.max(20000, params.monthlyRetirementWithdrawal * 2);
-        return { min: 0, max: monthlyWithdrawalMax, step: 100 };
+        // Set fixed maximum value to 20000 as requested
+        return { min: 0, max: 20000, step: 100 };
       case 'annualReturnRate':
         return { min: 0, max: 20, step: 0.1 };
       case 'inflation':
         return { min: 0, max: 10, step: 0.1 };
       case 'withdrawalRate':
-        return { min: 0.5, max: 20, step: 0.1 };
+        // Updated range as requested: 1-20
+        return { min: 1, max: 20, step: 0.1 };
       case 'maxAge':
-        return { min: 80, max: 105, step: 1 };
+        // Updated range as requested: 70-105
+        return { min: 70, max: 105, step: 1 };
       default:
         return { min: 0, max: 100, step: 1 };
     }
@@ -452,6 +470,11 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         newValue = Math.round(newValue / step) * step;
         // Ensure value is within bounds
         newValue = Math.max(min, Math.min(max, newValue));
+        
+        // For annual return rate and inflation, limit to one decimal place
+        if (id === 'annualReturnRate' || id === 'inflation') {
+          newValue = Math.round(newValue * 10) / 10;
+        }
         
         // Update UI and state
         slider.value = newValue.toString();
@@ -492,6 +515,11 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         // Ensure value is within bounds
         newValue = Math.max(min, Math.min(max, newValue));
         
+        // For annual return rate and inflation, limit to one decimal place
+        if (id === 'annualReturnRate' || id === 'inflation') {
+          newValue = Math.round(newValue * 10) / 10;
+        }
+        
         // Update UI and state
         slider.value = newValue.toString();
         
@@ -499,6 +527,51 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         onParamChange(id, newValue);
         setInputValues(prev => ({ ...prev, [id]: newValue.toString() }));
       }
+    }
+  };
+
+  // Handle form value changes
+  const handleValueChange = (id: keyof SimulatorParams, value: string | number) => {
+    // Update state with the new value
+    onParamChange(id, value);
+    setInputValues(prev => ({ ...prev, [id]: value.toString() }));
+  };
+
+  // Handle PDF generation
+  const handleGeneratePDF = async () => {
+    setIsPdfGenerating(true);
+    setShowPdfSuccess(false);
+    
+    console.log('PDF generation started in ParametersSection');
+    try {
+      console.log('Calling generateRetirementReport with:', {
+        paramsProvided: !!params,
+        statisticsProvided: !!statistics,
+        chartRefProvided: !!chartRef
+      });
+      
+      await generateRetirementReport({
+        params,
+        statistics: {
+          ...statistics,
+          ageAtYear: (year: number) => year - statistics.birthYear
+        },
+        formatAmount,
+        chartRef
+      });
+      
+      console.log('PDF generation completed successfully in ParametersSection');
+      setShowPdfSuccess(true);
+      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => {
+        setShowPdfSuccess(false);
+      }, 5000);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. See console for details.');
+    } finally {
+      setIsPdfGenerating(false);
     }
   };
 
@@ -565,14 +638,20 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 value={numericValue}
                 onChange={(e) => {
                   const newValue = e.target.value;
-                  const numericNewValue = parseFloat(newValue);
+                  let numericNewValue = parseFloat(newValue);
+                  
+                  // For annual return rate and inflation, limit to one decimal place
+                  if (id === 'annualReturnRate' || id === 'inflation') {
+                    numericNewValue = Math.round(numericNewValue * 10) / 10;
+                  }
+                  
                   onParamChange(id, numericNewValue);
                   
                   // For monetary values, ensure we're updating with the correct value format
                   if (currency && (id === 'initialCapital' || id === 'monthlyInvestment' || id === 'monthlyRetirementWithdrawal')) {
                     setInputValues(prev => ({ ...prev, [id]: numericNewValue.toString() }));
                   } else {
-                    setInputValues(prev => ({ ...prev, [id]: newValue }));
+                    setInputValues(prev => ({ ...prev, [id]: numericNewValue.toString() }));
                   }
                 }}
                 className="w-full h-2 appearance-none bg-transparent absolute z-10 cursor-pointer opacity-0"
@@ -658,34 +737,67 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
           <p className="text-xs text-gray-600">Tailor your personal path to financial freedom</p>
         </div>
           
-        {/* Currency selector as toggle button - moved to title bar */}
-        <div className="flex items-center mt-2 sm:mt-0">
-          <div className="text-xs text-gray-600 mr-2">Currency:</div>
-          <div className="flex border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-            <button 
-              className={`px-3 py-1 text-xs font-medium transition-all ${
-                params.currency === 'USD'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-              onClick={() => handleCurrencyChange('USD')}
-              aria-label="Switch to US Dollar"
-            >
-              USD ($)
-            </button>
-            <button 
-              className={`px-3 py-1 text-xs font-medium transition-all ${
-                params.currency === 'EUR'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-              onClick={() => handleCurrencyChange('EUR')}
-              aria-label="Switch to Euro"
-            >
-              EUR (€)
-            </button>
+        <div className="flex flex-row items-center justify-end w-full sm:w-auto gap-2 mt-3 sm:mt-0">
+          {/* PDF button */}
+          <button
+            onClick={handleGeneratePDF}
+            disabled={isPdfGenerating}
+            className={`px-4 py-1.5 ${isPdfGenerating ? 'bg-gray-400' : 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'} text-white text-xs font-medium rounded-lg flex items-center shadow-sm transition-colors duration-200`}
+            aria-label="Generate PDF Report"
+          >
+            {isPdfGenerating ? (
+              <>
+                <svg className="animate-spin h-3 w-3 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span className="whitespace-nowrap">Generating...</span>
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span className="whitespace-nowrap">PDF Report</span>
+              </>
+            )}
+          </button>
+          
+          {/* Success message */}
+          {showPdfSuccess && (
+            <div className="absolute right-0 top-full mt-2 px-3 py-1 bg-green-100 text-green-800 text-xs rounded-md shadow-sm z-10">
+              PDF generated successfully!
+            </div>
+          )}
+
+          <div className="flex items-center">
+            <span className="text-xs text-gray-600 mr-1">Currency:</span>
+            <div className="flex border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+              <button 
+                className={`px-2 py-1 text-xs font-medium transition-all ${
+                  params.currency === 'USD'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => handleCurrencyChange('USD')}
+                aria-label="Switch to US Dollar"
+              >
+                $
+              </button>
+              <button 
+                className={`px-2 py-1 text-xs font-medium transition-all ${
+                  params.currency === 'EUR'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => handleCurrencyChange('EUR')}
+                aria-label="Switch to Euro"
+              >
+                €
+              </button>
+            </div>
+            <span className="text-[10px] text-gray-500 ml-1 hidden sm:inline">Display only</span>
           </div>
-          <span className="text-[10px] text-gray-500 ml-2 hidden sm:inline">Display only</span>
         </div>
       </div>
 
@@ -802,7 +914,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 false, 
                 false, 
                 "years",
-                false
+                true // Changed to true to include slider
               )
             ) : params.withdrawalMode === 'amount' ? (
               renderParameterInput(
@@ -824,7 +936,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 false, 
                 true,
                 undefined,
-                false
+                true // Changed to true to include slider
               )
             )}
           </div>
