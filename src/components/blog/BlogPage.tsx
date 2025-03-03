@@ -47,13 +47,15 @@ const BlogPage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="text-center mb-12">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-          FIRE Blog & Insights
-        </h1>
-        <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-          Discover articles, tips, and strategies to help you achieve financial independence 
-          and retire early. Our experts share insights on investments, savings, and lifestyle choices.
+      <div className="mb-6 sm:mb-8 text-center">
+        <div className="inline-block mb-4 px-4 py-2 bg-gray-100/70 rounded-lg shadow-sm">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gradient">
+            Blog & Resources
+          </h1>
+        </div>
+        <p className="text-gray-800 text-sm sm:text-base max-w-2xl mx-auto font-medium">
+          Practical advice, real-world case studies, and data-driven strategies from people who achieved financial independence.
+          Explore success stories, investment insights, and retirement planning approaches that work.
         </p>
       </div>
       
