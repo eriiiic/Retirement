@@ -504,9 +504,6 @@ export const content = `# Coast FIRE: An Alternative Approach to Financial Indep
 ---
 
 <div class="engagement-section">
-  <h4>Join the Conversation</h4>
-  <p>Are you pursuing Coast FIRE or another variation of financial independence? Share your experiences and questions in the comments below!</p>
-  
   <div class="resource-links">
     <h5>Related Articles:</h5>
     <ul>

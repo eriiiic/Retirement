@@ -483,9 +483,6 @@ Create once, earn repeatedly from your intellectual property.
 ---
 
 <div class="engagement-section">
-  <h4>Join the Conversation</h4>
-  <p>What passive income strategies are you implementing on your FIRE journey? Have you had success with any particular approaches? Share your experiences in the comments below!</p>
-  
   <div class="resource-links">
     <h5>Related Articles:</h5>
     <ul>

@@ -559,10 +559,7 @@ export const content = `# The Psychology of Financial Independence
 ---
 
 <div class="engagement-section">
-  <h4>Join the Conversation</h4>
-  <p>What psychological aspects of the FIRE journey have you found most challenging? What mindset shifts have been most powerful for your financial independence journey? Share your experiences in the comments below!</p>
-  
-  <div class="resource-links">
+   <div class="resource-links">
     <h5>Related Articles:</h5>
     <ul>
       <li><a href="/blog/fire-basics-101">The Fundamentals of FIRE: Your Path to Financial Independence</a></li>

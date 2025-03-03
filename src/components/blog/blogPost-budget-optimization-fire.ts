@@ -566,10 +566,7 @@ The most successful FIRE practitioners build systems that make saving automatic 
 
 ---
 
-<div class="engagement-section">
-  <h4>Join the Conversation</h4>
-  <p>What budget optimization strategies have worked best in your FIRE journey? Share your experiences and tips in the comments below!</p>
-  
+<div class="engagement-section"> 
   <div class="resource-links">
     <h5>Related Articles:</h5>
     <ul>

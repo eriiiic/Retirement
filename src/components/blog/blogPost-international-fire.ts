@@ -639,10 +639,7 @@ export const content = `# Geographic Arbitrage: FIRE in International Settings
 ---
 
 <div class="engagement-section">
-  <h4>Join the Conversation</h4>
-  <p>Have you considered or implemented geographic arbitrage in your FIRE journey? Which locations are you most interested in? Share your experiences or questions in the comments below!</p>
-  
-  <div class="resource-links">
+    <div class="resource-links">
     <h5>Related Articles:</h5>
     <ul>
       <li><a href="/blog/fire-basics-101">The Fundamentals of FIRE: Your Path to Financial Independence</a></li>

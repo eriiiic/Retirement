@@ -591,10 +591,7 @@ export const content = `# The Fundamentals of FIRE: Your Path to Financial Indep
 
 ---
 
-<div class="engagement-section">
-  <h4>Join the Conversation</h4>
-  <p>Are you on your own FIRE journey? What strategies have worked best for you? Share your experiences and questions in the comments below!</p>
-  
+<div class="engagement-section"> 
   <div class="resource-links">
     <h5>Related Articles:</h5>
     <ul>

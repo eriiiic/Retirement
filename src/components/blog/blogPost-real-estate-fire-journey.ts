@@ -550,10 +550,7 @@ While real estate can dramatically accelerate your FIRE journey, it comes with r
 
 ---
 
-<div class="engagement-section">
-  <h4>Join the Conversation</h4>
-  <p>Are you incorporating real estate into your FIRE strategy? What approaches have worked best for you? Share your experiences and questions in the comments below!</p>
-  
+<div class="engagement-section">  
   <div class="resource-links">
     <h5>Related Articles:</h5>
     <ul>

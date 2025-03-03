@@ -187,9 +187,6 @@ While index funds should form the core of your portfolio, these supplemental str
 ---
 
 <div class="engagement-section">
-  <h4>Join the Conversation</h4>
-  <p>What investment strategies are you using to reach financial independence? Share your approach in the comments below!</p>
-  
   <div class="resource-links">
     <h5>Further Resources:</h5>
     <ul>

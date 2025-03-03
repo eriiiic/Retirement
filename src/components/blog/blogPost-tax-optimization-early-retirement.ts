@@ -365,10 +365,7 @@ For many early retirees under 65 (pre-Medicare), healthcare costs are among the 
 ---
 
 <div class="engagement-section">
-  <h4>Join the Conversation</h4>
-  <p>What tax optimization strategies have worked best in your FIRE journey? Are there other approaches you're considering? Share your experiences in the comments below!</p>
-  
-  <div class="resource-links">
+   <div class="resource-links">
     <h5>Related Articles:</h5>
     <ul>
       <li><a href="/blog/fire-basics-101">The Fundamentals of FIRE: Your Path to Financial Independence</a></li>
