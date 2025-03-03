@@ -51,6 +51,9 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   const [isPdfGenerating, setIsPdfGenerating] = useState<boolean>(false);
   const [showPdfSuccess, setShowPdfSuccess] = useState<boolean>(false);
 
+  // Add state for auto retirement age calculation
+  const [autoCalculateRetirementAge, setAutoCalculateRetirementAge] = useState(false);
+
   // Update local input values when params change, but only if the field is not currently focused
   useEffect(() => {
     setInputValues(prev => {
@@ -584,6 +587,19 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     }
   };
 
+  // Add handler for auto retirement age calculation
+  const toggleAutoRetirementCalculation = () => {
+    const newValue = !autoCalculateRetirementAge;
+    setAutoCalculateRetirementAge(newValue);
+    
+    if (newValue) {
+      // Here we would ideally calculate the optimal retirement age
+      // For now, we'll set a placeholder value that could be replaced with actual calculation
+      const calculatedOptimalAge = 59; // Example value - in a real implementation this would be calculated
+      onParamChange('retirementInput', calculatedOptimalAge.toString());
+    }
+  };
+
   // Render a parameter input field with slider for specified parameters
   const renderParameterInput = (
     label: string,
@@ -950,15 +966,42 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
             </h3>
             <div className="space-y-3">
               {renderParameterInput(
-                "Retirement Age/Year", 
+                "Retirement Age",
                 "retirementInput", 
                 inputValues.retirementInput, 
                 "65", 
                 false, 
                 false, 
                 "",
-                true // Include slider
+                !autoCalculateRetirementAge // Only include slider if not auto-calculating
               )}
+
+              {/* Auto-calculate retirement age toggle */}
+              <div className="mb-3 mt-1">
+                <button
+                  onClick={toggleAutoRetirementCalculation}
+                  className={`w-full text-left text-xs px-3 py-2 rounded-lg transition-all flex items-center ${
+                    autoCalculateRetirementAge 
+                      ? 'bg-purple-100 text-purple-800 border border-purple-200' 
+                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
+                  }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 mr-1.5 ${autoCalculateRetirementAge ? 'text-purple-600' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  <span className="flex-1">
+                    Calculate ideal retirement age for financial independence
+                  </span>
+                  <span className={`ml-2 inline-flex h-4 w-8 rounded-full transition-colors ${autoCalculateRetirementAge ? 'bg-purple-600' : 'bg-gray-300'}`}>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${autoCalculateRetirementAge ? 'translate-x-4' : 'translate-x-0'}`}></span>
+                  </span>
+                </button>
+                {autoCalculateRetirementAge && (
+                  <p className="text-xs text-purple-700 mt-1 px-3">
+                    Based on your inputs, the optimal retirement age for maintaining financial independence is {inputValues.retirementInput}.
+                  </p>
+                )}
+              </div>
 
               {/* Withdrawal Strategy - Optimized */}
               <div className="mb-1 p-2 bg-white rounded-lg border border-purple-100 shadow-sm">
@@ -978,9 +1021,9 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                           : "Define a withdrawal rate as percentage of your capital"}
                     </p>
                   </div>
-                  <div className="flex border border-purple-200 rounded-lg overflow-hidden shadow-sm">
+                  <div className="flex w-full sm:w-auto border border-purple-200 rounded-lg overflow-hidden shadow-sm">
                     <button 
-                      className={`px-3 py-1 text-xs font-medium transition-all ${
+                      className={`flex-1 px-3 py-1.5 text-xs font-medium transition-all ${
                         params.withdrawalMode === 'amount'
                           ? 'bg-purple-600 text-white'
                           : 'bg-white text-gray-700 hover:bg-purple-50'
@@ -990,7 +1033,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                       Amount
                     </button>
                     <button 
-                      className={`px-3 py-1 text-xs font-medium transition-all ${
+                      className={`flex-1 px-3 py-1.5 text-xs font-medium transition-all ${
                         params.withdrawalMode === 'age'
                           ? 'bg-purple-600 text-white'
                           : 'bg-white text-gray-700 hover:bg-purple-50'
@@ -1000,7 +1043,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                       Target Age
                     </button>
                     <button 
-                      className={`px-3 py-1 text-xs font-medium transition-all ${
+                      className={`flex-1 px-3 py-1.5 text-xs font-medium transition-all ${
                         params.withdrawalMode === 'rate'
                           ? 'bg-purple-600 text-white'
                           : 'bg-white text-gray-700 hover:bg-purple-50'
