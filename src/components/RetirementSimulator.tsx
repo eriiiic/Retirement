@@ -19,13 +19,13 @@ import { generateModernRetirementReport } from '../utils/modernPdfGenerator';
 const RetirementSimulator = () => {
   // Initialize simulator parameters
   const [params, setParams] = useState<SimulatorParams>({
-    initialCapital: 10000,
+    initialCapital: 250000,
     monthlyInvestment: 500,
-    annualReturnRate: 5,
+    annualReturnRate: 7,
     inflation: 2,
-    monthlyRetirementWithdrawal: 2000,
-    currentAge: 40,
-    retirementInput: "65",
+    monthlyRetirementWithdrawal: 3000,
+    currentAge: 46,
+    retirementInput: "60",
     currency: "USD",
     withdrawalMode: "amount",
     maxAge: 95,

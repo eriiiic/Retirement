@@ -219,7 +219,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     // If it's the initial load, set all default values
     if (isInitialLoad) {
       // Set all default values at once
-      onParamChange('initialCapital', 150000);
+      onParamChange('initialCapital', 250000);
       onParamChange('currentAge', 46);
       onParamChange('monthlyInvestment', 500);
       onParamChange('retirementInput', 60);
@@ -230,7 +230,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     } else {
       // Set individual values only if they are at the default "0" value
       if (params.initialCapital === 0) {
-        onParamChange('initialCapital', 150000);
+        onParamChange('initialCapital', 250000);
       }
       if (params.currentAge === 0) {
         onParamChange('currentAge', 46);
@@ -413,9 +413,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   const getSliderConfig = (id: keyof SimulatorParams) => {
     switch (id) {
       case 'initialCapital':
-        // For very large values, adjust max based on current value
-        const initialCapitalMax = Math.max(1000000, params.initialCapital * 2);
-        return { min: 0, max: initialCapitalMax, step: 1000 };
+        // Fixed range from 0 to 3,000,000 as specified
+        return { min: 0, max: 3000000, step: 10000 };
       case 'currentAge':
         return { min: 20, max: 80, step: 1 };
       case 'monthlyInvestment':
@@ -614,9 +613,6 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
       <div className="flex flex-col gap-1 p-2">
         <label htmlFor={id} className="text-xs font-medium text-gray-600 flex justify-between">
           <span>{label}</span>
-          <span className="font-semibold text-gray-800">
-            {currency ? formatAmount(parseFloat(value) || 0) : (value || '0')}{percentage ? '%' : ''}{suffix ? ` ${suffix}` : ''}
-          </span>
         </label>
         
         <div className="flex items-center gap-2">
@@ -678,61 +674,147 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
             </div>
           )}
           
-          <div className={`relative ${includeSlider ? 'w-1/3' : 'w-full'}`}>
-            <input
-              ref={el => inputRefs.current[id as string] = el}
-              id={id as string}
-              type="text"
-              inputMode={percentage || currency ? "decimal" : "numeric"}
-              value={currency 
-                ? `${params.currency === 'USD' ? '$' : '€'} ${value === '0' ? '' : value}` 
-                : percentage
-                  ? `${value === '0' ? '' : value}`
-                  : (value === '0' ? '' : value)}
-              onChange={(e) => {
-                if (currency) {
-                  // Remove currency symbol before handling change
-                  const valueWithoutCurrency = e.target.value.replace(/^[\$€]\s?/, '');
-                  handleInputChange(id, valueWithoutCurrency);
-                } else if (percentage) {
-                  // Remove percentage symbol before handling change
-                  const valueWithoutPercentage = e.target.value.replace(/%$/, '');
-                  handleInputChange(id, valueWithoutPercentage);
-                } else {
-                  handleInputChange(id, e.target.value);
-                }
-              }}
-              onBlur={(e) => {
-                if (currency) {
-                  // Remove currency symbol before handling blur
-                  const valueWithoutCurrency = e.target.value.replace(/^[\$€]\s?/, '');
-                  handleInputBlur(id, valueWithoutCurrency);
-                } else if (percentage) {
-                  // Remove percentage symbol before handling blur
-                  const valueWithoutPercentage = e.target.value.replace(/%$/, '');
-                  handleInputBlur(id, valueWithoutPercentage);
-                } else {
-                  handleInputBlur(id, e.target.value);
-                }
-              }}
-              onFocus={() => handleInputFocus(id as string)}
-              placeholder={currency 
-                ? `${params.currency === 'USD' ? '$' : '€'} ${placeholder}` 
-                : percentage ? placeholder : placeholder}
-              className={`w-full rounded-lg border border-gray-300 py-1.5 px-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm ${percentage ? 'text-right pr-6' : 'text-left'}`}
-              aria-label={`${label} input`}
-            />
-            {percentage && (
-              <span className="absolute inset-y-0 right-2 flex items-center text-gray-500 pointer-events-none">
-                %
-              </span>
-            )}
-            {suffix && !percentage && (
-              <span className="absolute inset-y-0 right-2 flex items-center text-gray-500 pointer-events-none text-xs">
-                {suffix}
-              </span>
-            )}
-          </div>
+          {/* For Current Age, add a container with a fixed width to match the Initial Capital input */}
+          {id === 'currentAge' ? (
+            <div className="relative w-1/3 flex items-center justify-end">
+              <div className="w-2/3 flex items-center">
+                <input
+                  ref={el => inputRefs.current[id as string] = el}
+                  id={id as string}
+                  type="text"
+                  inputMode="numeric"
+                  value={value === '0' ? '' : value}
+                  onChange={(e) => handleInputChange(id, e.target.value)}
+                  onBlur={(e) => handleInputBlur(id, e.target.value)}
+                  onFocus={() => handleInputFocus(id as string)}
+                  placeholder="46"
+                  className="w-full rounded-lg border border-gray-300 py-1.5 px-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-left"
+                  aria-label={`${label} input`}
+                />
+                <span className="text-xs text-gray-600 ml-1">years old</span>
+              </div>
+            </div>
+          ) : id === 'initialCapital' || id === 'monthlyInvestment' ? (
+            <div className="relative w-1/3 flex items-center justify-end">
+              <div className="w-2/3 flex items-center">
+                <input
+                  ref={el => inputRefs.current[id as string] = el}
+                  id={id as string}
+                  type="text"
+                  inputMode="decimal"
+                  value={`${params.currency === 'USD' ? '$' : '€'} ${value === '0' ? '' : value}`}
+                  onChange={(e) => {
+                    // Remove currency symbol before handling change
+                    const valueWithoutCurrency = e.target.value.replace(/^[\$€]\s?/, '');
+                    handleInputChange(id, valueWithoutCurrency);
+                  }}
+                  onBlur={(e) => {
+                    // Remove currency symbol before handling blur
+                    const valueWithoutCurrency = e.target.value.replace(/^[\$€]\s?/, '');
+                    handleInputBlur(id, valueWithoutCurrency);
+                  }}
+                  onFocus={() => handleInputFocus(id as string)}
+                  placeholder={`${params.currency === 'USD' ? '$' : '€'} ${placeholder}`}
+                  className="w-full rounded-lg border border-gray-300 py-1.5 px-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-left"
+                  aria-label={`${label} input`}
+                />
+              </div>
+            </div>
+          ) : id === 'retirementInput' ? (
+            <div className="relative w-1/3 flex items-center justify-end">
+              <div className="w-3/4 flex items-center">
+                <input
+                  ref={el => inputRefs.current[id as string] = el}
+                  id={id as string}
+                  type="text"
+                  inputMode="numeric"
+                  value={value === '0' ? '' : value}
+                  onChange={(e) => handleInputChange(id, e.target.value)}
+                  onBlur={(e) => handleInputBlur(id, e.target.value)}
+                  onFocus={() => handleInputFocus(id as string)}
+                  placeholder="65"
+                  className="w-full rounded-lg border border-gray-300 py-1.5 px-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-left"
+                  aria-label={`${label} input`}
+                />
+                <span className="text-xs text-gray-600 ml-1">{isRetirementInputAnAge() ? "years old" : "year"}</span>
+              </div>
+            </div>
+          ) : id === 'maxAge' ? (
+            <div className="relative w-1/3 flex items-center justify-end">
+              <div className="w-3/4 flex items-center">
+                <input
+                  ref={el => inputRefs.current[id as string] = el}
+                  id={id as string}
+                  type="text"
+                  inputMode="numeric"
+                  value={value === '0' ? '' : value}
+                  onChange={(e) => handleInputChange(id, e.target.value)}
+                  onBlur={(e) => handleInputBlur(id, e.target.value)}
+                  onFocus={() => handleInputFocus(id as string)}
+                  placeholder="95"
+                  className="w-full rounded-lg border border-gray-300 py-1.5 px-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-left"
+                  aria-label={`${label} input`}
+                />
+                <span className="text-xs text-gray-600 ml-1">years old</span>
+              </div>
+            </div>
+          ) : (
+            <div className={`relative ${includeSlider ? 'w-1/3' : 'w-full'}`}>
+              <input
+                ref={el => inputRefs.current[id as string] = el}
+                id={id as string}
+                type="text"
+                inputMode={percentage || currency ? "decimal" : "numeric"}
+                value={currency 
+                  ? `${params.currency === 'USD' ? '$' : '€'} ${value === '0' ? '' : value}` 
+                  : percentage
+                    ? `${value === '0' ? '' : value}`
+                    : (value === '0' ? '' : value)}
+                onChange={(e) => {
+                  if (currency) {
+                    // Remove currency symbol before handling change
+                    const valueWithoutCurrency = e.target.value.replace(/^[\$€]\s?/, '');
+                    handleInputChange(id, valueWithoutCurrency);
+                  } else if (percentage) {
+                    // Remove percentage symbol before handling change
+                    const valueWithoutPercentage = e.target.value.replace(/%$/, '');
+                    handleInputChange(id, valueWithoutPercentage);
+                  } else {
+                    handleInputChange(id, e.target.value);
+                  }
+                }}
+                onBlur={(e) => {
+                  if (currency) {
+                    // Remove currency symbol before handling blur
+                    const valueWithoutCurrency = e.target.value.replace(/^[\$€]\s?/, '');
+                    handleInputBlur(id, valueWithoutCurrency);
+                  } else if (percentage) {
+                    // Remove percentage symbol before handling blur
+                    const valueWithoutPercentage = e.target.value.replace(/%$/, '');
+                    handleInputBlur(id, valueWithoutPercentage);
+                  } else {
+                    handleInputBlur(id, e.target.value);
+                  }
+                }}
+                onFocus={() => handleInputFocus(id as string)}
+                placeholder={currency 
+                  ? `${params.currency === 'USD' ? '$' : '€'} ${placeholder}` 
+                  : percentage ? placeholder : placeholder}
+                className={`w-full rounded-lg border border-gray-300 py-1.5 px-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm ${percentage ? 'text-right pr-6' : 'text-left'}`}
+                aria-label={`${label} input`}
+              />
+              {percentage && (
+                <span className="absolute inset-y-0 right-2 flex items-center text-gray-500 pointer-events-none">
+                  %
+                </span>
+              )}
+              {suffix && !percentage && (
+                <span className="absolute inset-y-0 right-2 flex items-center text-gray-500 pointer-events-none text-xs">
+                  {suffix}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -814,155 +896,182 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
       {/* Combined Parameters Section - All inputs on same page */}
       <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100 mb-3">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* Current Status Section */}
-          <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-2 overflow-hidden">
-            <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider px-2 mb-1 py-1 bg-gray-50 rounded-t-lg">Current Status</h3>
-            
-            {renderParameterInput(
-              "Initial Capital", 
-              "initialCapital", 
-              getDisplayValue('initialCapital', inputValues.initialCapital), 
-              "150,000", 
-              true,
-              false,
-              undefined,
-              true // Include slider
-            )}
-            
-            {renderParameterInput(
-              "Current Age", 
-              "currentAge", 
-              inputValues.currentAge, 
-              "46", 
-              false, 
-              false, 
-              "years",
-              true // Include slider
-            )}
-            
-            {renderParameterInput(
-              "Monthly Investment", 
-              "monthlyInvestment", 
-              getDisplayValue('monthlyInvestment', inputValues.monthlyInvestment), 
-              "500", 
-              true,
-              false,
-              undefined,
-              true // Include slider
-            )}
-          </div>
-
-          {/* Retirement Plan Section */}
-          <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-2 overflow-hidden">
-            <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider px-2 mb-1 py-1 bg-gray-50 rounded-t-lg">Retirement Plan</h3>
-
-            {renderParameterInput(
-              "Retirement Age/Year", 
-              "retirementInput", 
-              inputValues.retirementInput, 
-              "65", 
-              false, 
-              false, 
-              isRetirementInputAnAge() ? "years old" : "year",
-              true // Include slider
-            )}
-
-            {/* Withdrawal Strategy */}
-            <div className="mb-3 mt-3 p-2 bg-gray-50 rounded-lg border border-gray-100">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                <div>
-                  <h3 className="text-xs font-medium text-gray-800">Withdrawal Strategy</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {params.withdrawalMode === 'amount'
-                      ? "Specify how much you want to withdraw each month"
-                      : params.withdrawalMode === 'age'
-                        ? "Set a target age and we'll calculate a sustainable withdrawal"
-                        : "Define a withdrawal rate as percentage of your capital"}
-                  </p>
-                </div>
-                <div className="flex border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-                  <button 
-                    className={`px-3 py-1 text-xs font-medium transition-all ${
-                      params.withdrawalMode === 'amount'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                    onClick={() => onParamChange('withdrawalMode', 'amount')}
-                  >
-                    Amount
-                  </button>
-                  <button 
-                    className={`px-3 py-1 text-xs font-medium transition-all ${
-                      params.withdrawalMode === 'age'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                    onClick={() => onParamChange('withdrawalMode', 'age')}
-                  >
-                    Age
-                  </button>
-                  <button 
-                    className={`px-3 py-1 text-xs font-medium transition-all ${
-                      params.withdrawalMode === 'rate'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                    onClick={() => onParamChange('withdrawalMode', 'rate')}
-                  >
-                    Rate
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {params.withdrawalMode === 'age' ? (
-              renderParameterInput(
-                "Target Age", 
-                "maxAge", 
-                inputValues.maxAge, 
-                "95", 
-                false, 
-                false, 
-                "years",
-                true // Changed to true to include slider
-              )
-            ) : params.withdrawalMode === 'amount' ? (
-              renderParameterInput(
-                "Monthly Withdrawal", 
-                "monthlyRetirementWithdrawal", 
-                getDisplayValue('monthlyRetirementWithdrawal', inputValues.monthlyRetirementWithdrawal), 
-                "0", 
+          {/* Current Status Section - Optimized */}
+          <div className="bg-gradient-to-b from-blue-50 to-white rounded-lg border border-blue-100 shadow-sm p-2 overflow-hidden">
+            <h3 className="text-xs font-semibold text-blue-800 uppercase tracking-wider px-2 mb-2 py-1.5 bg-blue-50 rounded-lg flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Current Status
+            </h3>
+            <div className="space-y-3">
+              {renderParameterInput(
+                "Initial Capital", 
+                "initialCapital", 
+                getDisplayValue('initialCapital', inputValues.initialCapital), 
+                "150,000", 
                 true,
                 false,
                 undefined,
                 true // Include slider
-              )
-            ) : (
-              renderParameterInput(
-                "Withdrawal Rate", 
-                "withdrawalRate", 
-                inputValues.withdrawalRate, 
-                "4", 
+              )}
+              
+              {renderParameterInput(
+                "Current Age", 
+                "currentAge", 
+                inputValues.currentAge, 
+                "46", 
                 false, 
+                false, 
+                "",
+                true // Include slider
+              )}
+              
+              {renderParameterInput(
+                "Monthly Investment", 
+                "monthlyInvestment", 
+                getDisplayValue('monthlyInvestment', inputValues.monthlyInvestment), 
+                "500", 
                 true,
+                false,
                 undefined,
-                true // Changed to true to include slider
-              )
-            )}
+                true // Include slider
+              )}
+            </div>
+          </div>
+
+          {/* Retirement Plan Section - Optimized */}
+          <div className="bg-gradient-to-b from-purple-50 to-white rounded-lg border border-purple-100 shadow-sm p-2 overflow-hidden">
+            <h3 className="text-xs font-semibold text-purple-800 uppercase tracking-wider px-2 mb-2 py-1.5 bg-purple-50 rounded-lg flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Retirement Plan
+            </h3>
+            <div className="space-y-3">
+              {renderParameterInput(
+                "Retirement Age/Year", 
+                "retirementInput", 
+                inputValues.retirementInput, 
+                "65", 
+                false, 
+                false, 
+                "",
+                true // Include slider
+              )}
+
+              {/* Withdrawal Strategy - Optimized */}
+              <div className="mb-1 p-2 bg-white rounded-lg border border-purple-100 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                  <div>
+                    <h3 className="text-xs font-medium text-purple-800 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Withdrawal Strategy
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5 ml-4.5">
+                      {params.withdrawalMode === 'amount'
+                        ? "Specify how much you want to withdraw each month"
+                        : params.withdrawalMode === 'age'
+                          ? "Set a target age and we'll calculate a sustainable withdrawal"
+                          : "Define a withdrawal rate as percentage of your capital"}
+                    </p>
+                  </div>
+                  <div className="flex border border-purple-200 rounded-lg overflow-hidden shadow-sm">
+                    <button 
+                      className={`px-3 py-1 text-xs font-medium transition-all ${
+                        params.withdrawalMode === 'amount'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-purple-50'
+                      }`}
+                      onClick={() => onParamChange('withdrawalMode', 'amount')}
+                    >
+                      Amount
+                    </button>
+                    <button 
+                      className={`px-3 py-1 text-xs font-medium transition-all ${
+                        params.withdrawalMode === 'age'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-purple-50'
+                      }`}
+                      onClick={() => onParamChange('withdrawalMode', 'age')}
+                    >
+                      Target Age
+                    </button>
+                    <button 
+                      className={`px-3 py-1 text-xs font-medium transition-all ${
+                        params.withdrawalMode === 'rate'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-purple-50'
+                      }`}
+                      onClick={() => onParamChange('withdrawalMode', 'rate')}
+                    >
+                      Rate
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {params.withdrawalMode === 'age' ? (
+                renderParameterInput(
+                  "Target Age", 
+                  "maxAge", 
+                  inputValues.maxAge, 
+                  "95", 
+                  false, 
+                  false, 
+                  "",
+                  true // Changed to true to include slider
+                )
+              ) : params.withdrawalMode === 'amount' ? (
+                renderParameterInput(
+                  "Monthly Withdrawal", 
+                  "monthlyRetirementWithdrawal", 
+                  getDisplayValue('monthlyRetirementWithdrawal', inputValues.monthlyRetirementWithdrawal), 
+                  "0", 
+                  true,
+                  false,
+                  undefined,
+                  true // Include slider
+                )
+              ) : (
+                renderParameterInput(
+                  "Withdrawal Rate", 
+                  "withdrawalRate", 
+                  inputValues.withdrawalRate, 
+                  "4", 
+                  false, 
+                  true,
+                  undefined,
+                  true // Changed to true to include slider
+                )
+              )}
+            </div>
           </div>
         </div>
         
-        {/* Market Assumptions Section - Moved from retirement tab */}
-        <div className="mt-3 bg-white rounded-lg border border-gray-100 shadow-sm p-2 overflow-hidden">
-          <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider px-2 mb-2 py-1 bg-gray-50 rounded-t-lg">Market Assumptions</h3>
-          <p className="text-xs text-gray-600 italic px-2 mb-3">
+        {/* Market Assumptions Section - Optimized */}
+        <div className="mt-3 bg-gradient-to-b from-green-50 to-white rounded-lg border border-green-100 shadow-sm p-2 overflow-hidden">
+          <h3 className="text-xs font-semibold text-green-800 uppercase tracking-wider px-2 mb-2 py-1.5 bg-green-50 rounded-lg flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Market Assumptions
+          </h3>
+          <p className="text-xs text-gray-600 italic px-2 mb-3 ml-5">
             These settings affect how your investments grow over time and how inflation impacts your withdrawal purchasing power.
           </p>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             {/* Annual Return Rate */}
-            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-2">
-              <h4 className="text-xs font-medium text-gray-700 mb-1">Annual Return</h4>
+            <div className="bg-white rounded-lg border border-green-100 shadow-sm p-2">
+              <h4 className="text-xs font-medium text-green-800 flex items-center mb-1">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                Annual Return
+              </h4>
               {renderParameterInput(
                 "Expected return on investments", 
                 "annualReturnRate", 
@@ -976,8 +1085,13 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
             </div>
             
             {/* Inflation Rate */}
-            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-2">
-              <h4 className="text-xs font-medium text-gray-700 mb-1">Inflation</h4>
+            <div className="bg-white rounded-lg border border-green-100 shadow-sm p-2">
+              <h4 className="text-xs font-medium text-green-800 flex items-center mb-1">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Inflation
+              </h4>
               {renderParameterInput(
                 "Annual inflation rate", 
                 "inflation", 
@@ -991,20 +1105,25 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
             </div>
             
             {/* Compound Frequency */}
-            <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-2">
-              <h4 className="text-xs font-medium text-gray-700 mb-1">Compound Frequency</h4>
+            <div className="bg-white rounded-lg border border-green-100 shadow-sm p-2">
+              <h4 className="text-xs font-medium text-green-800 flex items-center mb-1">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Compound Frequency
+              </h4>
               <div className="p-2">
                 <p className="text-xs text-gray-600 mb-2">
                   {params.compoundFrequency === 'monthly'
                     ? "Interest compounded monthly (higher returns)"
                     : "Interest compounded annually"}
                 </p>
-                <div className="flex border border-gray-200 rounded-lg overflow-hidden shadow-sm mt-2">
+                <div className="flex border border-green-200 rounded-lg overflow-hidden shadow-sm mt-2">
                   <button 
                     className={`px-3 py-1 text-xs font-medium transition-all flex-1 ${
                       params.compoundFrequency === 'monthly'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-green-50'
                     }`}
                     onClick={() => onParamChange('compoundFrequency', 'monthly')}
                     aria-label="Set monthly compounding"
@@ -1014,8 +1133,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   <button 
                     className={`px-3 py-1 text-xs font-medium transition-all flex-1 ${
                       params.compoundFrequency === 'annual'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-green-50'
                     }`}
                     onClick={() => onParamChange('compoundFrequency', 'annual')}
                     aria-label="Set annual compounding"
