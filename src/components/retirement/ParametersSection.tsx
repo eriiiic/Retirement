@@ -595,11 +595,66 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     setAutoCalculateRetirementAge(newValue);
     
     if (newValue) {
-      // Here we would ideally calculate the optimal retirement age
-      // For now, we'll set a placeholder value that could be replaced with actual calculation
-      const calculatedOptimalAge = 59; // Example value - in a real implementation this would be calculated
-      onParamChange('retirementInput', calculatedOptimalAge.toString());
+      // Calculate the optimal retirement age using financial data
+      const optimalAge = calculateOptimalRetirementAge();
+      onParamChange('retirementInput', optimalAge.toString());
+      onParamChange('autoCalculateRetirementAge', true);
+    } else {
+      onParamChange('autoCalculateRetirementAge', false);
     }
+  };
+
+  // Calculate optimal retirement age based on financial independence
+  const calculateOptimalRetirementAge = (): number => {
+    // Start with current age as baseline
+    let testAge = params.currentAge; // Start from exact current age, not +1
+    const maxTestAge = params.maxAge - 5; // Leave at least 5 years of retirement
+    
+    // Financial parameters
+    const monthlyInvestment = Number(params.monthlyInvestment);
+    const initialCapital = Number(params.initialCapital);
+    const annualReturnRate = Number(params.annualReturnRate) / 100;
+    const inflation = Number(params.inflation) / 100;
+    const monthlyWithdrawal = Number(params.monthlyRetirementWithdrawal);
+    const adjustedRate = annualReturnRate - inflation;
+    
+    // Keep testing ages until we find one where the accumulated capital
+    // is sufficient for the planned retirement duration
+    while (testAge <= maxTestAge) {
+      // Years until retirement
+      const yearsToRetirement = testAge - params.currentAge;
+      
+      // Calculate future value of current investments
+      const futureValue = initialCapital * Math.pow(1 + annualReturnRate, yearsToRetirement) + 
+                          monthlyInvestment * 12 * ((Math.pow(1 + annualReturnRate, yearsToRetirement) - 1) / annualReturnRate);
+      
+      // Calculate years in retirement
+      const yearsInRetirement = params.maxAge - testAge;
+      
+      // Calculate needed capital for retirement
+      const annualWithdrawal = monthlyWithdrawal * 12;
+      let neededCapital;
+      
+      if (adjustedRate > 0) {
+        // Using the present value of an annuity formula
+        neededCapital = annualWithdrawal * (1 - Math.pow(1 + adjustedRate, -yearsInRetirement)) / adjustedRate;
+      } else {
+        // Simple multiplication if adjusted rate is zero or negative
+        neededCapital = annualWithdrawal * yearsInRetirement;
+      }
+      
+      // If we have enough capital, this is our optimal retirement age
+      if (futureValue >= neededCapital) {
+        // We've found the earliest possible retirement age
+        return testAge;
+      }
+      
+      // Try the next age
+      testAge++;
+    }
+    
+    // If we couldn't find an optimal age, return a reasonable default
+    return Math.min(65, params.maxAge - 5);
   };
 
   // Function to calculate slider progress for the retirement age slider
@@ -650,7 +705,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
           {includeSlider && (
             <div 
               ref={el => sliderContainerRefs.current[id as string] = el}
-              className="w-2/3 relative" 
+              className="w-2/3 sm:w-2/3 w-1/2 relative" 
               onMouseDown={(e) => handleSliderMouseDown(id, e)}
               onTouchStart={(e) => handleSliderTouchStart(id, e)}
             >
@@ -752,8 +807,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               </div>
             </div>
           ) : id === 'retirementInput' ? (
-            <div className="relative w-1/3 flex items-center justify-end">
-              <div className="w-3/4 flex items-center">
+            <div className="relative w-1/3 sm:w-1/3 w-1/2 flex items-center justify-end">
+              <div className="w-3/4 sm:w-3/4 w-full flex items-center">
                 <input
                   ref={el => inputRefs.current[id as string] = el}
                   id={id as string}
@@ -980,47 +1035,51 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               Retirement Plan
             </h3>
             <div className="space-y-3">
-              {/* Retirement Age with Auto-calculate button */}
-              <div className="mb-2">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center">
-                    <label className="block text-xs font-medium text-gray-700">
-                      Retirement Age
-                      {autoCalculateRetirementAge && (
-                        <span className="ml-1.5 text-xs text-purple-600 font-normal">(Auto-calculated)</span>
-                      )}
-                    </label>
-                  </div>
-                  
-                  {/* Auto-calculate button */}
+              {/* Custom wrapper for retirement age parameter */}
+              <div className={`${autoCalculateRetirementAge ? "opacity-70" : ""}`}>
+                {/* First row - add label and the auto-calculated tag when active */}
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-xs font-medium text-gray-700">
+                    Retirement Age
+                    {autoCalculateRetirementAge && (
+                      <span className="ml-1.5 text-xs text-purple-600 font-normal">(Auto-calculated)</span>
+                    )}
+                  </label>
+                </div>
+                
+                {/* Second row - auto-calculate button and slider */}
+                <div className="flex items-center">
+                  {/* Auto-calculate button - now wider with explicit text */}
                   <button
                     onClick={toggleAutoRetirementCalculation}
-                    className={`p-1.5 rounded-lg transition-all flex items-center ${
+                    className={`flex-shrink-0 mr-2 p-1.5 px-3 rounded-lg transition-all flex items-center w-36 ${
                       autoCalculateRetirementAge 
                         ? 'bg-purple-600 text-white ring-1 ring-purple-300' 
                         : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
                     }`}
                     title="Calculate ideal retirement age for financial independence"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <span className="text-xs ml-1">Auto-calculate</span>
+                    <span className="text-xs font-medium">
+                      {autoCalculateRetirementAge ? "Auto-calculating" : "Auto-calculate"}
+                    </span>
                   </button>
-                </div>
-                
-                {/* Standard parameter input with grayed out style when auto-calculated */}
-                <div className={autoCalculateRetirementAge ? "opacity-60 pointer-events-none" : ""}>
-                  {renderParameterInput(
-                    "", // Empty label since we have a custom label above
-                    "retirementInput", 
-                    inputValues.retirementInput, 
-                    "65", 
-                    false, 
-                    false, 
-                    "",
-                    true // Always include slider
-                  )}
+                  
+                  {/* Standard parameter input with reduced width */}
+                  <div className="flex-1">
+                    {renderParameterInput(
+                      "", // Empty label since we've added it manually above
+                      "retirementInput", 
+                      inputValues.retirementInput, 
+                      "65", 
+                      false, 
+                      false, 
+                      "",
+                      true // Include slider
+                    )}
+                  </div>
                 </div>
               </div>
 

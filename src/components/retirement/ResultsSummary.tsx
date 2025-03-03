@@ -318,7 +318,12 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
               </div>
               <div>
                 <div className="text-xs font-medium text-gray-600">Retirement Begins</div>
-                <div className="text-xs sm:text-sm font-semibold">{statistics.calculatedRetirementStartYear}</div>
+                <div className="text-xs sm:text-sm font-semibold">{ }</div>
+                {params.autoCalculateRetirementAge && (
+                  <div className="text-xs italic text-purple-700 mt-0.5">
+                    Auto-calculated for financial independence
+                  </div>
+                )}
               </div>
             </div>
             
