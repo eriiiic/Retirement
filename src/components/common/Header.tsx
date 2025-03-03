@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showMenuAnimation, setShowMenuAnimation] = useState(false);
   const location = useLocation();
   
   // Detect scrolling to add a background effect
@@ -14,6 +15,23 @@ const Header = () => {
     
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  // Add initial animation to hamburger menu
+  useEffect(() => {
+    // Slight delay to ensure it happens after initial render
+    const timer = setTimeout(() => {
+      setShowMenuAnimation(true);
+      
+      // Remove animation class after it completes
+      const cleanupTimer = setTimeout(() => {
+        setShowMenuAnimation(false);
+      }, 2000); // Animation duration
+      
+      return () => clearTimeout(cleanupTimer);
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, []);
   
   const isActive = (path: string) => {
@@ -78,11 +96,13 @@ const Header = () => {
             </Link>
           </nav>
           
-          {/* Mobile menu button */}
+          {/* Mobile menu button with initial attention animation */}
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none transition-colors"
+              className={`inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none transition-all ${
+                showMenuAnimation ? 'animate-attention-pulse' : ''
+              }`}
               aria-expanded={isMenuOpen}
             >
               <span className="sr-only">Open main menu</span>
@@ -91,9 +111,19 @@ const Header = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" 
+                  className={`h-6 w-6 ${showMenuAnimation ? 'animate-bounce-subtle' : ''}`} 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
+              )}
+              
+              {/* Visual indicator dot that appears on first load */}
+              {!isMenuOpen && showMenuAnimation && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-indigo-600 rounded-full animate-ping-slow"></span>
               )}
             </button>
           </div>
@@ -152,5 +182,37 @@ const Header = () => {
     </header>
   );
 };
+
+// Add the new animation keyframes and utilities to the global styles
+const styleElement = document.createElement('style');
+styleElement.textContent = `
+  @keyframes bounce-subtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  
+  @keyframes ping-slow {
+    0% { transform: scale(1); opacity: 1; }
+    75%, 100% { transform: scale(2); opacity: 0; }
+  }
+  
+  @keyframes attention-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+    50% { box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.3); }
+  }
+  
+  .animate-bounce-subtle {
+    animation: bounce-subtle 1s ease-in-out 3;
+  }
+  
+  .animate-ping-slow {
+    animation: ping-slow 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  
+  .animate-attention-pulse {
+    animation: attention-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) 2;
+  }
+`;
+document.head.appendChild(styleElement);
 
 export default Header; 
