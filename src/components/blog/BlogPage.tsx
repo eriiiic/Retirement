@@ -156,7 +156,8 @@ const BlogPage: React.FC = () => {
         )}
       </div>
       
-      {/* Newsletter subscription */}
+      {/* Newsletter subscription - temporarily disabled */}
+      {/*
       <div className="bg-indigo-50 rounded-lg p-8 border border-indigo-100">
         <div className="text-center mb-6">
           <h3 className="text-2xl font-bold text-indigo-900 mb-2">Subscribe to Our Newsletter</h3>
@@ -179,6 +180,7 @@ const BlogPage: React.FC = () => {
           </button>
         </form>
       </div>
+      */}
       
       
     </div>
