@@ -50,7 +50,7 @@ const Header = () => {
               </div>
               <div className="ml-2">
                 <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  FIRE Calculator
+                  AI FIRE Retirement Planner
                 </span>
               </div>
             </Link>

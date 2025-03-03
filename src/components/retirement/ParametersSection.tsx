@@ -32,7 +32,6 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     withdrawalRate: params.withdrawalRate?.toString() || "4",
   });
   
-  // Track the focused input field
   const [focusedField, setFocusedField] = useState<string | null>(null);
   
   // References to input elements for maintaining focus
@@ -40,6 +39,9 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   
   // References to slider elements for drag handling
   const sliderRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  
+  // Reference for the custom retirement slider track
+  const retirementSliderRef = useRef<HTMLDivElement | null>(null);
   
   // State to track current slider being dragged
   const [draggingSlider, setDraggingSlider] = useState<string | null>(null);
@@ -600,6 +602,19 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     }
   };
 
+  // Function to calculate slider progress for the retirement age slider
+  const calculateProgress = (id: keyof SimulatorParams) => {
+    if (id !== 'retirementInput') return 0;
+    
+    const value = parseFloat(inputValues[id] || '0');
+    const config = getSliderConfig(id);
+    const min = config.min || 0;
+    const max = config.max || 100;
+    
+    // Calculate percentage
+    return Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+  };
+
   // Render a parameter input field with slider for specified parameters
   const renderParameterInput = (
     label: string,
@@ -965,42 +980,48 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               Retirement Plan
             </h3>
             <div className="space-y-3">
-              {renderParameterInput(
-                "Retirement Age",
-                "retirementInput", 
-                inputValues.retirementInput, 
-                "65", 
-                false, 
-                false, 
-                "",
-                !autoCalculateRetirementAge // Only include slider if not auto-calculating
-              )}
-
-              {/* Auto-calculate retirement age toggle */}
-              <div className="mb-3 mt-1">
-                <button
-                  onClick={toggleAutoRetirementCalculation}
-                  className={`w-full text-left text-xs px-3 py-2 rounded-lg transition-all flex items-center ${
-                    autoCalculateRetirementAge 
-                      ? 'bg-purple-100 text-purple-800 border border-purple-200' 
-                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 mr-1.5 ${autoCalculateRetirementAge ? 'text-purple-600' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                  <span className="flex-1">
-                    Calculate ideal retirement age for financial independence
-                  </span>
-                  <span className={`ml-2 inline-flex h-4 w-8 rounded-full transition-colors ${autoCalculateRetirementAge ? 'bg-purple-600' : 'bg-gray-300'}`}>
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${autoCalculateRetirementAge ? 'translate-x-4' : 'translate-x-0'}`}></span>
-                  </span>
-                </button>
-                {autoCalculateRetirementAge && (
-                  <p className="text-xs text-purple-700 mt-1 px-3">
-                    Based on your inputs, the optimal retirement age for maintaining financial independence is {inputValues.retirementInput}.
-                  </p>
-                )}
+              {/* Retirement Age with Auto-calculate button */}
+              <div className="mb-2">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center">
+                    <label className="block text-xs font-medium text-gray-700">
+                      Retirement Age
+                      {autoCalculateRetirementAge && (
+                        <span className="ml-1.5 text-xs text-purple-600 font-normal">(Auto-calculated)</span>
+                      )}
+                    </label>
+                  </div>
+                  
+                  {/* Auto-calculate button */}
+                  <button
+                    onClick={toggleAutoRetirementCalculation}
+                    className={`p-1.5 rounded-lg transition-all flex items-center ${
+                      autoCalculateRetirementAge 
+                        ? 'bg-purple-600 text-white ring-1 ring-purple-300' 
+                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
+                    }`}
+                    title="Calculate ideal retirement age for financial independence"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span className="text-xs ml-1">Auto-calculate</span>
+                  </button>
+                </div>
+                
+                {/* Standard parameter input with grayed out style when auto-calculated */}
+                <div className={autoCalculateRetirementAge ? "opacity-60 pointer-events-none" : ""}>
+                  {renderParameterInput(
+                    "", // Empty label since we have a custom label above
+                    "retirementInput", 
+                    inputValues.retirementInput, 
+                    "65", 
+                    false, 
+                    false, 
+                    "",
+                    true // Always include slider
+                  )}
+                </div>
               </div>
 
               {/* Withdrawal Strategy - Optimized */}

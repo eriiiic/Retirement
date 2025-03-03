@@ -650,13 +650,13 @@ const RetirementSimulator = () => {
   return (
     <div className="p-3 sm:p-6 max-w-6xl mx-auto bg-white rounded-lg shadow-md">
       <div className="mb-6 sm:mb-8 text-center">
-        <div className="title-container inline-block mb-4 px-4 py-2">
+        <div className="inline-block mb-4 px-4 py-2 bg-gray-100/70 rounded-lg shadow-sm">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gradient">
-            Financial Independence, Retire Early Calculator
+            AI-Powered Retirement & Investment Calculator
           </h1>
         </div>
         <p className="text-gray-800 text-sm sm:text-base max-w-2xl mx-auto font-medium">
-          Plan your path to financial independence and early retirement. Calculate exactly how much you need to save and how long until you can achieve FIRE.
+          Leverage advanced AI algorithms to plan your financial future with precision. Calculate how compound interest grows your investments with intelligent projections.
         </p>
       </div>
       
