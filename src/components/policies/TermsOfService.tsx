@@ -98,7 +98,7 @@ const TermsOfService: React.FC = () => {
       <section className="mb-6">
         <h3 className="text-xl font-semibold mb-3">Contact Us</h3>
         <p>
-          If you have any questions about these Terms of Service, please contact us at: edelattre@gmail.com
+          If you have any questions about these Terms of Service, please contact us at: contact@FIRECalculator.ai
         </p>
       </section>
     </div>
