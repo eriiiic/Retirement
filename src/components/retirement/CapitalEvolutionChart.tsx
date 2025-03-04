@@ -255,8 +255,8 @@ export const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
     if (state.showDelayedRetirement && retirementIndex >= 0) {
       // When delayed simulations are shown, use fixed limit based on original retirement capital
       const capitalAtOriginalRetirement = graphData[retirementIndex].capital;
-      console.log("Y-axis limit:", capitalAtOriginalRetirement + 1000000);
-      return capitalAtOriginalRetirement + 1000000;
+      console.log("Y-axis limit:", capitalAtOriginalRetirement + 750000);
+      return capitalAtOriginalRetirement + 750000;
     } else {
       // When delayed simulations are hidden, use the max value from the main chart
       const maxValue = Math.max(...graphData.map(d => d.capital));
