@@ -705,7 +705,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
           {includeSlider && (
             <div 
               ref={el => sliderContainerRefs.current[id as string] = el}
-              className="w-2/3 sm:w-2/3 w-1/2 relative" 
+              className="w-full sm:w-2/3 md:w-2/3 relative" 
               onMouseDown={(e) => handleSliderMouseDown(id, e)}
               onTouchStart={(e) => handleSliderTouchStart(id, e)}
             >
@@ -762,8 +762,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
           
           {/* For Current Age, add a container with a fixed width to match the Initial Capital input */}
           {id === 'currentAge' ? (
-            <div className="relative w-1/3 flex items-center justify-end">
-              <div className="w-2/3 flex items-center">
+            <div className="relative w-full sm:w-1/3 flex items-center justify-end">
+              <div className="w-full sm:w-2/3 flex items-center">
                 <input
                   ref={el => inputRefs.current[id as string] = el}
                   id={id as string}
@@ -780,9 +780,9 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 <span className="text-xs text-gray-600 ml-1">years old</span>
               </div>
             </div>
-          ) : id === 'initialCapital' || id === 'monthlyInvestment' ? (
-            <div className="relative w-1/3 flex items-center justify-end">
-              <div className="w-2/3 flex items-center">
+          ) : id === 'initialCapital' || id === 'monthlyInvestment' || id === 'monthlyRetirementWithdrawal' ? (
+            <div className="relative w-full sm:w-1/3 flex items-center justify-end">
+              <div className="w-full sm:w-2/3 flex items-center">
                 <input
                   ref={el => inputRefs.current[id as string] = el}
                   id={id as string}
@@ -807,8 +807,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               </div>
             </div>
           ) : id === 'retirementInput' ? (
-            <div className="relative w-1/3 sm:w-1/3 w-1/2 flex items-center justify-end">
-              <div className="w-3/4 sm:w-3/4 w-full flex items-center">
+            <div className="relative w-full sm:w-1/3 flex items-center justify-end">
+              <div className="w-full sm:w-1/2 flex items-center">
                 <input
                   ref={el => inputRefs.current[id as string] = el}
                   id={id as string}
@@ -826,8 +826,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               </div>
             </div>
           ) : id === 'maxAge' ? (
-            <div className="relative w-1/3 flex items-center justify-end">
-              <div className="w-3/4 flex items-center">
+            <div className="relative w-full sm:w-1/3 flex items-center justify-end">
+              <div className="w-full sm:w-3/4 flex items-center">
                 <input
                   ref={el => inputRefs.current[id as string] = el}
                   id={id as string}
@@ -845,7 +845,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               </div>
             </div>
           ) : (
-            <div className={`relative ${includeSlider ? 'w-1/3' : 'w-full'}`}>
+            <div className={`relative ${includeSlider ? (percentage ? 'w-full sm:w-1/4' : 'w-full sm:w-1/3') : 'w-full'} flex items-center`}>
               <input
                 ref={el => inputRefs.current[id as string] = el}
                 id={id as string}
@@ -853,18 +853,12 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 inputMode={percentage || currency ? "decimal" : "numeric"}
                 value={currency 
                   ? `${params.currency === 'USD' ? '$' : '€'} ${value === '0' ? '' : value}` 
-                  : percentage
-                    ? `${value === '0' ? '' : value}`
-                    : (value === '0' ? '' : value)}
+                  : (value === '0' ? '' : value)}
                 onChange={(e) => {
                   if (currency) {
                     // Remove currency symbol before handling change
                     const valueWithoutCurrency = e.target.value.replace(/^[\$€]\s?/, '');
                     handleInputChange(id, valueWithoutCurrency);
-                  } else if (percentage) {
-                    // Remove percentage symbol before handling change
-                    const valueWithoutPercentage = e.target.value.replace(/%$/, '');
-                    handleInputChange(id, valueWithoutPercentage);
                   } else {
                     handleInputChange(id, e.target.value);
                   }
@@ -874,10 +868,6 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                     // Remove currency symbol before handling blur
                     const valueWithoutCurrency = e.target.value.replace(/^[\$€]\s?/, '');
                     handleInputBlur(id, valueWithoutCurrency);
-                  } else if (percentage) {
-                    // Remove percentage symbol before handling blur
-                    const valueWithoutPercentage = e.target.value.replace(/%$/, '');
-                    handleInputBlur(id, valueWithoutPercentage);
                   } else {
                     handleInputBlur(id, e.target.value);
                   }
@@ -885,12 +875,18 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 onFocus={() => handleInputFocus(id as string)}
                 placeholder={currency 
                   ? `${params.currency === 'USD' ? '$' : '€'} ${placeholder}` 
-                  : percentage ? placeholder : placeholder}
-                className={`w-full rounded-lg border border-gray-300 py-1.5 px-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm ${percentage ? 'text-right pr-6' : 'text-left'}`}
+                  : placeholder}
+                className={`w-full rounded-lg border border-gray-300 py-1.5 px-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-left`}
                 aria-label={`${label} input`}
               />
-              {percentage && (
+              {/* Remove percentage symbol display */}
+              {/* {percentage && (
                 <span className="absolute inset-y-0 right-2 flex items-center text-gray-500 pointer-events-none">
+                  %
+                </span>
+              )} */}
+              {percentage && (
+                <span className="text-xs text-gray-600 ml-1.5">
                   %
                 </span>
               )}
@@ -1052,18 +1048,18 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   {/* Auto-calculate button - now wider with explicit text */}
                   <button
                     onClick={toggleAutoRetirementCalculation}
-                    className={`flex-shrink-0 mr-2 p-1.5 px-3 rounded-lg transition-all flex items-center w-36 ${
+                    className={`flex-shrink-0 mr-2 p-1.5 px-3 rounded-lg transition-all flex items-center w-32 sm:w-36 ${
                       autoCalculateRetirementAge 
                         ? 'bg-purple-600 text-white ring-1 ring-purple-300' 
                         : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
                     }`}
                     title="Calculate ideal retirement age for financial independence"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 sm:mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                     <span className="text-xs font-medium">
-                      {autoCalculateRetirementAge ? "Auto-calculating" : "Auto-calculate"}
+                      {autoCalculateRetirementAge ? "Auto-calc" : "Auto-calc"}
                     </span>
                   </button>
                   
