@@ -200,4 +200,21 @@ export interface SummaryResult {
   growthPercentage: number;
   /** Annualized return percentage */
   annualizedReturn: number;
-} 
+}
+
+/**
+ * Delayed retirement point data
+ */
+export interface DelayedRetirementPoint {
+  /** Year of delayed retirement */
+  year: number;
+  /** Minimum capital at this point */
+  capitalMin: number;
+  /** Maximum capital at this point */
+  capitalMax: number;
+}
+
+/**
+ * Function to calculate delayed retirement capital
+ */
+export type CalculateDelayedCapitalFunction = (delayRange: [number, number], data: GraphDataPoint[], params: SimulatorParams) => DelayedRetirementPoint | null; 

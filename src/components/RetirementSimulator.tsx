@@ -687,6 +687,7 @@ const RetirementSimulator = () => {
           formatAmount={formatAmount}
           currency={params.currency}
           currentAge={params.currentAge}
+          params={params}
         />
       </div>
 
