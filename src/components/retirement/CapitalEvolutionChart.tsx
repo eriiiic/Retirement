@@ -253,16 +253,30 @@ export const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
     const retirementIndex = graphData.findIndex(point => point.retirement === "Yes");
     
     if (state.showDelayedRetirement && retirementIndex >= 0) {
-      // When delayed simulations are shown, use fixed limit based on original retirement capital
+      // When delayed simulations are shown, calculate the actual maximum value across all simulations
       const capitalAtOriginalRetirement = graphData[retirementIndex].capital;
-      console.log("Y-axis limit:", capitalAtOriginalRetirement + 750000);
-      return capitalAtOriginalRetirement + 750000;
+      
+      // Find the maximum value across all delayed retirement simulations
+      let maxDelayedValue = 0;
+      Object.values(delayedRetirementData).forEach(simulation => {
+        const simulationMax = Math.max(...simulation.map(point => point.capital));
+        maxDelayedValue = Math.max(maxDelayedValue, simulationMax);
+      });
+      
+      // Use the maximum of either the original data's max or the delayed simulations' max
+      const maxValue = Math.max(
+        Math.max(...graphData.map(d => d.capital)),
+        maxDelayedValue
+      );
+      
+      // Add a 20% buffer to ensure all values fit comfortably
+      return maxValue * 1.2;
     } else {
       // When delayed simulations are hidden, use the max value from the main chart
       const maxValue = Math.max(...graphData.map(d => d.capital));
       return maxValue + 200000; // Add a small buffer
     }
-  }, [graphData, state.showDelayedRetirement]);
+  }, [graphData, state.showDelayedRetirement, delayedRetirementData]);
 
   // Calculate all unique years for proper x-axis domain
   const allYears = useMemo(() => {
