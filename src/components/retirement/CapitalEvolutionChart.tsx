@@ -252,31 +252,20 @@ export const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
     // Find the exact retirement index and capital at that point
     const retirementIndex = graphData.findIndex(point => point.retirement === "Yes");
     
-    if (state.showDelayedRetirement && retirementIndex >= 0) {
-      // When delayed simulations are shown, calculate the actual maximum value across all simulations
-      const capitalAtOriginalRetirement = graphData[retirementIndex].capital;
+    if (retirementIndex >= 0) {
+      // Get capital at retirement year
+      const capitalAtRetirement = graphData[retirementIndex].capital;
       
-      // Find the maximum value across all delayed retirement simulations
-      let maxDelayedValue = 0;
-      Object.values(delayedRetirementData).forEach(simulation => {
-        const simulationMax = Math.max(...simulation.map(point => point.capital));
-        maxDelayedValue = Math.max(maxDelayedValue, simulationMax);
-      });
-      
-      // Use the maximum of either the original data's max or the delayed simulations' max
-      const maxValue = Math.max(
-        Math.max(...graphData.map(d => d.capital)),
-        maxDelayedValue
-      );
-      
-      // Add a 20% buffer to ensure all values fit comfortably
-      return maxValue * 1.2;
+      // Set maximum Y value to be not higher than 1/3 above the retirement capital
+      // This ensures we keep focus on the main simulation even if delayed retirement
+      // simulations go much higher
+      return capitalAtRetirement * 1.33; // Add 1/3 to the capital at retirement
     } else {
-      // When delayed simulations are hidden, use the max value from the main chart
+      // Fallback if retirement point not found - use maximum value from the data
       const maxValue = Math.max(...graphData.map(d => d.capital));
-      return maxValue + 200000; // Add a small buffer
+      return maxValue * 1.2; // Add a 20% buffer
     }
-  }, [graphData, state.showDelayedRetirement, delayedRetirementData]);
+  }, [graphData]);
 
   // Calculate all unique years for proper x-axis domain
   const allYears = useMemo(() => {
