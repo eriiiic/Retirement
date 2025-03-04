@@ -30,6 +30,7 @@ const RetirementSimulator = () => {
     withdrawalMode: "amount",
     maxAge: 95,
     compoundFrequency: 'monthly',
+    autoCalculateRetirementAge: false,
   });
 
   // State for chart data

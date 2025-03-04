@@ -123,6 +123,8 @@ export interface SimulatorParams {
   compoundFrequency: CompoundFrequency;
   /** Withdrawal rate percentage (for rate mode) */
   withdrawalRate?: number;
+  /** Whether to auto-calculate the optimal retirement age */
+  autoCalculateRetirementAge: boolean;
 }
 
 /**
