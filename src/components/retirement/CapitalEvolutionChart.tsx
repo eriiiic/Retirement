@@ -483,34 +483,55 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
   const maxYValue = useMemo(() => {
     if (!graphData.length) return 'auto';
     
+    // Find the main capital value at retirement year
     const retirementYear = statistics.calculatedRetirementStartYear;
     const retirementPoint = graphData.find(point => point.year === retirementYear);
     
     if (!retirementPoint?.capital) return 'auto';
 
-    // Fixed maximum value based on main retirement capital + 40%
-    return retirementPoint.capital * 1.4;
-  }, [graphData, statistics.calculatedRetirementStartYear]);
+    // Calculate the absolute maximum cap (retirement capital + 40%)
+    const maxAllowedValue = retirementPoint.capital * 1.4;
+
+    // Find the current maximum value across all visible data
+    const currentMaxValue = Math.max(
+      ...chartData.map(point => {
+        const values = [point.capital];
+        // Only include delayed retirement values if they are selected
+        if (selectedDelays.includes(1) && point.capitalMin !== undefined) values.push(point.capitalMin);
+        if (selectedDelays.includes(2) && point.capital2Year !== undefined) values.push(point.capital2Year);
+        if (selectedDelays.includes(3) && point.capital3Year !== undefined) values.push(point.capital3Year);
+        if (selectedDelays.includes(4) && point.capital4Year !== undefined) values.push(point.capital4Year);
+        if (selectedDelays.includes(5) && point.capitalMax !== undefined) values.push(point.capitalMax);
+        return Math.max(...values);
+      })
+    );
+
+    // Add 10% padding to the current maximum for better visualization
+    const paddedCurrentMax = currentMaxValue * 1.1;
+
+    // Return the smaller of the padded current maximum or the absolute cap
+    return Math.min(paddedCurrentMax, maxAllowedValue);
+  }, [graphData, statistics.calculatedRetirementStartYear, chartData, selectedDelays]);
 
   // Check if capital is positive at target age for each delay
   const getPositiveDelays = useMemo(() => {
     if (!graphData.length) return new Set<number>();
     
     const targetYear = new Date().getFullYear() + (statistics.lifeExpectancy - currentAge);
-    const finalDataPoint = graphData.find(point => point.year === targetYear);
+    const finalDataPoint = chartData.find(point => point.year === targetYear);
     
     if (!finalDataPoint) return new Set<number>();
     
     const positiveDelays = new Set<number>();
     
-    if (finalDataPoint.capitalMin && finalDataPoint.capitalMin > 0) positiveDelays.add(1);
-    if (finalDataPoint.capital2Year && finalDataPoint.capital2Year > 0) positiveDelays.add(2);
-    if (finalDataPoint.capital3Year && finalDataPoint.capital3Year > 0) positiveDelays.add(3);
-    if (finalDataPoint.capital4Year && finalDataPoint.capital4Year > 0) positiveDelays.add(4);
-    if (finalDataPoint.capitalMax && finalDataPoint.capitalMax > 0) positiveDelays.add(5);
+    if (finalDataPoint.capitalMin > 0) positiveDelays.add(1);
+    if (finalDataPoint.capital2Year > 0) positiveDelays.add(2);
+    if (finalDataPoint.capital3Year > 0) positiveDelays.add(3);
+    if (finalDataPoint.capital4Year > 0) positiveDelays.add(4);
+    if (finalDataPoint.capitalMax > 0) positiveDelays.add(5);
     
     return positiveDelays;
-  }, [graphData, statistics.lifeExpectancy, currentAge]);
+  }, [chartData, statistics.lifeExpectancy, currentAge]);
 
   return (
     <div className="bg-gray-50 p-5 rounded-2xl shadow-md border border-gray-200">
@@ -615,6 +636,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
               stroke={colors.neutral[600]}
               tick={{ fill: colors.neutral[600], fontSize: 12 }}
               domain={[0, maxYValue]}
+              allowDataOverflow={true}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
