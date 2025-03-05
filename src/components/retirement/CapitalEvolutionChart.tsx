@@ -272,6 +272,46 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
       // Get all delayed retirement values directly from the payload's raw data
       const { capitalMin, capital2Year, capital3Year, capital4Year, capitalMax } = payload[0]?.payload || {};
 
+      // Format function that includes currency
+      const formatWithCurrency = (amount: number) => {
+        if (amount === undefined || amount === null) return '';
+        
+        // Round the amount to remove decimals
+        const roundedAmount = Math.round(amount);
+        
+        // Format the amount based on currency locale
+        let formattedAmount;
+        if (currency === 'EUR') {
+          // Use European formatting (spaces for thousands)
+          formattedAmount = roundedAmount.toLocaleString('fr-FR', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+            useGrouping: true
+          });
+        } else {
+          // Use standard formatting for other currencies
+          formattedAmount = roundedAmount.toLocaleString('en-US', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+            useGrouping: true
+          });
+        }
+        
+        // Add currency symbol based on currency type
+        switch (currency) {
+          case 'USD':
+            return `$ ${formattedAmount}`;
+          case 'EUR':
+            return `${formattedAmount} €`;
+          case 'GBP':
+            return `£ ${formattedAmount}`;
+          case 'JPY':
+            return `¥ ${formattedAmount}`;
+          default:
+            return formattedAmount;
+        }
+      };
+
       return (
         <div className={cx(
           'p-4 bg-white border border-gray-200 rounded-lg',
@@ -311,7 +351,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                 'text-lg font-bold tracking-tight',
                 'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'
               )}>
-                {formatAmount(mainCapital)}
+                {formatWithCurrency(mainCapital)}
               </p>
             </div>
 
@@ -322,7 +362,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                   Capital invested
                 </p>
                 <p className={cx('text-base font-semibold text-gray-800')}>
-                  {formatAmount(capitalInvested)}
+                  {formatWithCurrency(capitalInvested)}
                 </p>
               </div>
             )}
@@ -341,7 +381,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                         +1 year delay
                       </p>
                       <p className={cx('text-xs font-semibold text-gray-700')}>
-                        {formatAmount(capitalMin)}
+                        {formatWithCurrency(capitalMin)}
                       </p>
                     </div>
                   )}
@@ -351,7 +391,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                         +2 years delay
                       </p>
                       <p className={cx('text-xs font-semibold text-gray-700')}>
-                        {formatAmount(capital2Year)}
+                        {formatWithCurrency(capital2Year)}
                       </p>
                     </div>
                   )}
@@ -361,7 +401,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                         +3 years delay
                       </p>
                       <p className={cx('text-xs font-semibold text-gray-700')}>
-                        {formatAmount(capital3Year)}
+                        {formatWithCurrency(capital3Year)}
                       </p>
                     </div>
                   )}
@@ -371,7 +411,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                         +4 years delay
                       </p>
                       <p className={cx('text-xs font-semibold text-gray-700')}>
-                        {formatAmount(capital4Year)}
+                        {formatWithCurrency(capital4Year)}
                       </p>
                     </div>
                   )}
@@ -381,7 +421,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                         +5 years delay
                       </p>
                       <p className={cx('text-xs font-semibold text-gray-700')}>
-                        {formatAmount(capitalMax)}
+                        {formatWithCurrency(capitalMax)}
                       </p>
                     </div>
                   )}
