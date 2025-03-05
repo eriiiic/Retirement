@@ -577,13 +577,17 @@ const RetirementSimulator = () => {
       </section>
       
       <section className={cx("pt-0 pb-3 sm:pb-6 max-w-6xl mx-auto mb-0 mt-0")}>
-        <CapitalEvolutionChart
-          graphData={graphData}
-          formatAmount={formatAmount}
-          statistics={statistics}
-          currency={params.currency}
-          currentAge={params.currentAge}
-        />
+        {graphData.length > 0 && statistics && (
+          <CapitalEvolutionChart
+            graphData={graphData}
+            formatAmount={formatAmount}
+            statistics={statistics}
+            currency={params.currency}
+            currentAge={params.currentAge}
+            annualReturnRate={params.annualReturnRate}
+            params={params}
+          />
+        )}
       </section>
 
       <section className={cx("pt-0 pb-3 sm:pb-6 max-w-6xl mx-auto mb-0 mt-0")}>
