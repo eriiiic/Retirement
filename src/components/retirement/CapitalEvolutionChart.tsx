@@ -14,8 +14,6 @@ import {
 } from 'recharts';
 import { GraphDataPoint, FormatAmountFunction, Statistics, Currency } from './types';
 import { colors, components, typography, cx } from '../../styles/styleGuide';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFlag, faCircleExclamation, faBullseye } from '@fortawesome/free-solid-svg-icons';
 
 type ViewBoxType = {
   x?: number;
@@ -35,7 +33,7 @@ interface CapitalEvolutionChartProps {
 interface LabelProps {
   viewBox: any;
   text: string;
-  icon: any;
+  symbol: string;
   color: string;
 }
 
@@ -101,7 +99,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
     return positions.sort((a, b) => a.x - b.x);
   }, [statistics, firstCapitalWithdrawalDecreaseYear, currentAge]);
 
-  const CustomLabel = ({ viewBox, text, icon, color }: LabelProps) => {
+  const CustomLabel = ({ viewBox, text, symbol, color }: LabelProps) => {
     const x = (viewBox?.x ?? 0) as number;
     const currentLabel = labelPositions.find(pos => pos.x === x);
     const labelIndex = labelPositions.findIndex(pos => pos.x === x);
@@ -140,7 +138,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
               right: 5
             }}
           >
-            <FontAwesomeIcon icon={icon} style={{ color, fontSize: '12px' }} />
+            <span style={{ color, fontSize: '12px' }}>{symbol}</span>
             <span style={{ color, fontSize: '12px', fontWeight: 500 }}>
               {text}
             </span>
@@ -286,7 +284,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                   <CustomLabel
                     viewBox={props.viewBox}
                     text="Retired"
-                    icon={faFlag}
+                    symbol="⚑"
                     color="#3B82F6"
                   />
                 )}
@@ -305,7 +303,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                     <CustomLabel
                       viewBox={props.viewBox}
                       text="Depleted"
-                      icon={faCircleExclamation}
+                      symbol="⚠"
                       color="#EF4444"
                     />
                   )}
@@ -325,7 +323,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                     <CustomLabel
                       viewBox={props.viewBox}
                       text="Target"
-                      icon={faBullseye}
+                      symbol="◎"
                       color="#22C55E"
                     />
                   )}
