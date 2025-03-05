@@ -8,10 +8,21 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
+  ReferenceLine,
+  Label
 } from 'recharts';
 import { GraphDataPoint, FormatAmountFunction, Statistics, Currency } from './types';
 import { colors, components, typography, cx } from '../../styles/styleGuide';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFlag, faCircleExclamation, faBullseye } from '@fortawesome/free-solid-svg-icons';
+
+type ViewBoxType = {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+};
 
 interface CapitalEvolutionChartProps {
   graphData: GraphDataPoint[];
@@ -19,6 +30,13 @@ interface CapitalEvolutionChartProps {
   statistics: Statistics;
   currency: Currency;
   currentAge: number;
+}
+
+interface LabelProps {
+  viewBox: any;
+  text: string;
+  icon: any;
+  color: string;
 }
 
 const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
@@ -36,6 +54,101 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
       capitalWithoutInterest: point.retirement === "No" ? point.capitalWithoutInterest : null
     }));
   }, [graphData]);
+
+  // Find the first year where capital withdrawal reduces
+  const firstCapitalWithdrawalDecreaseYear = useMemo(() => {
+    for (let i = 1; i < graphData.length; i++) {
+      if (graphData[i].retirement === "Yes" && 
+          graphData[i-1].retirement === "Yes" &&
+          Math.abs(graphData[i].netVariationExcludingInterest) < Math.abs(graphData[i-1].netVariationExcludingInterest)) {
+        return graphData[i].year;
+      }
+    }
+    return null;
+  }, [graphData]);
+
+  // Track label positions
+  const labelPositions = useMemo(() => {
+    const positions = [];
+    
+    // Add retirement line position
+    if (statistics.calculatedRetirementStartYear) {
+      positions.push({
+        x: statistics.calculatedRetirementStartYear - 1,
+        text: "Retired",
+        width: 80 // Approximate width in pixels including icon and padding
+      });
+    }
+
+    // Add withdrawal decrease line position
+    if (firstCapitalWithdrawalDecreaseYear) {
+      positions.push({
+        x: firstCapitalWithdrawalDecreaseYear - 1,
+        text: "Depleted",
+        width: 85 // Approximate width in pixels including icon and padding
+      });
+    }
+
+    // Add target age line position
+    if (statistics.lifeExpectancy && currentAge) {
+      positions.push({
+        x: new Date().getFullYear() + (statistics.lifeExpectancy - currentAge),
+        text: "Target",
+        width: 75 // Approximate width in pixels including icon and padding
+      });
+    }
+
+    return positions.sort((a, b) => a.x - b.x);
+  }, [statistics, firstCapitalWithdrawalDecreaseYear, currentAge]);
+
+  const CustomLabel = ({ viewBox, text, icon, color }: LabelProps) => {
+    const x = (viewBox?.x ?? 0) as number;
+    const currentLabel = labelPositions.find(pos => pos.x === x);
+    const labelIndex = labelPositions.findIndex(pos => pos.x === x);
+    
+    // Base offset for all labels
+    let offset = 105;
+
+    // Only adjust left labels if they're not the rightmost label
+    if (labelIndex < labelPositions.length - 1) {
+      const currentLabelWidth = currentLabel?.width || 80;
+      const nextLabel = labelPositions[labelIndex + 1];
+      const pixelsPerUnit = 8; // Approximate pixels per x-axis unit
+      const distance = (nextLabel.x - x) * pixelsPerUnit;
+      
+      // If the distance is less than the width of both labels plus desired gap
+      if (distance < (currentLabelWidth + nextLabel.width + 10)) {
+        offset = currentLabelWidth + 20; // Move left label further left
+      }
+    }
+
+    return (
+      <g transform={`translate(${x - offset}, 35)`}>
+        <foreignObject width="100" height="30">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              backgroundColor: 'white',
+              border: `1px solid ${color}`,
+              borderRadius: '4px',
+              padding: '2px 6px',
+              width: 'fit-content',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+              position: 'absolute',
+              right: 5
+            }}
+          >
+            <FontAwesomeIcon icon={icon} style={{ color, fontSize: '12px' }} />
+            <span style={{ color, fontSize: '12px', fontWeight: 500 }}>
+              {text}
+            </span>
+          </div>
+        </foreignObject>
+      </g>
+    );
+  };
 
   // Custom tooltip formatter
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -121,7 +234,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={chartData}
-            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
           >
             <defs>
               <linearGradient id="capitalGradient" x1="0" y1="0" x2="1" y2="0">
@@ -160,6 +273,66 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
+            
+            {/* Reference line for last year before retirement */}
+            <ReferenceLine
+              x={statistics.calculatedRetirementStartYear - 1}
+              stroke="#3B82F6"
+              strokeDasharray="3 3"
+              strokeWidth={2}
+            >
+              <Label
+                content={(props) => (
+                  <CustomLabel
+                    viewBox={props.viewBox}
+                    text="Retired"
+                    icon={faFlag}
+                    color="#3B82F6"
+                  />
+                )}
+              />
+            </ReferenceLine>
+
+            {/* Reference line for capital withdrawal decrease */}
+            {firstCapitalWithdrawalDecreaseYear && (
+              <ReferenceLine
+                x={firstCapitalWithdrawalDecreaseYear - 1}
+                stroke="#EF4444"
+                strokeWidth={3}
+              >
+                <Label
+                  content={(props) => (
+                    <CustomLabel
+                      viewBox={props.viewBox}
+                      text="Depleted"
+                      icon={faCircleExclamation}
+                      color="#EF4444"
+                    />
+                  )}
+                />
+              </ReferenceLine>
+            )}
+
+            {/* Reference line for target age */}
+            {statistics.lifeExpectancy && currentAge && (
+              <ReferenceLine
+                x={new Date().getFullYear() + (statistics.lifeExpectancy - currentAge)}
+                stroke="#22C55E"
+                strokeWidth={3}
+              >
+                <Label
+                  content={(props) => (
+                    <CustomLabel
+                      viewBox={props.viewBox}
+                      text="Target"
+                      icon={faBullseye}
+                      color="#22C55E"
+                    />
+                  )}
+                />
+              </ReferenceLine>
+            )}
+
             <Area
               type="monotone"
               dataKey="capital"
