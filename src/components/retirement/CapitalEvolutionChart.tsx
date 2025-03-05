@@ -12,8 +12,11 @@ import {
   ReferenceLine,
   Label
 } from 'recharts';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBriefcase, faTriangleExclamation, faBullseye } from '@fortawesome/free-solid-svg-icons';
 import { GraphDataPoint, FormatAmountFunction, Statistics, Currency } from './types';
 import { colors, components, typography, cx } from '../../styles/styleGuide';
+import { calculateFutureValue } from '../../utils/financialCalculations';
 
 type ViewBoxType = {
   x?: number;
@@ -28,6 +31,8 @@ interface CapitalEvolutionChartProps {
   statistics: Statistics;
   currency: Currency;
   currentAge: number;
+  annualReturnRate: number;
+  params: any;
 }
 
 interface LabelProps {
@@ -36,158 +41,228 @@ interface LabelProps {
   color: string;
 }
 
+const CustomLabel: React.FC<LabelProps> = ({ viewBox, text, color }) => {
+  const icon = getIconForLabel(text);
+  return (
+    <g>
+      <foreignObject x={viewBox.x - 120} y={viewBox.y - 15} width={100} height={30}>
+        <div className="flex items-center gap-2 bg-white border-2 rounded-lg px-3 py-1.5 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12)]">
+          <FontAwesomeIcon icon={icon} className="text-sm" style={{ color }} />
+          <span className="text-xs font-semibold" style={{ color }}>{text}</span>
+        </div>
+      </foreignObject>
+    </g>
+  );
+};
+
+const getIconForLabel = (text: string) => {
+  switch (text) {
+    case 'Retired':
+      return faBriefcase;
+    case 'Depleted':
+      return faTriangleExclamation;
+    case 'Target':
+      return faBullseye;
+    default:
+      return faBriefcase;
+  }
+};
+
 const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
   graphData,
   formatAmount,
   statistics,
   currency,
-  currentAge
+  currentAge,
+  annualReturnRate,
+  params
 }) => {
+  // Calculate data for delayed retirement scenarios
+  const delayedRetirementData = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const retirementYear = statistics.calculatedRetirementStartYear;
+    
+    // Initialize delayed scenario capitals
+    let delay1YearCapital = params.initialCapital;
+    let delay5YearCapital = params.initialCapital;
+    let delay1YearMonthlyInvestment = params.monthlyInvestment;
+    let delay5YearMonthlyInvestment = params.monthlyInvestment;
+    let delay1YearMonthlyWithdrawal = params.monthlyRetirementWithdrawal;
+    let delay5YearMonthlyWithdrawal = params.monthlyRetirementWithdrawal;
+    
+    // Create data points for each year
+    return graphData.map((point, index) => {
+      const yearIndex = point.year - currentYear;
+      
+      if (yearIndex < 0) {
+        return { ...point, capitalMin: point.capital, capitalMax: point.capital };
+      }
+      
+      const delay1Year = retirementYear + 1;
+      const delay5Years = retirementYear + 5;
+      
+      // Calculate 1-year delay scenario
+      const isRetired1Year = point.year >= delay1Year;
+      if (!isRetired1Year) {
+        // Still in investment phase
+        delay1YearCapital = calculateFutureValue(
+          delay1YearCapital,
+          annualReturnRate,
+          1,
+          delay1YearMonthlyInvestment,
+          'monthly'
+        );
+        delay1YearMonthlyInvestment *= (1 + params.inflation / 100);
+      } else {
+        // In retirement phase
+        delay1YearCapital = calculateFutureValue(
+          delay1YearCapital,
+          annualReturnRate,
+          1,
+          -delay1YearMonthlyWithdrawal,
+          'monthly'
+        );
+        delay1YearMonthlyWithdrawal *= (1 + params.inflation / 100);
+      }
+      
+      // Calculate 5-year delay scenario
+      const isRetired5Years = point.year >= delay5Years;
+      if (!isRetired5Years) {
+        // Still in investment phase
+        delay5YearCapital = calculateFutureValue(
+          delay5YearCapital,
+          annualReturnRate,
+          1,
+          delay5YearMonthlyInvestment,
+          'monthly'
+        );
+        delay5YearMonthlyInvestment *= (1 + params.inflation / 100);
+      } else {
+        // In retirement phase
+        delay5YearCapital = calculateFutureValue(
+          delay5YearCapital,
+          annualReturnRate,
+          1,
+          -delay5YearMonthlyWithdrawal,
+          'monthly'
+        );
+        delay5YearMonthlyWithdrawal *= (1 + params.inflation / 100);
+      }
+      
+      return {
+        ...point,
+        capitalMin: Math.max(0, Math.round(delay1YearCapital)),
+        capitalMax: Math.max(0, Math.round(delay5YearCapital))
+      };
+    });
+  }, [
+    graphData,
+    statistics,
+    annualReturnRate,
+    params.initialCapital,
+    params.monthlyInvestment,
+    params.monthlyRetirementWithdrawal,
+    params.inflation
+  ]);
+
   // Prepare data with investment phase only for capitalWithoutInterest
   const chartData = useMemo(() => {
-    return graphData.map(point => ({
+    return delayedRetirementData.map(point => ({
       ...point,
-      // Only keep capitalWithoutInterest during investment phase
+      // Only keep capitalWithoutInterest during investment phase and set to null during retirement
       capitalWithoutInterest: point.retirement === "No" ? point.capitalWithoutInterest : null
     }));
-  }, [graphData]);
-
-  // Find the first year where capital withdrawal reduces
-  const firstCapitalWithdrawalDecreaseYear = useMemo(() => {
-    for (let i = 1; i < graphData.length; i++) {
-      if (graphData[i].retirement === "Yes" && 
-          graphData[i-1].retirement === "Yes" &&
-          Math.abs(graphData[i].netVariationExcludingInterest) < Math.abs(graphData[i-1].netVariationExcludingInterest)) {
-        return graphData[i].year;
-      }
-    }
-    return null;
-  }, [graphData]);
-
-  // Track label positions
-  const labelPositions = useMemo(() => {
-    const positions = [];
-    
-    // Add retirement line position
-    if (statistics.calculatedRetirementStartYear) {
-      positions.push({
-        x: statistics.calculatedRetirementStartYear - 1,
-        text: "Retired",
-        width: 80 // Approximate width in pixels including icon and padding
-      });
-    }
-
-    // Add withdrawal decrease line position
-    if (firstCapitalWithdrawalDecreaseYear) {
-      positions.push({
-        x: firstCapitalWithdrawalDecreaseYear - 1,
-        text: "Depleted",
-        width: 85 // Approximate width in pixels including icon and padding
-      });
-    }
-
-    // Add target age line position
-    if (statistics.lifeExpectancy && currentAge) {
-      positions.push({
-        x: new Date().getFullYear() + (statistics.lifeExpectancy - currentAge),
-        text: "Target",
-        width: 75 // Approximate width in pixels including icon and padding
-      });
-    }
-
-    return positions.sort((a, b) => a.x - b.x);
-  }, [statistics, firstCapitalWithdrawalDecreaseYear, currentAge]);
-
-  const CustomLabel = ({ viewBox, text, color }: LabelProps) => {
-    const x = (viewBox?.x ?? 0) as number;
-    const currentLabel = labelPositions.find(pos => pos.x === x);
-    const labelIndex = labelPositions.findIndex(pos => pos.x === x);
-    
-    // Base offset for all labels
-    let offset = 105;
-
-    // Only adjust left labels if they're not the rightmost label
-    if (labelIndex < labelPositions.length - 1) {
-      const currentLabelWidth = currentLabel?.width || 80;
-      const nextLabel = labelPositions[labelIndex + 1];
-      const pixelsPerUnit = 8; // Approximate pixels per x-axis unit
-      const distance = (nextLabel.x - x) * pixelsPerUnit;
-      
-      // If the distance is less than the width of both labels plus desired gap
-      if (distance < (currentLabelWidth + nextLabel.width + 10)) {
-        offset = currentLabelWidth + 20; // Move left label further left
-      }
-    }
-
-    return (
-      <g transform={`translate(${x - offset}, 35)`}>
-        <foreignObject width="100" height="30">
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              backgroundColor: 'white',
-              border: `1px solid ${color}`,
-              borderRadius: '4px',
-              padding: '2px 6px',
-              width: 'fit-content',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-              position: 'absolute',
-              right: 5
-            }}
-          >
-            <span style={{ color, fontSize: '12px', fontWeight: 500 }}>
-              {text}
-            </span>
-          </div>
-        </foreignObject>
-      </g>
-    );
-  };
+  }, [delayedRetirementData]);
 
   // Custom tooltip formatter
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
-      const isCapitalZero = (payload[0]?.value || 0) <= 0;
+      const mainCapital = payload.find((p: any) => p.dataKey === 'capital')?.value || 0;
+      const capitalInvested = payload.find((p: any) => p.dataKey === 'capitalWithoutInterest')?.value;
+      const delay1Year = payload.find((p: any) => p.dataKey === 'capitalMin')?.value;
+      const delay5Years = payload.find((p: any) => p.dataKey === 'capitalMax')?.value;
+      const isCapitalZero = mainCapital <= 0;
       const age = payload[0]?.payload.age || 0;
       const isRetirementPhase = payload[0]?.payload.retirement === "Yes";
+      const showDelayedValues = isRetirementPhase || payload[0]?.payload.year === statistics.calculatedRetirementStartYear;
 
       return (
         <div className={cx(
-          components.container.card,
-          'p-3 bg-white/95 backdrop-blur-sm border border-gray-100 shadow-sm'
+          'p-3 bg-white border border-gray-200 rounded-lg',
+          'shadow-[0_4px_12px_-2px_rgba(0,0,0,0.12)]',
+          'min-w-[240px]'
         )}>
-          <p className={cx(typography.style.label)}>
-            Year {label}
-          </p>
-          <p className={cx(
-            typography.weight.bold,
-            isCapitalZero ? 'text-red-600' : typography.style.value,
-            'mb-2'
-          )}>
-            Age {age}
-          </p>
-          <div className="space-y-2">
-            <p className="flex flex-col">
-              <span className={cx(
-                typography.weight.bold,
-                'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'
-              )}>Capital with interests</span>
-              <span className={cx(
-                typography.weight.bold,
+          {/* Header */}
+          <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-gray-200">
+            <div>
+              <p className={cx('text-xs font-medium text-gray-600')}>
+                Year {label} · <span className={cx(
+                  'font-bold',
+                  isCapitalZero ? 'text-red-600' : 'text-gray-900'
+                )}>Age {age}</span>
+              </p>
+            </div>
+            <div className={cx(
+              'px-2 py-0.5 rounded text-[11px] font-semibold border-[1.5px]',
+              isRetirementPhase 
+                ? 'bg-purple-50 text-purple-800 border-purple-200' 
+                : 'bg-blue-50 text-blue-800 border-blue-200'
+            )}>
+              {isRetirementPhase ? 'Retirement' : 'Investment'}
+            </div>
+          </div>
+
+          {/* Main Capital Section */}
+          <div className="space-y-2.5">
+            <div>
+              <p className={cx(
+                'text-xs font-bold mb-1',
                 'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'
               )}>
-                {formatAmount(payload[0]?.value || 0)}
-              </span>
-            </p>
-            {!isRetirementPhase && payload[1]?.value !== null && (
-              <p className="flex flex-col">
-                <span className={cx(typography.style.label)}>Capital invested</span>
-                <span className={cx(typography.style.value, 'text-gray-700')}>
-                  {formatAmount(payload[1]?.value || 0)}
-                </span>
+                Capital with interests
               </p>
+              <p className={cx(
+                'text-sm font-bold tracking-tight',
+                'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'
+              )}>
+                {formatAmount(mainCapital)}
+              </p>
+            </div>
+
+            {/* Investment Phase Info */}
+            {!isRetirementPhase && capitalInvested !== null && capitalInvested !== undefined && (
+              <div>
+                <p className={cx('text-xs font-medium text-gray-600 mb-1')}>
+                  Capital invested
+                </p>
+                <p className={cx('text-sm font-semibold text-gray-800')}>
+                  {formatAmount(capitalInvested)}
+                </p>
+              </div>
+            )}
+
+            {/* Delayed Retirement Section */}
+            {showDelayedValues && delay1Year !== undefined && delay5Years !== undefined && (
+              <div className="mt-2.5 pt-2.5 border-t border-gray-200">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className={cx('text-xs font-medium text-gray-600 mb-1')}>
+                      +1 year delay
+                    </p>
+                    <p className={cx('text-sm font-semibold text-gray-800')}>
+                      {formatAmount(delay1Year)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className={cx('text-xs font-medium text-gray-600 mb-1')}>
+                      +5 years delay
+                    </p>
+                    <p className={cx('text-sm font-semibold text-gray-800')}>
+                      {formatAmount(delay5Years)}
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -211,6 +286,17 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
     return graphData.findIndex(point => point.retirement === "Yes");
   }, [graphData]);
 
+  // Find first year when capital starts decreasing
+  const firstCapitalWithdrawalDecreaseYear = useMemo(() => {
+    const retirementIndex = graphData.findIndex(point => point.retirement === "Yes");
+    if (retirementIndex === -1) return null;
+
+    const decreasePoint = graphData.slice(retirementIndex).find((point, index, arr) => 
+      index > 0 && point.annualWithdrawal < arr[index - 1].annualWithdrawal
+    );
+    return decreasePoint?.year;
+  }, [graphData]);
+
   return (
     <div className="bg-gray-50 p-5 rounded-2xl shadow-md border border-gray-200">
       <div className={cx("mb-6")}>
@@ -223,7 +309,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
           Capital Evolution Over Time
         </h3>
         <p className={cx(typography.size.sm, "text-gray-600")}>
-          Visualize how your capital grows over time, comparing the total amount including interest earnings with your invested capital during the investment phase.
+          Visualize how your capital grows over time, comparing the total amount including interest earnings with your invested capital during the investment phase. The shaded area shows potential growth with delayed retirement (1-5 years).
         </p>
       </div>
       <div className="h-[400px]">
@@ -252,6 +338,18 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                 <stop
                   offset="100%"
                   stopColor={colors.primary[500]}
+                  stopOpacity={0.05}
+                />
+              </linearGradient>
+              <linearGradient id="bandedAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop
+                  offset="0%"
+                  stopColor={colors.secondary[500]}
+                  stopOpacity={0.2}
+                />
+                <stop
+                  offset="100%"
+                  stopColor={colors.secondary[500]}
                   stopOpacity={0.05}
                 />
               </linearGradient>
@@ -325,6 +423,24 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                 />
               </ReferenceLine>
             )}
+
+            {/* Banded area showing delayed retirement range */}
+            <Area
+              type="monotone"
+              dataKey="capitalMax"
+              stroke="none"
+              fill="url(#bandedAreaGradient)"
+              fillOpacity={1}
+              legendType="none"
+            />
+            <Area
+              type="monotone"
+              dataKey="capitalMin"
+              stroke="none"
+              fill="url(#bandedAreaGradient)"
+              fillOpacity={1}
+              legendType="none"
+            />
 
             <Area
               type="monotone"
