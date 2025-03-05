@@ -572,6 +572,7 @@ const RetirementSimulator = () => {
           statistics={statistics}
           params={params}
           formatAmount={formatAmount}
+          currency={params.currency}
         />
       </section>
       
