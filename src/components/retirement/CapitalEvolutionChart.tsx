@@ -39,6 +39,24 @@ interface LabelProps {
   color: string;
 }
 
+interface TooltipPayload {
+  dataKey: string;
+  value: number;
+  payload: GraphDataPoint & {
+    capitalMin?: number;
+    capital2Year?: number;
+    capital3Year?: number;
+    capital4Year?: number;
+    capitalMax?: number;
+  };
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+  label?: string;
+}
+
 const CustomLabel: React.FC<LabelProps> = ({ viewBox, text, color }) => {
   const icon = getIconForLabel(text);
   return (
@@ -261,10 +279,10 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
   }, [delayedRetirementData]);
 
   // Custom tooltip formatter
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
-      const mainCapital = payload.find((p: any) => p.dataKey === 'capital')?.value || 0;
-      const capitalInvested = payload.find((p: any) => p.dataKey === 'capitalWithoutInterest')?.value;
+      const mainCapital = payload.find((p) => p.dataKey === 'capital')?.value || 0;
+      const capitalInvested = payload.find((p) => p.dataKey === 'capitalWithoutInterest')?.value;
       const age = payload[0]?.payload.age || 0;
       const isRetirementPhase = payload[0]?.payload.retirement === "Yes";
       const isCapitalZero = mainCapital <= 0;
