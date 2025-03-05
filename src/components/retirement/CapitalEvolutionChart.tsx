@@ -10,19 +10,23 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { GraphDataPoint, FormatAmountFunction, Statistics } from './types';
+import { GraphDataPoint, FormatAmountFunction, Statistics, Currency } from './types';
 import { colors, components, typography, cx } from '../../styles/styleGuide';
 
 interface CapitalEvolutionChartProps {
   graphData: GraphDataPoint[];
   formatAmount: FormatAmountFunction;
   statistics: Statistics;
+  currency: Currency;
+  currentAge: number;
 }
 
 const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
   graphData,
   formatAmount,
-  statistics
+  statistics,
+  currency,
+  currentAge
 }) => {
   // Prepare data with investment phase only for capitalWithoutInterest
   const chartData = useMemo(() => {
