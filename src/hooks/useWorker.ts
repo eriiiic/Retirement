@@ -3,14 +3,12 @@ import { WorkerType, WorkerMessageType, WorkerMessage, WorkerResponse } from '..
 
 // Global worker pool to improve performance
 const workerPool: Record<WorkerType, Worker | null> = {
-  'capitalEvolution': null,
   'scheduleDetails': null,
   'resultsSummary': null
 };
 
 // Track how many components are using each worker
 const workerUsageCount: Record<WorkerType, number> = {
-  'capitalEvolution': 0,
   'scheduleDetails': 0,
   'resultsSummary': 0
 };
@@ -44,9 +42,6 @@ export const useWorker = (workerType: WorkerType) => {
     if (!workerPool[workerType]) {
       try {
         switch (workerType) {
-          case 'capitalEvolution':
-            workerPool[workerType] = new Worker(new URL('../workers/capitalEvolution.worker.ts', import.meta.url), { type: 'module' });
-            break;
           case 'scheduleDetails':
             workerPool[workerType] = new Worker(new URL('../workers/scheduleDetails.worker.ts', import.meta.url), { type: 'module' });
             break;

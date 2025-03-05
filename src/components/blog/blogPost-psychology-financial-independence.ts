@@ -4,11 +4,7 @@
  * The metadata is stored in blogData.ts, while the content lives here for better performance
  */
 
-export const content = `# The Psychology of Financial Independence
-
-![Psychology of money concept](https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80)
-
-<div class="lead-quote">
+export const content = `<div class="lead-quote">
   <blockquote>
     "Financial peace isn't the acquisition of stuff. It's learning to live on less than you make, so you can give money back and have money to invest. You can't win until you do this."
     <cite>— Dave Ramsey</cite>

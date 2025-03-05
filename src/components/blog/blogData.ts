@@ -40,7 +40,7 @@ export const blogPosts: BlogPost[] = [
     title: 'Investment Strategies for Building Your FIRE Portfolio',
     excerpt: 'Explore effective investment approaches that can help accelerate your path to financial independence while managing risk.',
     date: '2024-11-18',
-    author: 'Michael Chen',
+    author: 'Sophia Blake',
     topics: ['Investing', 'Financial Independence', 'Retirement Planning'],
     image: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
     readTime: 12
@@ -50,7 +50,7 @@ export const blogPosts: BlogPost[] = [
     title: 'Tax Optimization Strategies for Early Retirees',
     excerpt: 'Learn how to structure your investments and withdrawals to minimize tax burden during your early retirement years.',
     date: '2024-12-03',
-    author: 'Sarah Johnson',
+    author: 'Sophia Blake',
     topics: ['Tax Optimization', 'Early Retirement', 'Retirement Planning'],
     image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
     readTime: 10
@@ -60,7 +60,7 @@ export const blogPosts: BlogPost[] = [
     title: 'Building Passive Income Streams for FIRE',
     excerpt: 'Discover various passive income opportunities that can supplement your investment returns and accelerate your journey to financial independence.',
     date: '2024-12-15',
-    author: 'David Wong',
+    author: 'Sophia Blake',
     topics: ['Passive Income', 'Financial Independence', 'Investing'],
     image: 'https://images.unsplash.com/photo-1607863680198-23d4b2565df0?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
     readTime: 9
@@ -70,7 +70,7 @@ export const blogPosts: BlogPost[] = [
     title: 'How Real Estate Can Accelerate Your FIRE Journey',
     excerpt: 'Explore the benefits and challenges of incorporating real estate investments into your financial independence strategy.',
     date: '2024-12-28',
-    author: 'Jennifer Martinez',
+    author: 'Sophia Blake',
     topics: ['Real Estate', 'Passive Income', 'Financial Independence'],
     image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
     readTime: 11
@@ -80,7 +80,7 @@ export const blogPosts: BlogPost[] = [
     title: 'Optimizing Your Budget for Maximum Savings Rate',
     excerpt: 'Learn practical strategies to increase your savings rate without sacrificing quality of life, helping you reach FIRE faster.',
     date: '2025-01-10',
-    author: 'Thomas Black',
+    author: 'Sophia Blake',
     topics: ['Budget', 'Savings', 'Lifestyle'],
     image: 'https://images.unsplash.com/photo-1554224154-22dec7ec8818?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
     readTime: 7
@@ -90,7 +90,7 @@ export const blogPosts: BlogPost[] = [
     title: 'Coast FIRE: An Alternative Approach to Financial Independence',
     excerpt: 'Understand the concept of Coast FIRE and how it might be the right balance between early saving and lifestyle for many people.',
     date: '2025-01-22',
-    author: 'Olivia Parker',
+    author: 'Sophia Blaker',
     topics: ['Financial Independence', 'Retirement Planning', 'Lifestyle'],
     image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
     readTime: 8
@@ -110,7 +110,7 @@ export const blogPosts: BlogPost[] = [
     title: 'Geographic Arbitrage: FIRE in International Settings',
     excerpt: 'Discover how living abroad in lower-cost areas can dramatically accelerate your path to financial independence.',
     date: '2025-02-18',
-    author: 'Emily Chang',
+    author: 'Sophia Blake',
     topics: ['Financial Independence', 'Lifestyle', 'Early Retirement'],
     image: 'https://images.unsplash.com/photo-1473186578172-c141e6798cf4?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
     readTime: 10

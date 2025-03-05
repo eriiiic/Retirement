@@ -1,5 +1,5 @@
-import { useReducer, useState, useEffect, useRef, useMemo } from 'react';
-import { GraphDataPoint, FormatAmountFunction, SortConfig, FilterPhase } from './types';
+import { useReducer, useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { GraphDataPoint, FormatAmountFunction, SortConfig, FilterPhase, Currency } from './types';
 import { useWorker } from '../../hooks/useWorker';
 import { WorkerMessageType, WorkerResponse } from '../../types/worker';
 import { FixedSizeList as List } from 'react-window';
@@ -30,6 +30,7 @@ const scrollbarStyles = `
 interface ScheduleDetailsProps {
   graphData: GraphDataPoint[];
   formatAmount: FormatAmountFunction;
+  currency: Currency;
 }
 
 interface ScheduleState {
@@ -264,6 +265,7 @@ const PhaseSummaryTile: React.FC<PhaseSummaryTileProps> = ({
 export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
   graphData,
   formatAmount,
+  currency
 }) => {
   const [state, dispatch] = useReducer(scheduleReducer, {
     sortConfig: {
@@ -404,6 +406,12 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
     };
   }, [processedData]);
 
+  // Add console logs for debugging
+  useEffect(() => {
+    console.log("Processed Data:", processedData);
+    console.log("Retirement Summary:", retirementSummary);
+  }, [processedData, retirementSummary]);
+
   const handleSort = (key: keyof GraphDataPoint) => {
     const direction = 
       state.sortConfig.key === key && state.sortConfig.direction === 'ascending' 
@@ -427,6 +435,30 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
   const handleShowSummary = () => {
     dispatch({ type: 'SET_VIEW_MODE', payload: 'tiles' });
   };
+
+  // Add currency formatting function
+  const formatCurrencyValue = useCallback((value: number, showDecimals: boolean = false): string => {
+    const formatter = new Intl.NumberFormat(
+      currency === 'EUR' ? 'fr-FR' :
+      currency === 'GBP' ? 'en-GB' :
+      currency === 'JPY' ? 'ja-JP' : 'en-US',
+      {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: showDecimals ? 1 : 0,
+        maximumFractionDigits: showDecimals ? 1 : 0
+      }
+    );
+    return formatter.format(value);
+  }, [currency]);
+
+  // Update the display values to use the new currency formatter
+  const formatDisplayValue = useCallback((value: number): string => {
+    if (value >= 1000000) {
+      return formatCurrencyValue(value / 1000000, true) + 'M';
+    }
+    return formatCurrencyValue(value, false);
+  }, [formatCurrencyValue]);
 
   const renderScheduleTable = () => {
     if (!processedData.length) {
@@ -531,16 +563,16 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
                     {entry.age}
                   </div>
                   <div style={{ width: `var(--col-capital, ${COLUMN_WIDTHS.capital.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 truncate">
-                    {formatAmount(entry.capital)}
+                    {formatDisplayValue(entry.capital)}
                   </div>
                   <div style={{ width: `var(--col-variation, ${COLUMN_WIDTHS.variation.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium truncate ${entry.variation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {entry.variation >= 0 ? '+' : ''}{formatAmount(entry.variation)}
+                    {entry.variation >= 0 ? '+' : ''}{formatDisplayValue(entry.variation)}
                   </div>
                   <div style={{ width: `var(--col-interest, ${COLUMN_WIDTHS.interest.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium text-indigo-600 truncate">
-                    +{formatAmount(entry.annualInterest)}
+                    +{formatDisplayValue(entry.annualInterest)}
                   </div>
                   <div style={{ width: `var(--col-netvar, ${COLUMN_WIDTHS.netVariation.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium truncate ${entry.netVariationExcludingInterest >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                    {entry.netVariationExcludingInterest >= 0 ? '+' : ''}{formatAmount(entry.netVariationExcludingInterest)}
+                    {entry.netVariationExcludingInterest >= 0 ? '+' : ''}{formatDisplayValue(entry.netVariationExcludingInterest)}
                   </div>
                   <div style={{ width: `var(--col-phase, ${COLUMN_WIDTHS.phase.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm truncate">
                     <span className={`px-1 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${entry.retirement === "Yes" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}`}>
@@ -578,7 +610,7 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
             endCapital={investmentSummary.endCapital}
             totalInterest={investmentSummary.totalInterest}
             totalInvestment={investmentSummary.totalInvestment}
-            formatAmount={formatAmount}
+            formatAmount={formatDisplayValue}
             colorClasses={{
               bgGradient: 'bg-gradient-to-r from-blue-500 to-indigo-600',
               textAccent: 'text-blue-600',
@@ -601,7 +633,7 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
             endCapital={retirementSummary.endCapital}
             totalInterest={retirementSummary.totalInterest}
             totalWithdrawal={retirementSummary.totalWithdrawal}
-            formatAmount={formatAmount}
+            formatAmount={formatDisplayValue}
             colorClasses={{
               bgGradient: 'bg-gradient-to-r from-purple-500 to-pink-600',
               textAccent: 'text-purple-600',
@@ -648,7 +680,7 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
   };
 
   return (
-    <div className="mt-8 bg-gray-50 p-4 sm:p-6 rounded-2xl shadow-md border border-gray-200">
+    <div className="bg-gray-50 p-4 sm:p-6 rounded-2xl shadow-md border border-gray-200">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
         <h2 className="text-xl font-semibold text-gradient mb-2 sm:mb-0">Schedule Details</h2>
         

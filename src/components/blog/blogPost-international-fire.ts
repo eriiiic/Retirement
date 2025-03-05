@@ -4,11 +4,7 @@
  * The metadata is stored in blogData.ts, while the content lives here for better performance
  */
 
-export const content = `# Geographic Arbitrage: FIRE in International Settings
-
-![Geographic Arbitrage: FIRE in International Settings](https://images.unsplash.com/photo-1473186578172-c141e6798cf4?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80)
-
-<div class="lead-quote">
+export const content = `<div class="lead-quote">
   <blockquote>
     "The world is a book, and those who do not travel read only one page. Travel is not just about seeing new places, but about discovering new economies in which your money can work harder for you."
     <cite>— Adapted from Saint Augustine</cite>

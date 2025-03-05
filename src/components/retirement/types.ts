@@ -83,7 +83,7 @@ export interface Statistics {
 /**
  * Currency type
  */
-export type Currency = "USD" | "EUR";
+export type Currency = "USD" | "EUR" | "GBP" | "JPY";
 
 /**
  * Withdrawal mode type
@@ -202,4 +202,15 @@ export interface SummaryResult {
   growthPercentage: number;
   /** Annualized return percentage */
   annualizedReturn: number;
-} 
+}
+
+export interface DelayedRetirementPoint {
+  /** Year of delayed retirement */
+  year: number;
+  /** Minimum capital at this point */
+  capitalMin: number;
+  /** Maximum capital at this point */
+  capitalMax: number;
+}
+
+export type CalculateDelayedCapitalFunction = (delayRange: [number, number], data: GraphDataPoint[], params: SimulatorParams) => DelayedRetirementPoint | null; 

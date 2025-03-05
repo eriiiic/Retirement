@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useState, useRef } from 'react';
+import { useReducer, useEffect, useState, useRef, useCallback } from 'react';
 import { Statistics, SimulatorParams, FormatAmountFunction, TimelineWidths, CapitalComparison, StatusInfo, WithdrawalMode, GraphDataPoint, Currency } from './types';
 import { useWorker } from '../../hooks/useWorker';
 import { WorkerMessageType, WorkerResponse } from '../../types/worker';
@@ -291,6 +291,30 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
     ? (annualRetirementIncome / statistics.capitalAtRetirement) * 100
     : 0;
 
+  // Add currency formatting function
+  const formatCurrencyValue = useCallback((value: number, showDecimals: boolean = false): string => {
+    const formatter = new Intl.NumberFormat(
+      currency === 'EUR' ? 'fr-FR' :
+      currency === 'GBP' ? 'en-GB' :
+      currency === 'JPY' ? 'ja-JP' : 'en-US',
+      {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: showDecimals ? 1 : 0,
+        maximumFractionDigits: showDecimals ? 1 : 0
+      }
+    );
+    return formatter.format(value);
+  }, [currency]);
+
+  // Update the display values to use the new currency formatter
+  const formatDisplayValue = useCallback((value: number): string => {
+    if (value >= 1000000) {
+      return formatCurrencyValue(value / 1000000, true) + 'M';
+    }
+    return formatCurrencyValue(value, false);
+  }, [formatCurrencyValue]);
+
   return (
     <div className="bg-gray-50 p-5 rounded-2xl shadow-md border border-gray-200">
       {/* Header with status indicator */}
@@ -417,7 +441,7 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
                 </div>
                 <div>
                   <div className="text-xs font-medium text-gray-600">Funds Remaining</div>
-                  <div className="text-xs sm:text-sm font-semibold text-emerald-700">{formatAmount(statistics.finalCapital).split('.')[0]}</div>
+                  <div className="text-xs sm:text-sm font-semibold text-emerald-700">{formatDisplayValue(statistics.finalCapital).split('.')[0]}</div>
                 </div>
               </div>
             )}
@@ -516,7 +540,9 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
                       ></div>
                     </div>
                   </div>
-                  <div className={cx("w-32 text-right", typography.size.sm, typography.weight.semibold, "text-gray-800")}>{formatAmount(params.initialCapital)}</div>
+                  <div className={cx("w-32 text-right", typography.size.sm, typography.weight.semibold, "text-gray-800")}>
+                    {formatDisplayValue(params.initialCapital)}
+                  </div>
                 </div>
                 
                 <div className="flex items-center mb-4">
@@ -529,7 +555,9 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
                       ></div>
                     </div>
                   </div>
-                  <div className={cx("w-32 text-right", typography.size.sm, typography.weight.semibold, "text-gray-800")}>{formatAmount(statistics.totalInvestedAmount - params.initialCapital)}</div>
+                  <div className={cx("w-32 text-right", typography.size.sm, typography.weight.semibold, "text-gray-800")}>
+                    {formatDisplayValue(statistics.totalInvestedAmount - params.initialCapital)}
+                  </div>
                 </div>
                 
                 <div className="flex items-center mb-4">
@@ -542,7 +570,9 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
                       ></div>
                     </div>
                   </div>
-                  <div className={cx("w-32 text-right", typography.size.sm, typography.weight.semibold, colors.phases.investment.text)}>{formatAmount(statistics.capitalAtRetirement - statistics.totalInvestedAmount)}</div>
+                  <div className={cx("w-32 text-right", typography.size.sm, typography.weight.semibold, colors.phases.investment.text)}>
+                    {formatDisplayValue(statistics.capitalAtRetirement - statistics.totalInvestedAmount)}
+                  </div>
                 </div>
                 
                 <div className="h-px w-full bg-gray-200 my-4"></div>
@@ -550,7 +580,9 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
                 <div className="flex items-center">
                   <div className={cx("w-24", typography.size.sm, typography.weight.medium, "text-gray-800")}>At Retirement</div>
                   <div className="flex-1"></div>
-                  <div className={cx("w-32 text-right", typography.size.base, typography.weight.bold, "text-green-600")}>{formatAmount(statistics.capitalAtRetirement)}</div>
+                  <div className={cx("w-32 text-right", typography.size.base, typography.weight.bold, "text-green-600")}>
+                    {formatDisplayValue(statistics.capitalAtRetirement)}
+                  </div>
                 </div>
                 
                 <div className="flex items-center mt-2">
@@ -562,7 +594,7 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
                     typography.weight.bold, 
                     statistics.finalCapital > 0 ? components.dataViz.positive : components.dataViz.negative
                   )}>
-                    {formatAmount(statistics.finalCapital)}
+                    {formatDisplayValue(statistics.finalCapital)}
                   </div>
                 </div>
               </div>
@@ -579,9 +611,9 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
                   <div className="flex justify-between items-center mb-1">
                     <div className={cx(typography.size.sm, "text-gray-700")}>Monthly Investment</div>
                     <div className={cx(typography.size.sm, typography.weight.medium, "text-gray-700")}>
-                      <span className={colors.phases.investment.text}>{formatAmount(params.monthlyInvestment)}</span>
+                      <span className={colors.phases.investment.text}>{formatDisplayValue(params.monthlyInvestment)}</span>
                       <span className="mx-1 text-gray-400">→</span>
-                      <span className="text-red-600">{formatAmount(statistics.finalMonthlyInvestment)}</span>
+                      <span className="text-red-600">{formatDisplayValue(statistics.finalMonthlyInvestment)}</span>
                     </div>
                   </div>
                   <div className="h-8 w-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200 relative">
@@ -606,9 +638,9 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
                   <div className="flex justify-between items-center mb-1">
                     <div className={cx(typography.size.sm, "text-gray-700")}>Monthly Withdrawal</div>
                     <div className={cx(typography.size.sm, typography.weight.medium, "text-gray-700")}>
-                      <span className={colors.phases.retirement.text}>{formatAmount(params.monthlyRetirementWithdrawal)}</span>
+                      <span className={colors.phases.retirement.text}>{formatDisplayValue(params.monthlyRetirementWithdrawal)}</span>
                       <span className="mx-1 text-gray-400">→</span>
-                      <span className="text-red-600">{formatAmount(statistics.finalMonthlyWithdrawalValue)}</span>
+                      <span className="text-red-600">{formatDisplayValue(statistics.finalMonthlyWithdrawalValue)}</span>
                     </div>
                   </div>
                   <div className="h-8 w-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200 relative">

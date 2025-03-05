@@ -4,11 +4,7 @@
  * The metadata is stored in blogData.ts, while the content lives here for better performance
  */
 
-export const content = `# Coast FIRE: An Alternative Approach to Financial Independence
-
-![Coast FIRE concept](https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80)
-
-<div class="lead-quote">
+export const content = `<div class="lead-quote">
   <blockquote>
     "The goal isn't more money. The goal is living life on your terms."
     <cite>— Chris Brogan</cite>

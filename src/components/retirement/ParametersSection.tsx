@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { SimulatorParams, Statistics, FormatAmountFunction, GraphDataPoint } from './types';
 import FormulaModal from './FormulaModal';
 import { generateModernRetirementReport } from '../../utils/modernPdfGenerator';
+import { colors, typography, spacing, components, cx } from '../../styles/styleGuide';
 
 interface ParametersSectionProps {
   params: SimulatorParams;
@@ -56,6 +57,53 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   // Add state for auto retirement age calculation
   const [autoCalculateRetirementAge, setAutoCalculateRetirementAge] = useState(false);
 
+  // Memoize parameter constraints to avoid recreation on each render
+  const paramConstraints = useMemo(() => ({
+    currentAge: { min: 20, max: 80, default: 40 },
+    maxAge: { min: 80, max: 105, default: 95 },
+    retirementInput: { min: 50, max: 80, default: 60 },
+    annualReturnRate: { min: 0, max: 30, default: 7 },
+    inflation: { min: 0, max: 15, default: 2 },
+    withdrawalRate: { min: 0.5, max: 20, default: 4 }
+  }), []);
+
+  // Common function to update slider value based on position
+  const updateSliderValue = useCallback((id: keyof SimulatorParams, clientX: number, container: HTMLDivElement) => {
+    const rect = container.getBoundingClientRect();
+    
+    // Calculate position as percentage of container width
+    let percent = (clientX - rect.left) / rect.width;
+    // Clamp between 0 and 1
+    percent = Math.max(0, Math.min(1, percent));
+    
+    // Get min/max/step values
+    const slider = sliderRefs.current[id as string];
+    if (slider) {
+      const min = parseFloat(slider.min);
+      const max = parseFloat(slider.max);
+      const step = parseFloat(slider.step) || 1;
+      
+      // Calculate new value based on percentage and step
+      let newValue = min + percent * (max - min);
+      // Round to nearest step
+      newValue = Math.round(newValue / step) * step;
+      // Ensure value is within bounds
+      newValue = Math.max(min, Math.min(max, newValue));
+      
+      // For annual return rate and inflation, limit to one decimal place
+      if (id === 'annualReturnRate' || id === 'inflation') {
+        newValue = Math.round(newValue * 10) / 10;
+      }
+      
+      // Update UI and state
+      slider.value = newValue.toString();
+      
+      // Update state with the new value
+      onParamChange(id, newValue);
+      setInputValues(prev => ({ ...prev, [id]: newValue.toString() }));
+    }
+  }, [onParamChange]);
+
   // Update local input values when params change, but only if the field is not currently focused
   useEffect(() => {
     setInputValues(prev => {
@@ -89,44 +137,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     const handleMouseMove = (e: MouseEvent) => {
       if (draggingSlider && sliderRefs.current[draggingSlider] && sliderContainerRefs.current[draggingSlider]) {
         const id = draggingSlider as keyof SimulatorParams;
-        // Get slider element and its properties
-        const slider = sliderRefs.current[draggingSlider] as HTMLInputElement;
         const container = sliderContainerRefs.current[draggingSlider] as HTMLDivElement;
-        
-        const rect = container.getBoundingClientRect();
-        
-        // Calculate position as percentage of container width
-        let percent = (e.clientX - rect.left) / rect.width;
-        // Clamp between 0 and 1
-        percent = Math.max(0, Math.min(1, percent));
-        
-        // Get min/max/step values from slider
-        const min = parseFloat(slider.min);
-        const max = parseFloat(slider.max);
-        const step = parseFloat(slider.step) || 1;
-        
-        // Calculate new value based on percentage and step
-        let newValue = min + percent * (max - min);
-        // Round to nearest step
-        newValue = Math.round(newValue / step) * step;
-        // Ensure value is within bounds
-        newValue = Math.max(min, Math.min(max, newValue));
-        
-        // For annual return rate and inflation, limit to one decimal place
-        if (id === 'annualReturnRate' || id === 'inflation') {
-          newValue = Math.round(newValue * 10) / 10;
-        }
-        
-        // Update UI and state
-        slider.value = newValue.toString();
-        
-        // Update state with the new value
-        onParamChange(id, newValue);
-        
-        // Check if this is a monetary value
-        const isMonetary = id === 'initialCapital' || id === 'monthlyInvestment' || id === 'monthlyRetirementWithdrawal';
-        
-        setInputValues(prev => ({ ...prev, [id]: newValue.toString() }));
+        updateSliderValue(id, e.clientX, container);
       }
     };
     
@@ -138,45 +150,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         
         // Get the touch position
         const touch = e.touches[0];
-        
-        // Get slider element and its properties
-        const slider = sliderRefs.current[draggingSlider] as HTMLInputElement;
         const container = sliderContainerRefs.current[draggingSlider] as HTMLDivElement;
-        
-        const rect = container.getBoundingClientRect();
-        
-        // Calculate position as percentage of container width
-        let percent = (touch.clientX - rect.left) / rect.width;
-        // Clamp between 0 and 1
-        percent = Math.max(0, Math.min(1, percent));
-        
-        // Get min/max/step values from slider
-        const min = parseFloat(slider.min);
-        const max = parseFloat(slider.max);
-        const step = parseFloat(slider.step) || 1;
-        
-        // Calculate new value based on percentage and step
-        let newValue = min + percent * (max - min);
-        // Round to nearest step
-        newValue = Math.round(newValue / step) * step;
-        // Ensure value is within bounds
-        newValue = Math.max(min, Math.min(max, newValue));
-        
-        // For annual return rate and inflation, limit to one decimal place
-        if (id === 'annualReturnRate' || id === 'inflation') {
-          newValue = Math.round(newValue * 10) / 10;
-        }
-        
-        // Update UI and state
-        slider.value = newValue.toString();
-        
-        // Update state with the new value
-        onParamChange(id, newValue);
-        
-        // Check if this is a monetary value
-        const isMonetary = id === 'initialCapital' || id === 'monthlyInvestment' || id === 'monthlyRetirementWithdrawal';
-        
-        setInputValues(prev => ({ ...prev, [id]: newValue.toString() }));
+        updateSliderValue(id, touch.clientX, container);
       }
     };
     
@@ -203,7 +178,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
       document.removeEventListener('touchend', handleTouchEnd);
       document.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [draggingSlider, onParamChange]);
+  }, [draggingSlider, updateSliderValue]);
 
   // Maintain focus after state updates
   useEffect(() => {
@@ -262,7 +237,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   }, []);
 
   // Add thousand separators to a number
-  const addThousandSeparators = (value: string) => {
+  const addThousandSeparators = useCallback((value: string) => {
     if (!value) return '';
     // Remove any existing commas or spaces first
     const cleanValue = value.replace(/[,\s]/g, '');
@@ -270,15 +245,70 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     const num = parseFloat(cleanValue);
     if (isNaN(num)) return cleanValue;
     return num.toLocaleString('en-US');
-  };
+  }, []);
 
   // Remove thousand separators for processing
-  const removeThousandSeparators = (value: string) => {
+  const removeThousandSeparators = useCallback((value: string) => {
     if (!value) return '';
     return value.replace(/[,\s]/g, '');
-  };
+  }, []);
 
-  const handleInputChange = (key: keyof SimulatorParams, value: string) => {
+  // Get currency symbol based on currency code
+  const getCurrencySymbol = useCallback((currency: string): string => {
+    switch(currency) {
+      case 'USD': return '$';
+      case 'EUR': return '€';
+      case 'GBP': return '£';
+      case 'JPY': return '¥';
+      default: return '$';
+    }
+  }, []);
+
+  // Remove currency symbol for processing
+  const removeCurrencySymbol = useCallback((value: string) => {
+    // Remove any currency symbol before handling change
+    return value.replace(/^[\$€£¥]\s?/, '');
+  }, []);
+
+  // Format number according to regional currency settings
+  const formatNumberForCurrency = useCallback((value: string | number, currency: string) => {
+    if (value === '' || value === '0' || value === 0) return '';
+    
+    const numValue = typeof value === 'string' ? parseFloat(value.replace(/[^\d.-]/g, '')) : value;
+    if (isNaN(numValue)) return '';
+    
+    // Format based on currency
+    switch(currency) {
+      case 'USD':
+        return new Intl.NumberFormat('en-US', { 
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0 
+        }).format(numValue);
+      
+      case 'EUR':
+        return new Intl.NumberFormat('fr-FR', { 
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(numValue);
+      
+      case 'GBP':
+        return new Intl.NumberFormat('en-GB', { 
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(numValue);
+      
+      case 'JPY':
+        return new Intl.NumberFormat('ja-JP', { 
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(numValue);
+      
+      default:
+        return value.toString();
+    }
+  }, []);
+
+  const handleInputChange = useCallback((key: keyof SimulatorParams, value: string) => {
     // Set the focused field to maintain focus
     setFocusedField(key as string);
     
@@ -322,9 +352,9 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     else {
       setInputValues(prev => ({ ...prev, [key]: value }));
     }
-  };
+  }, [onParamChange, removeThousandSeparators]);
 
-  const handleInputBlur = (key: keyof SimulatorParams, value: string) => {
+  const handleInputBlur = useCallback((key: keyof SimulatorParams, value: string) => {
     // Clear the focused field when input loses focus
     setFocusedField(null);
     
@@ -332,19 +362,9 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     const cleanValue = removeThousandSeparators(value);
     let parsedValue: number;
     
-    // Define min/max constraints based on parameter type
-    const constraints = {
-      currentAge: { min: 20, max: 80, default: 40 },
-      maxAge: { min: 80, max: 105, default: 95 },
-      retirementInput: { min: 50, max: 80, default: 60 },
-      annualReturnRate: { min: 0, max: 30, default: 7 },
-      inflation: { min: 0, max: 15, default: 2 },
-      withdrawalRate: { min: 0.5, max: 20, default: 4 }
-    };
-    
     // Handle special cases based on parameter type
-    if (key in constraints) {
-      const constraint = constraints[key as keyof typeof constraints];
+    if (key in paramConstraints) {
+      const constraint = paramConstraints[key as keyof typeof paramConstraints];
       parsedValue = key === 'retirementInput' 
         ? parseInt(cleanValue) || constraint.default
         : parseFloat(cleanValue) || constraint.default;
@@ -367,55 +387,65 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     
     // Update the input value to reflect the validated value
     setInputValues(prev => ({ ...prev, [key]: parsedValue.toString() }));
-  };
+  }, [onParamChange, paramConstraints, removeThousandSeparators]);
 
-  const handleInputFocus = (key: string) => {
+  const handleInputFocus = useCallback((key: string) => {
     setFocusedField(key);
-  };
+  }, []);
 
-  const handleCurrencyChange = (currency: string) => {
+  const handleCurrencyChange = useCallback((currency: string) => {
     onParamChange('currency', currency);
-  };
+  }, [onParamChange]);
 
-  // Format number for display in input fields
-  const formatNumberInput = (value: string, addSeparators = true) => {
-    if (value === '') return '';
-    if (value === '0') return '0';
+  // Format number inputs with proper formatting
+  const formatNumberInput = useCallback((value: string, addSeparators: boolean = false) => {
+    if (!value) return '';
     
-    // First clean and parse the value
+    // Remove existing separators for processing
     const cleanValue = removeThousandSeparators(value);
-    const num = parseFloat(cleanValue);
-    if (isNaN(num)) return '';
     
-    // Add thousand separators if requested
+    // Handle decimal input
+    let num: number;
+    try {
+      // Try to parse as float first
+      num = parseFloat(cleanValue);
+      if (isNaN(num)) {
+        num = 0;
+      }
+    } catch (e) {
+      console.error('Error parsing number:', e);
+      num = 0;
+    }
+    
+    // Use our currency formatter for consistency
     if (addSeparators) {
-      return addThousandSeparators(num.toString());
+      return formatNumberForCurrency(num, params.currency);
     }
     
     // Otherwise just return the number
     return num.toString();
-  };
+  }, [removeThousandSeparators, formatNumberForCurrency, params.currency]);
 
-  // Get displayed value for monetary inputs (with thousand separators)
-  const getDisplayValue = (key: keyof SimulatorParams, value: string) => {
+  // Get displayed value for monetary inputs (with regional number formatting)
+  const getDisplayValue = useCallback((key: keyof SimulatorParams, value: string) => {
     if (value === '0') return '';
     
     if (key === 'initialCapital' || key === 'monthlyInvestment' || key === 'monthlyRetirementWithdrawal') {
-      return formatNumberInput(value, true);
+      return formatNumberForCurrency(value, params.currency);
     }
     
     return value;
-  };
+  }, [formatNumberForCurrency, params.currency]);
 
   // Helper to determine if retirement input is an age or a year
-  const isRetirementInputAnAge = (): boolean => {
+  const isRetirementInputAnAge = useCallback((): boolean => {
     const input = Number(params.retirementInput);
     return (input > 0 && input < 120 && params.retirementInput.length <= 2) || 
            !(params.retirementInput.length === 4 && params.retirementInput.startsWith('20'));
-  };
+  }, [params.retirementInput]);
 
   // Get slider min/max/step values based on parameter type
-  const getSliderConfig = (id: keyof SimulatorParams) => {
+  const getSliderConfig = useCallback((id: keyof SimulatorParams) => {
     switch (id) {
       case 'initialCapital':
         // Fixed range from 0 to 3,000,000 as specified
@@ -447,104 +477,40 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
       default:
         return { min: 0, max: 100, step: 1 };
     }
-  };
+  }, [params.currentAge, isRetirementInputAnAge]);
 
   // Handle slider mousedown for enhanced drag behavior
-  const handleSliderMouseDown = (id: keyof SimulatorParams, e: React.MouseEvent) => {
+  const handleSliderMouseDown = useCallback((id: keyof SimulatorParams, e: React.MouseEvent) => {
     setDraggingSlider(id as string);
     
     // Immediately update slider position based on initial click
     if (sliderContainerRefs.current[id as string]) {
       const container = sliderContainerRefs.current[id as string] as HTMLDivElement;
-      const rect = container.getBoundingClientRect();
-      
-      // Calculate position as percentage of container width
-      let percent = (e.clientX - rect.left) / rect.width;
-      // Clamp between 0 and 1
-      percent = Math.max(0, Math.min(1, percent));
-      
-      // Get min/max/step values
-      const slider = sliderRefs.current[id as string];
-      if (slider) {
-        const min = parseFloat(slider.min);
-        const max = parseFloat(slider.max);
-        const step = parseFloat(slider.step) || 1;
-        
-        // Calculate new value based on percentage and step
-        let newValue = min + percent * (max - min);
-        // Round to nearest step
-        newValue = Math.round(newValue / step) * step;
-        // Ensure value is within bounds
-        newValue = Math.max(min, Math.min(max, newValue));
-        
-        // For annual return rate and inflation, limit to one decimal place
-        if (id === 'annualReturnRate' || id === 'inflation') {
-          newValue = Math.round(newValue * 10) / 10;
-        }
-        
-        // Update UI and state
-        slider.value = newValue.toString();
-        
-        // Update state with the new value - handle values consistently
-        onParamChange(id, newValue);
-        setInputValues(prev => ({ ...prev, [id]: newValue.toString() }));
-      }
+      updateSliderValue(id, e.clientX, container);
     }
-  };
+  }, [updateSliderValue]);
 
   // Handle touch start for mobile devices
-  const handleSliderTouchStart = (id: keyof SimulatorParams, e: React.TouchEvent) => {
+  const handleSliderTouchStart = useCallback((id: keyof SimulatorParams, e: React.TouchEvent) => {
     setDraggingSlider(id as string);
     
     // Immediately update slider position based on initial touch
     if (sliderContainerRefs.current[id as string]) {
       const touch = e.touches[0];
       const container = sliderContainerRefs.current[id as string] as HTMLDivElement;
-      const rect = container.getBoundingClientRect();
-      
-      // Calculate position as percentage of container width
-      let percent = (touch.clientX - rect.left) / rect.width;
-      // Clamp between 0 and 1
-      percent = Math.max(0, Math.min(1, percent));
-      
-      // Get min/max/step values
-      const slider = sliderRefs.current[id as string];
-      if (slider) {
-        const min = parseFloat(slider.min);
-        const max = parseFloat(slider.max);
-        const step = parseFloat(slider.step) || 1;
-        
-        // Calculate new value based on percentage and step
-        let newValue = min + percent * (max - min);
-        // Round to nearest step
-        newValue = Math.round(newValue / step) * step;
-        // Ensure value is within bounds
-        newValue = Math.max(min, Math.min(max, newValue));
-        
-        // For annual return rate and inflation, limit to one decimal place
-        if (id === 'annualReturnRate' || id === 'inflation') {
-          newValue = Math.round(newValue * 10) / 10;
-        }
-        
-        // Update UI and state
-        slider.value = newValue.toString();
-        
-        // Update state with the new value
-        onParamChange(id, newValue);
-        setInputValues(prev => ({ ...prev, [id]: newValue.toString() }));
-      }
+      updateSliderValue(id, touch.clientX, container);
     }
-  };
+  }, [updateSliderValue]);
 
   // Handle form value changes
-  const handleValueChange = (id: keyof SimulatorParams, value: string | number) => {
+  const handleValueChange = useCallback((id: keyof SimulatorParams, value: string | number) => {
     // Update state with the new value
     onParamChange(id, value);
     setInputValues(prev => ({ ...prev, [id]: value.toString() }));
-  };
+  }, [onParamChange]);
 
   // Handle PDF generation
-  const handleGeneratePDF = async () => {
+  const handleGeneratePDF = useCallback(async () => {
     setIsPdfGenerating(true);
     setShowPdfSuccess(false);
     
@@ -587,25 +553,10 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     } finally {
       setIsPdfGenerating(false);
     }
-  };
-
-  // Add handler for auto retirement age calculation
-  const toggleAutoRetirementCalculation = () => {
-    const newValue = !autoCalculateRetirementAge;
-    setAutoCalculateRetirementAge(newValue);
-    
-    if (newValue) {
-      // Calculate the optimal retirement age using financial data
-      const optimalAge = calculateOptimalRetirementAge();
-      onParamChange('retirementInput', optimalAge.toString());
-      onParamChange('autoCalculateRetirementAge', true);
-    } else {
-      onParamChange('autoCalculateRetirementAge', false);
-    }
-  };
+  }, [params, statistics, formatAmount, graphData, chartRef]);
 
   // Calculate optimal retirement age based on financial independence
-  const calculateOptimalRetirementAge = (): number => {
+  const calculateOptimalRetirementAge = useCallback((): number => {
     // Start with current age as baseline
     let testAge = params.currentAge; // Start from exact current age, not +1
     const maxTestAge = params.maxAge - 5; // Leave at least 5 years of retirement
@@ -655,10 +606,25 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     
     // If we couldn't find an optimal age, return a reasonable default
     return Math.min(65, params.maxAge - 5);
-  };
+  }, [params]);
+
+  // Add handler for auto retirement age calculation
+  const toggleAutoRetirementCalculation = useCallback(() => {
+    const newValue = !autoCalculateRetirementAge;
+    setAutoCalculateRetirementAge(newValue);
+    
+    if (newValue) {
+      // Calculate the optimal retirement age using financial data
+      const optimalAge = calculateOptimalRetirementAge();
+      onParamChange('retirementInput', optimalAge.toString());
+      onParamChange('autoCalculateRetirementAge', true);
+    } else {
+      onParamChange('autoCalculateRetirementAge', false);
+    }
+  }, [autoCalculateRetirementAge, onParamChange, calculateOptimalRetirementAge]);
 
   // Function to calculate slider progress for the retirement age slider
-  const calculateProgress = (id: keyof SimulatorParams) => {
+  const calculateProgress = useCallback((id: keyof SimulatorParams) => {
     if (id !== 'retirementInput') return 0;
     
     const value = parseFloat(inputValues[id] || '0');
@@ -668,10 +634,10 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     
     // Calculate percentage
     return Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
-  };
+  }, [inputValues, getSliderConfig]);
 
   // Render a parameter input field with slider for specified parameters
-  const renderParameterInput = (
+  const renderParameterInput = useCallback((
     label: string,
     id: keyof SimulatorParams,
     value: string,
@@ -694,27 +660,39 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     
     // Get slider configuration
     const { min, max, step } = getSliderConfig(id);
+
+    // Check if this input should be disabled (for retirement age when auto-calc is enabled)
+    const isDisabled = id === 'retirementInput' && autoCalculateRetirementAge;
     
     return (
-      <div className="flex flex-col gap-1 p-2">
-        <label htmlFor={id} className="text-xs font-medium text-gray-600 flex justify-between">
+      <div className={cx("flex flex-col gap-1")}>
+        <label htmlFor={id} className={cx(typography.style.label, "flex justify-between")}>
           <span>{label}</span>
         </label>
         
-        <div className="flex items-center gap-2">
+        <div className={cx("flex items-center", spacing.gap.sm)}>
           {includeSlider && (
             <div 
               ref={el => sliderContainerRefs.current[id as string] = el}
-              className="w-full sm:w-2/3 md:w-2/3 relative" 
-              onMouseDown={(e) => handleSliderMouseDown(id, e)}
-              onTouchStart={(e) => handleSliderTouchStart(id, e)}
+              className={cx(
+                "w-full sm:w-2/3 md:w-2/3 relative",
+                isDisabled ? 'pointer-events-none' : ''
+              )}
+              onMouseDown={(e) => !isDisabled && handleSliderMouseDown(id, e)}
+              onTouchStart={(e) => !isDisabled && handleSliderTouchStart(id, e)}
             >
               <div 
-                className="absolute inset-0 w-full h-2 bg-gray-200 rounded-lg cursor-pointer"
+                className={cx(
+                  "absolute inset-0 w-full h-2 rounded-lg cursor-pointer",
+                  isDisabled ? 'bg-gray-300' : components.form.slider.track
+                )}
                 style={{ top: '50%', transform: 'translateY(-50%)' }}
               ></div>
               <div 
-                className="absolute h-2 bg-indigo-500 rounded-lg"
+                className={cx(
+                  "absolute h-2 rounded-lg",
+                  isDisabled ? 'bg-gray-400' : 'bg-gradient-to-r from-purple-500 to-indigo-500'
+                )}
                 style={{ 
                   width: `${((numericValue - min) / (max - min)) * 100}%`,
                   top: '50%',
@@ -728,7 +706,9 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 max={max}
                 step={step}
                 value={numericValue}
+                disabled={isDisabled}
                 onChange={(e) => {
+                  if (isDisabled) return;
                   const newValue = e.target.value;
                   let numericNewValue = parseFloat(newValue);
                   
@@ -746,21 +726,29 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                     setInputValues(prev => ({ ...prev, [id]: numericNewValue.toString() }));
                   }
                 }}
-                className="w-full h-2 appearance-none bg-transparent absolute z-10 cursor-pointer opacity-0"
+                className={cx(
+                  "w-full h-2 appearance-none bg-transparent absolute z-10 cursor-pointer opacity-0",
+                  isDisabled ? 'cursor-not-allowed' : ''
+                )}
                 style={{ top: '50%', transform: 'translateY(-50%)' }}
               />
               <div 
-                className={`absolute w-4 h-4 bg-white border border-indigo-500 rounded-full shadow transition-all ${draggingSlider === id ? 'w-5 h-5 border-indigo-600 scale-110' : ''}`}
+                className={cx(
+                  "absolute w-4 h-4 bg-white border rounded-full shadow transition-all",
+                  isDisabled ? 'border-gray-400' : 'border-indigo-500',
+                  draggingSlider === id ? 'w-5 h-5 border-purple-600 scale-110 shadow-md' : ''
+                )}
                 style={{ 
                   left: `${((numericValue - min) / (max - min)) * 100}%`,
                   top: '50%',
-                  transform: 'translate(-50%, -50%)'
+                  transform: 'translate(-50%, -50%)',
+                  borderWidth: draggingSlider === id ? '2px' : '1px'
                 }}
               ></div>
             </div>
           )}
           
-          {/* For Current Age, add a container with a fixed width to match the Initial Capital input */}
+          {/* Input field with appropriate styling based on type */}
           {id === 'currentAge' ? (
             <div className="relative w-full sm:w-1/3 flex items-center justify-end">
               <div className="w-full sm:w-2/3 flex items-center">
@@ -770,59 +758,87 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   type="text"
                   inputMode="numeric"
                   value={value === '0' ? '' : value}
+                  disabled={isDisabled}
                   onChange={(e) => handleInputChange(id, e.target.value)}
                   onBlur={(e) => handleInputBlur(id, e.target.value)}
                   onFocus={() => handleInputFocus(id as string)}
                   placeholder="46"
-                  className="w-full rounded-lg border border-gray-300 py-1.5 px-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-left"
+                  className={cx(
+                    "w-full rounded-lg border border-gray-300 py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-right",
+                    typography.size.sm,
+                    colors.neutral[600],
+                    isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''
+                  )}
                   aria-label={`${label} input`}
                 />
-                <span className="text-xs text-gray-600 ml-1">years old</span>
-              </div>
-            </div>
-          ) : id === 'initialCapital' || id === 'monthlyInvestment' || id === 'monthlyRetirementWithdrawal' ? (
-            <div className="relative w-full sm:w-1/3 flex items-center justify-end">
-              <div className="w-full sm:w-2/3 flex items-center">
-                <input
-                  ref={el => inputRefs.current[id as string] = el}
-                  id={id as string}
-                  type="text"
-                  inputMode="decimal"
-                  value={`${params.currency === 'USD' ? '$' : '€'} ${value === '0' ? '' : value}`}
-                  onChange={(e) => {
-                    // Remove currency symbol before handling change
-                    const valueWithoutCurrency = e.target.value.replace(/^[\$€]\s?/, '');
-                    handleInputChange(id, valueWithoutCurrency);
-                  }}
-                  onBlur={(e) => {
-                    // Remove currency symbol before handling blur
-                    const valueWithoutCurrency = e.target.value.replace(/^[\$€]\s?/, '');
-                    handleInputBlur(id, valueWithoutCurrency);
-                  }}
-                  onFocus={() => handleInputFocus(id as string)}
-                  placeholder={`${params.currency === 'USD' ? '$' : '€'} ${placeholder}`}
-                  className="w-full rounded-lg border border-gray-300 py-1.5 px-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-left"
-                  aria-label={`${label} input`}
-                />
+                <span className={cx(typography.size.xs, colors.neutral[600], "ml-1")}>years old</span>
               </div>
             </div>
           ) : id === 'retirementInput' ? (
-            <div className="relative w-full sm:w-1/3 flex items-center justify-end">
-              <div className="w-full sm:w-1/2 flex items-center">
+            <div className="relative w-full sm:w-2/3 flex items-center justify-end">
+              <div className="w-full sm:w-4/5 flex items-center">
                 <input
                   ref={el => inputRefs.current[id as string] = el}
                   id={id as string}
                   type="text"
                   inputMode="numeric"
                   value={value === '0' ? '' : value}
+                  disabled={isDisabled}
                   onChange={(e) => handleInputChange(id, e.target.value)}
                   onBlur={(e) => handleInputBlur(id, e.target.value)}
                   onFocus={() => handleInputFocus(id as string)}
                   placeholder="65"
-                  className="w-full rounded-lg border border-gray-300 py-1.5 px-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-left"
+                  className={cx(
+                    "w-full rounded-lg border border-gray-300 py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-right",
+                    typography.size.sm,
+                    colors.neutral[700],
+                    isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''
+                  )}
                   aria-label={`${label} input`}
                 />
-                <span className="text-xs text-gray-600 ml-1">{isRetirementInputAnAge() ? "years old" : "year"}</span>
+                <span className={cx(typography.size.xs, colors.neutral[600], "ml-1")}>
+                  {isRetirementInputAnAge() ? "years old" : "year"}
+                </span>
+              </div>
+            </div>
+          ) : id === 'initialCapital' || id === 'monthlyInvestment' || id === 'monthlyRetirementWithdrawal' ? (
+            <div className="relative w-full sm:w-1/3 flex items-center justify-end">
+              <div className="w-full sm:w-2/3 flex items-center">
+                <div className="relative w-full">
+                  {/* Currency symbol positioned on the left */}
+                  <span className={cx(
+                    "absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none",
+                    typography.size.sm,
+                    colors.neutral[500]
+                  )}>
+                    {getCurrencySymbol(params.currency)}
+                  </span>
+                  <input
+                    ref={el => inputRefs.current[id as string] = el}
+                    id={id as string}
+                    type="text"
+                    inputMode="decimal"
+                    value={value === '0' ? '' : formatNumberForCurrency(value, params.currency)}
+                    onChange={(e) => {
+                      // Remove currency symbol before handling change
+                      const valueWithoutCurrency = removeCurrencySymbol(e.target.value);
+                      handleInputChange(id, valueWithoutCurrency);
+                    }}
+                    onBlur={(e) => {
+                      // Remove currency symbol before handling blur
+                      const valueWithoutCurrency = removeCurrencySymbol(e.target.value);
+                      handleInputBlur(id, valueWithoutCurrency);
+                    }}
+                    onFocus={() => handleInputFocus(id as string)}
+                    placeholder={placeholder}
+                    className={cx(
+                      "w-full rounded-lg border border-gray-300 py-1.5 pl-6 pr-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-right",
+                      typography.size.sm,
+                      colors.neutral[700]
+                    )}
+                    aria-label={`${label} input`}
+                  />
+                </div>
               </div>
             </div>
           ) : id === 'maxAge' ? (
@@ -838,26 +854,35 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   onBlur={(e) => handleInputBlur(id, e.target.value)}
                   onFocus={() => handleInputFocus(id as string)}
                   placeholder="95"
-                  className="w-full rounded-lg border border-gray-300 py-1.5 px-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-left"
+                  className={cx(
+                    "w-full rounded-lg border border-gray-300 py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-right",
+                    typography.size.sm,
+                    colors.neutral[700]
+                  )}
                   aria-label={`${label} input`}
                 />
-                <span className="text-xs text-gray-600 ml-1">years old</span>
+                <span className={cx(typography.size.xs, colors.neutral[600], "ml-1")}>years old</span>
               </div>
             </div>
           ) : (
-            <div className={`relative ${includeSlider ? (percentage ? 'w-full sm:w-1/4' : 'w-full sm:w-1/3') : 'w-full'} flex items-center`}>
+            <div className={cx(
+              "relative flex items-center",
+              includeSlider 
+                ? (percentage ? 'w-full sm:w-1/4' : 'w-full sm:w-1/3') 
+                : 'w-full'
+            )}>
               <input
                 ref={el => inputRefs.current[id as string] = el}
                 id={id as string}
                 type="text"
                 inputMode={percentage || currency ? "decimal" : "numeric"}
                 value={currency 
-                  ? `${params.currency === 'USD' ? '$' : '€'} ${value === '0' ? '' : value}` 
+                  ? `${getCurrencySymbol(params.currency)} ${value === '0' ? '' : value}` 
                   : (value === '0' ? '' : value)}
                 onChange={(e) => {
                   if (currency) {
                     // Remove currency symbol before handling change
-                    const valueWithoutCurrency = e.target.value.replace(/^[\$€]\s?/, '');
+                    const valueWithoutCurrency = removeCurrencySymbol(e.target.value);
                     handleInputChange(id, valueWithoutCurrency);
                   } else {
                     handleInputChange(id, e.target.value);
@@ -866,7 +891,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 onBlur={(e) => {
                   if (currency) {
                     // Remove currency symbol before handling blur
-                    const valueWithoutCurrency = e.target.value.replace(/^[\$€]\s?/, '');
+                    const valueWithoutCurrency = removeCurrencySymbol(e.target.value);
                     handleInputBlur(id, valueWithoutCurrency);
                   } else {
                     handleInputBlur(id, e.target.value);
@@ -874,19 +899,17 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 }}
                 onFocus={() => handleInputFocus(id as string)}
                 placeholder={currency 
-                  ? `${params.currency === 'USD' ? '$' : '€'} ${placeholder}` 
+                  ? `${getCurrencySymbol(params.currency)} ${placeholder}` 
                   : placeholder}
-                className={`w-full rounded-lg border border-gray-300 py-1.5 px-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-left`}
+                className={cx(
+                  "w-full rounded-lg border border-gray-300 py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-right",
+                  typography.size.sm,
+                  colors.neutral[700]
+                )}
                 aria-label={`${label} input`}
               />
-              {/* Remove percentage symbol display */}
-              {/* {percentage && (
-                <span className="absolute inset-y-0 right-2 flex items-center text-gray-500 pointer-events-none">
-                  %
-                </span>
-              )} */}
               {percentage && (
-                <span className="text-xs text-gray-600 ml-1.5">
+                <span className={cx(typography.size.xs, colors.neutral[600], "ml-1.5")}>
                   %
                 </span>
               )}
@@ -900,15 +923,27 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         </div>
       </div>
     );
-  };
+  }, [
+    params, 
+    autoCalculateRetirementAge, 
+    draggingSlider, 
+    getSliderConfig, 
+    handleInputBlur, 
+    handleInputChange, 
+    handleInputFocus, 
+    handleSliderMouseDown, 
+    handleSliderTouchStart, 
+    isRetirementInputAnAge, 
+    onParamChange
+  ]);
 
   return (
-    <div className="mt-6 bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-200 p-4">
+    <div className={cx("bg-gray-50 rounded-lg border border-gray-200 shadow-sm overflow-hidden p-4")}>
       {/* Header with Title */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 pb-2 border-b border-gray-200">
+      <div className={cx("flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 pb-2 border-b border-gray-200")}>
         <div>
-          <h2 className="text-lg font-semibold text-gradient">Define Your Plan</h2>
-          <p className="text-xs text-gray-600">Tailor your personal path to financial freedom</p>
+          <h2 className="text-xl font-semibold text-gradient mb-1 sm:mb-0">Define Your Plan</h2>
+          <p className={typography.style.subtitle}>Tailor your personal path to financial freedom</p>
         </div>
           
         <div className="flex flex-row items-center justify-end w-full sm:w-auto gap-2 mt-3 sm:mt-0">
@@ -916,7 +951,10 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
           <button
             onClick={handleGeneratePDF}
             disabled={isPdfGenerating}
-            className={`px-4 py-1.5 ${isPdfGenerating ? 'bg-gray-400' : 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'} text-white text-xs font-medium rounded-lg flex items-center shadow-sm transition-colors duration-200`}
+            className={cx(
+              "px-4 py-1.5 text-white text-xs font-medium rounded-lg flex items-center shadow-sm transition-colors duration-200",
+              isPdfGenerating ? 'bg-gray-400' : 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
+            )}
             aria-label="Generate PDF Report"
           >
             {isPdfGenerating ? (
@@ -939,108 +977,161 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
           
           {/* Success message */}
           {showPdfSuccess && (
-            <div className="absolute right-0 top-full mt-2 px-3 py-1 bg-green-100 text-green-800 text-xs rounded-md shadow-sm z-10">
+            <div className={cx("absolute right-0 top-full mt-2 px-3 py-1 bg-green-100 text-green-800 text-xs rounded-md shadow-sm z-10")}>
               PDF generated successfully!
             </div>
           )}
 
           <div className="flex items-center">
-            <span className="text-xs text-gray-600 mr-1">Currency:</span>
+            <span className={cx("text-xs font-semibold uppercase tracking-wider bg-gradient-to-r from-purple-500 to-indigo-500 bg-clip-text text-transparent mr-1")}>Currency:</span>
             <div className="flex border border-gray-200 rounded-lg overflow-hidden shadow-sm">
               <button 
-                className={`px-2 py-1 text-xs font-medium transition-all ${
+                className={cx(
+                  "px-2.5 py-1.5 text-xs font-medium transition-all min-w-[2rem]",
                   params.currency === 'USD'
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
+                )}
                 onClick={() => handleCurrencyChange('USD')}
                 aria-label="Switch to US Dollar"
               >
                 $
               </button>
               <button 
-                className={`px-2 py-1 text-xs font-medium transition-all ${
+                className={cx(
+                  "px-2.5 py-1.5 text-xs font-medium transition-all min-w-[2rem]",
                   params.currency === 'EUR'
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
+                )}
                 onClick={() => handleCurrencyChange('EUR')}
                 aria-label="Switch to Euro"
               >
                 €
               </button>
+              <button 
+                className={cx(
+                  "px-2.5 py-1.5 text-xs font-medium transition-all min-w-[2rem]",
+                  params.currency === 'GBP'
+                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                )}
+                onClick={() => handleCurrencyChange('GBP')}
+                aria-label="Switch to British Pound"
+              >
+                £
+              </button>
+              <button 
+                className={cx(
+                  "px-2.5 py-1.5 text-xs font-medium transition-all min-w-[2rem]",
+                  params.currency === 'JPY'
+                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                )}
+                onClick={() => handleCurrencyChange('JPY')}
+                aria-label="Switch to Japanese Yen"
+              >
+                ¥
+              </button>
             </div>
-            <span className="text-[10px] text-gray-500 ml-1 hidden sm:inline">Display only</span>
+            <span className={cx(typography.size.xs, "text-gray-500 ml-1 hidden sm:inline")}>Display only</span>
           </div>
         </div>
       </div>
 
       {/* Combined Parameters Section - All inputs on same page */}
-      <div className="p-2 bg-white rounded-lg shadow-sm border border-gray-100 mb-3">
+      <div className={cx(components.container.section, "mb-3")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Current Status Section - Optimized */}
-          <div className="bg-gradient-to-b from-blue-50 to-white rounded-lg border border-blue-100 shadow-sm p-2 overflow-hidden">
-            <h3 className="text-xs font-semibold text-blue-800 uppercase tracking-wider px-2 mb-2 py-1.5 bg-blue-50 rounded-lg flex items-center">
+          <div className={cx("bg-gradient-to-b from-blue-50 to-white rounded-lg border border-blue-100 shadow-sm p-1 overflow-hidden")}>
+            <h3 className={cx("text-xs font-semibold text-blue-800 uppercase tracking-wider px-2 mb-0.5 py-0.5 flex items-center")}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Current Status
             </h3>
-            <div className="space-y-3">
-              {renderParameterInput(
-                "Initial Capital", 
-                "initialCapital", 
-                getDisplayValue('initialCapital', inputValues.initialCapital), 
-                "150,000", 
-                true,
-                false,
-                undefined,
-                true // Include slider
-              )}
+            <div className={cx("space-y-0")}>
+              <div className="p-1">
+                <h4 className="text-xs font-medium text-blue-800 flex items-center mb-0.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Initial Capital
+                </h4>
+                {renderParameterInput(
+                  "", 
+                  "initialCapital", 
+                  getDisplayValue('initialCapital', inputValues.initialCapital), 
+                  "150,000", 
+                  true,
+                  false,
+                  undefined,
+                  true
+                )}
+              </div>
               
-              {renderParameterInput(
-                "Current Age", 
-                "currentAge", 
-                inputValues.currentAge, 
-                "46", 
-                false, 
-                false, 
-                "",
-                true // Include slider
-              )}
+              <div className="p-1">
+                <h4 className="text-xs font-medium text-blue-800 flex items-center mb-0.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Current Age
+                </h4>
+                {renderParameterInput(
+                  "", 
+                  "currentAge", 
+                  inputValues.currentAge, 
+                  "46", 
+                  false, 
+                  false, 
+                  "",
+                  true
+                )}
+              </div>
               
-              {renderParameterInput(
-                "Monthly Investment", 
-                "monthlyInvestment", 
-                getDisplayValue('monthlyInvestment', inputValues.monthlyInvestment), 
-                "500", 
-                true,
-                false,
-                undefined,
-                true // Include slider
-              )}
+              <div className="p-1">
+                <h4 className="text-xs font-medium text-blue-800 flex items-center mb-0.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                  </svg>
+                  Monthly Investment
+                </h4>
+                {renderParameterInput(
+                  "", 
+                  "monthlyInvestment", 
+                  getDisplayValue('monthlyInvestment', inputValues.monthlyInvestment), 
+                  "500", 
+                  true,
+                  false,
+                  undefined,
+                  true
+                )}
+              </div>
             </div>
           </div>
 
           {/* Retirement Plan Section - Optimized */}
-          <div className="bg-gradient-to-b from-purple-50 to-white rounded-lg border border-purple-100 shadow-sm p-2 overflow-hidden">
-            <h3 className="text-xs font-semibold text-purple-800 uppercase tracking-wider px-2 mb-2 py-1.5 bg-purple-50 rounded-lg flex items-center">
+          <div className="bg-gradient-to-b from-purple-50 to-white rounded-lg border border-purple-100 shadow-sm p-1 overflow-hidden">
+            <h3 className="text-xs font-semibold text-purple-800 uppercase tracking-wider px-2 mb-0.5 py-0.5 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               Retirement Plan
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-0">
               {/* Custom wrapper for retirement age parameter */}
-              <div className={`${autoCalculateRetirementAge ? "opacity-70" : ""}`}>
+              <div className="p-1">
                 {/* First row - add label and the auto-calculated tag when active */}
-                <div className="flex justify-between items-center mb-1">
-                  <label className="block text-xs font-medium text-gray-700">
+                <div className="flex justify-between items-center mb-0.5">
+                  <h4 className="text-xs font-medium text-purple-800 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                     Retirement Age
                     {autoCalculateRetirementAge && (
                       <span className="ml-1.5 text-xs text-purple-600 font-normal">(Auto-calculated)</span>
                     )}
-                  </label>
+                  </h4>
                 </div>
                 
                 {/* Second row - auto-calculate button and slider */}
@@ -1064,7 +1155,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   </button>
                   
                   {/* Standard parameter input with reduced width */}
-                  <div className="flex-1">
+                  <div className={`flex-1 ${autoCalculateRetirementAge ? "opacity-70 pointer-events-none" : ""}`}>
                     {renderParameterInput(
                       "", // Empty label since we've added it manually above
                       "retirementInput", 
@@ -1080,7 +1171,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               </div>
 
               {/* Withdrawal Strategy - Optimized */}
-              <div className="mb-1 p-2 bg-white rounded-lg border border-purple-100 shadow-sm">
+              <div className="mb-1 p-1">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                   <div>
                     <h3 className="text-xs font-medium text-purple-800 flex items-center">
@@ -1133,46 +1224,70 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               </div>
 
               {params.withdrawalMode === 'age' ? (
-                renderParameterInput(
-                  "Target Age", 
-                  "maxAge", 
-                  inputValues.maxAge, 
-                  "95", 
-                  false, 
-                  false, 
-                  "",
-                  true // Changed to true to include slider
-                )
+                <div className="p-1">
+                  <h4 className="text-xs font-medium text-purple-800 flex items-center mb-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Target Age
+                  </h4>
+                  {renderParameterInput(
+                    "", 
+                    "maxAge", 
+                    inputValues.maxAge, 
+                    "95", 
+                    false, 
+                    false, 
+                    "",
+                    true
+                  )}
+                </div>
               ) : params.withdrawalMode === 'amount' ? (
-                renderParameterInput(
-                  "Monthly Withdrawal", 
-                  "monthlyRetirementWithdrawal", 
-                  getDisplayValue('monthlyRetirementWithdrawal', inputValues.monthlyRetirementWithdrawal), 
-                  "0", 
-                  true,
-                  false,
-                  undefined,
-                  true // Include slider
-                )
+                <div className="p-1">
+                  <h4 className="text-xs font-medium text-purple-800 flex items-center mb-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Monthly Withdrawal
+                  </h4>
+                  {renderParameterInput(
+                    "", 
+                    "monthlyRetirementWithdrawal", 
+                    getDisplayValue('monthlyRetirementWithdrawal', inputValues.monthlyRetirementWithdrawal), 
+                    "0", 
+                    true,
+                    false,
+                    undefined,
+                    true
+                  )}
+                </div>
               ) : (
-                renderParameterInput(
-                  "Withdrawal Rate", 
-                  "withdrawalRate", 
-                  inputValues.withdrawalRate, 
-                  "4", 
-                  false, 
-                  true,
-                  undefined,
-                  true // Changed to true to include slider
-                )
+                <div className="p-1">
+                  <h4 className="text-xs font-medium text-purple-800 flex items-center mb-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    Withdrawal Rate
+                  </h4>
+                  {renderParameterInput(
+                    "", 
+                    "withdrawalRate", 
+                    inputValues.withdrawalRate, 
+                    "4", 
+                    false, 
+                    true,
+                    undefined,
+                    true
+                  )}
+                </div>
               )}
             </div>
           </div>
         </div>
         
         {/* Market Assumptions Section - Optimized */}
-        <div className="mt-3 bg-gradient-to-b from-green-50 to-white rounded-lg border border-green-100 shadow-sm p-2 overflow-hidden">
-          <h3 className="text-xs font-semibold text-green-800 uppercase tracking-wider px-2 mb-2 py-1.5 bg-green-50 rounded-lg flex items-center">
+        <div className="mt-3 bg-gradient-to-b from-green-50 to-white rounded-lg border border-green-100 shadow-sm p-1 overflow-hidden">
+          <h3 className="text-xs font-semibold text-green-800 uppercase tracking-wider px-2 mb-2 py-0.5 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
@@ -1184,8 +1299,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             {/* Annual Return Rate */}
-            <div className="bg-white rounded-lg border border-green-100 shadow-sm p-2">
-              <h4 className="text-xs font-medium text-green-800 flex items-center mb-1">
+            <div className="bg-white rounded-lg border border-green-100 shadow-sm p-1">
+              <h4 className="text-xs font-medium text-green-800 flex items-center mb-0.5">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
@@ -1204,8 +1319,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
             </div>
             
             {/* Inflation Rate */}
-            <div className="bg-white rounded-lg border border-green-100 shadow-sm p-2">
-              <h4 className="text-xs font-medium text-green-800 flex items-center mb-1">
+            <div className="bg-white rounded-lg border border-green-100 shadow-sm p-1">
+              <h4 className="text-xs font-medium text-green-800 flex items-center mb-0.5">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -1224,14 +1339,14 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
             </div>
             
             {/* Compound Frequency */}
-            <div className="bg-white rounded-lg border border-green-100 shadow-sm p-2">
-              <h4 className="text-xs font-medium text-green-800 flex items-center mb-1">
+            <div className="bg-white rounded-lg border border-green-100 shadow-sm p-1">
+              <h4 className="text-xs font-medium text-green-800 flex items-center mb-0.5">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Compound Frequency
               </h4>
-              <div className="p-2">
+              <div className="p-1">
                 <p className="text-xs text-gray-600 mb-2">
                   {params.compoundFrequency === 'monthly'
                     ? "Interest compounded monthly (higher returns)"

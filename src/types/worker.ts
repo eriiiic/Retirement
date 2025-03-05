@@ -20,7 +20,7 @@ export enum WorkerMessageType {
 /**
  * Worker types
  */
-export type WorkerType = 'capitalEvolution' | 'scheduleDetails' | 'resultsSummary';
+export type WorkerType = 'scheduleDetails' | 'resultsSummary';
 
 /**
  * Base interface for worker messages

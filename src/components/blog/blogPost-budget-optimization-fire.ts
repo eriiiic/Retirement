@@ -4,11 +4,7 @@
  * The metadata is stored in blogData.ts, while the content lives here for better performance
  */
 
-export const content = `# Optimizing Your Budget for Maximum Savings Rate
-
-![Budget optimization](https://images.unsplash.com/photo-1554224154-22dec7ec8818?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80)
-
-<div class="lead-quote">
+export const content = `<div class="lead-quote">
   <blockquote>
     "A budget is telling your money where to go instead of wondering where it went."
     <cite>— Dave Ramsey</cite>

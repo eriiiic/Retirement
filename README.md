@@ -5,7 +5,6 @@ A comprehensive retirement planning tool that helps users visualize and optimize
 ## Features
 
 - **Retirement Simulation**: Calculate retirement readiness based on various financial parameters
-- **Capital Evolution**: Visualize how your investments grow over time
 - **Detailed Schedule**: Year-by-year breakdown of your financial journey
 - **Customizable Parameters**: Adjust retirement age, investment returns, inflation, and more
 - **Responsive Design**: Works on desktop and mobile devices
@@ -18,7 +17,6 @@ src/
 │   ├── common/              # Reusable UI components
 │   │   └── StyledComponents.tsx
 │   └── retirement/          # Retirement simulator components
-│       ├── CapitalEvolutionChart.tsx
 │       ├── ParametersSection.tsx
 │       ├── ResultsSummary.tsx
 │       ├── RetirementSimulator.tsx
@@ -32,7 +30,6 @@ src/
 ├── utils/                   # Utility functions
 │   └── financialCalculations.ts
 ├── workers/                 # Web Workers for performance
-│   ├── capitalEvolution.worker.ts
 │   ├── resultsSummary.worker.ts
 │   └── scheduleDetails.worker.ts
 └── types/                   # TypeScript type definitions
@@ -46,7 +43,7 @@ src/
 The application utilizes Web Workers for compute-intensive operations. Worker instances are pooled for performance, reducing the overhead of creating and terminating workers:
 
 - `useWorker.ts`: Implements a worker pool that maintains worker instances and tracks their usage
-- Each worker type (capitalEvolution, scheduleDetails, resultsSummary) has its own pool
+- Each worker type (scheduleDetails, resultsSummary) has its own pool
 - Workers are kept alive as long as at least one component is using them
 
 ### 2. Financial Calculation Optimization

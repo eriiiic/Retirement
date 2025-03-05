@@ -1,18 +1,44 @@
-import { useMemo } from 'react';
-import { Statistics, SimulatorParams, FormatAmountFunction } from './types';
+import { useMemo, useCallback } from 'react';
+import { Statistics, SimulatorParams, FormatAmountFunction, Currency } from './types';
 import { colors, typography, spacing, components, cx } from '../../styles/styleGuide';
 
 interface AnalysesProps {
   statistics: Statistics;
   params: SimulatorParams;
   formatAmount: FormatAmountFunction;
+  currency: Currency;
 }
 
 export const Analyses: React.FC<AnalysesProps> = ({
   statistics,
   params,
   formatAmount,
+  currency
 }) => {
+  // Add currency formatting function
+  const formatCurrencyValue = useCallback((value: number, showDecimals: boolean = false): string => {
+    const formatter = new Intl.NumberFormat(
+      currency === 'EUR' ? 'fr-FR' :
+      currency === 'GBP' ? 'en-GB' :
+      currency === 'JPY' ? 'ja-JP' : 'en-US',
+      {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: showDecimals ? 1 : 0,
+        maximumFractionDigits: showDecimals ? 1 : 0
+      }
+    );
+    return formatter.format(value);
+  }, [currency]);
+
+  // Update the display values to use the new currency formatter
+  const formatDisplayValue = useCallback((value: number): string => {
+    if (value >= 1000000) {
+      return formatCurrencyValue(value / 1000000, true) + 'M';
+    }
+    return formatCurrencyValue(value, false);
+  }, [formatCurrencyValue]);
+
   // Helper function to calculate optimal assessment
   const calculateOptimalAssessment = (stats: Statistics, params: SimulatorParams) => {
     const yearsToRetirement = stats.retirementStartAge - params.currentAge;
@@ -188,7 +214,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
   }, [statistics, params]);
   
   return (
-    <div className="mt-8 bg-gray-50 p-5 rounded-2xl shadow-md border border-gray-200">
+    <div className="bg-gray-50 p-5 rounded-2xl shadow-md border border-gray-200">
       {/* Header section */}
       <div className="mb-4">
         <h2 className="text-xl font-semibold text-gradient mb-1">Retirement Optimization</h2>
@@ -221,7 +247,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
               <p className="text-xs text-gray-600 mt-1">
                 To retire at age <span className="font-semibold">{analyses.retirementAgeInsights.earlierPossible.age}</span> (
                 {analyses.retirementAgeInsights.earlierPossible.yearsEarlier} years earlier), consider increasing your 
-                monthly investment by {formatAmount(analyses.retirementAgeInsights.earlierPossible.extraMonthlyInvestment)}.
+                monthly investment by {formatDisplayValue(analyses.retirementAgeInsights.earlierPossible.extraMonthlyInvestment)}.
               </p>
             </div>
             
@@ -234,7 +260,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
               </h4>
               <p className="text-xs text-gray-600 mt-1">
                 Working until age <span className="font-semibold">{analyses.retirementAgeInsights.laterBenefits.age}</span> would 
-                add approximately {formatAmount(analyses.retirementAgeInsights.laterBenefits.additionalCapital)} to your 
+                add approximately {formatDisplayValue(analyses.retirementAgeInsights.laterBenefits.additionalCapital)} to your 
                 retirement fund, improving your financial safety by 
                 {Math.round(analyses.retirementAgeInsights.laterBenefits.improvedSafety)}%.
               </p>
@@ -307,7 +333,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
               <div>
                 <div className={typography.size.base}>Delaying by {analyses.delayRetirement.years} years would add:</div>
                 <div className={cx(typography.weight.bold, typography.size.lg, "text-green-600")}>
-                  {formatAmount(analyses.delayRetirement.impact)}
+                  {formatDisplayValue(analyses.delayRetirement.impact)}
                 </div>
               </div>
             </div>
@@ -324,7 +350,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
               <div className="flex justify-between">
                 <div className={typography.size.sm}>New retirement capital:</div>
                 <div className={cx(typography.size.sm, typography.weight.semibold, "text-green-600")}>
-                  {formatAmount(analyses.delayRetirement.newCapital)}
+                  {formatDisplayValue(analyses.delayRetirement.newCapital)}
                 </div>
               </div>
             </div>
@@ -349,7 +375,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
               </div>
               <div>
                 <div className={typography.size.base}>
-                  Increasing your monthly investment by {formatAmount(analyses.investmentIncrease.monthlyIncrease)} would add:
+                  Increasing your monthly investment by {formatDisplayValue(analyses.investmentIncrease.monthlyIncrease)} would add:
                 </div>
               </div>
             </div>
@@ -359,13 +385,13 @@ export const Analyses: React.FC<AnalysesProps> = ({
                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
                   <div className={typography.size.xs}>Additional contributions</div>
                   <div className={cx(typography.size.base, typography.weight.bold, "text-blue-600")}>
-                    {formatAmount(analyses.investmentIncrease.additionalCapital)}
+                    {formatDisplayValue(analyses.investmentIncrease.additionalCapital)}
                   </div>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
                   <div className={typography.size.xs}>Additional returns</div>
                   <div className={cx(typography.size.base, typography.weight.bold, "text-purple-600")}>
-                    {formatAmount(analyses.investmentIncrease.estimatedAdditionalReturns)}
+                    {formatDisplayValue(analyses.investmentIncrease.estimatedAdditionalReturns)}
                   </div>
                 </div>
               </div>
@@ -376,7 +402,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
             <div className="flex justify-between items-center">
               <div className={typography.size.sm}>Total benefit at retirement:</div>
               <div className={cx(typography.size.base, typography.weight.bold, "text-green-600")}>
-                {formatAmount(analyses.investmentIncrease.totalBenefit)}
+                {formatDisplayValue(analyses.investmentIncrease.totalBenefit)}
               </div>
             </div>
           </div>
@@ -409,11 +435,43 @@ export const Analyses: React.FC<AnalysesProps> = ({
             
             <div className="text-xs text-gray-500">
               {analyses.runningOut.risk === 'High' ? (
-                <>Your highest priority should be increasing monthly investments and delaying retirement if possible.</>
+                <div className="mt-2 text-sm font-medium text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">
+                  Your highest priority should be increasing monthly investments by{' '}
+                  <span className="font-bold text-red-700">
+                    {formatDisplayValue(params.monthlyInvestment * 0.3)}/month
+                  </span>{' '}
+                  or delaying retirement by{' '}
+                  <span className="font-bold text-red-700">
+                    {analyses.runningOut.risk === 'High' ? 3 : 1} years
+                  </span>
+                </div>
               ) : analyses.runningOut.risk === 'Medium' ? (
-                <>You have approximately {analyses.runningOut.safetyMargin} years of safety margin beyond life expectancy.</>
+                <div className="mt-2 text-sm font-medium text-yellow-600 bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+                  You have approximately{' '}
+                  <span className="font-bold text-yellow-700">
+                    {analyses.runningOut.safetyMargin} years
+                  </span>{' '}
+                  of safety margin. Consider increasing monthly investments by{' '}
+                  <span className="font-bold text-yellow-700">
+                    {formatDisplayValue(params.monthlyInvestment * 0.1)}/month
+                  </span>{' '}
+                  to improve your safety margin to{' '}
+                  <span className="font-bold text-yellow-700">
+                    {analyses.runningOut.safetyMargin + 5}+ years
+                  </span>.
+                </div>
               ) : (
-                <>You have {analyses.runningOut.safetyMargin}+ years of safety margin beyond your life expectancy.</>
+                <div className="mt-2 text-sm font-medium text-emerald-600 bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                  You have{' '}
+                  <span className="font-bold text-emerald-700">
+                    {analyses.runningOut.safetyMargin}+ years
+                  </span>{' '}
+                  of safety margin beyond your life expectancy, with a projected capital of{' '}
+                  <span className="font-bold text-emerald-700">
+                    {formatDisplayValue(statistics.finalCapital)}
+                  </span>{' '}
+                  at target age.
+                </div>
               )}
             </div>
             
@@ -445,7 +503,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
             <h4 className={cx(typography.weight.semibold, "text-gray-800")}>Optimize Returns</h4>
           </div>
           <p className={cx(typography.size.sm, "text-gray-600 mb-3")}>
-            A {analyses.returnImprovement.improvementRate.toFixed(1)}% improvement in return rate could add {formatAmount(analyses.returnImprovement.benefit)} to your retirement capital.
+            A {analyses.returnImprovement.improvementRate.toFixed(1)}% improvement in return rate could add {formatDisplayValue(analyses.returnImprovement.benefit)} to your retirement capital.
           </p>
           <div className={cx(typography.size.xs, "text-gray-500")}>
             Consider rebalancing your portfolio or searching for lower fee investment options to increase your effective returns.

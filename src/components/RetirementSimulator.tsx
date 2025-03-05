@@ -591,6 +591,7 @@ const RetirementSimulator = () => {
           statistics={statistics}
           params={params}
           formatAmount={formatAmount}
+          currency={params.currency}
         />
       </section>
 
@@ -598,6 +599,7 @@ const RetirementSimulator = () => {
         <ScheduleDetails 
           graphData={graphData}
           formatAmount={formatAmount}
+          currency={params.currency}
         />
       </section>
       

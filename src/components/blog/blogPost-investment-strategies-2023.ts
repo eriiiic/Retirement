@@ -4,11 +4,7 @@
  * The metadata is stored in blogData.ts, while the content lives here for better performance
  */
 
-export const content = `# Investment Strategies for Building Your FIRE Portfolio
-
-![Investment portfolio visualization](/images/investment-portfolio.jpg)
-
-<div class="lead-quote">
+export const content = `<div class="lead-quote">
   <blockquote>
     "The best investment you can make is in yourself, but the second best is a diversified portfolio with low fees."
   </blockquote>
