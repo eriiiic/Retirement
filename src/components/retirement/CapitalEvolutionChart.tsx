@@ -33,7 +33,6 @@ interface CapitalEvolutionChartProps {
 interface LabelProps {
   viewBox: any;
   text: string;
-  symbol: string;
   color: string;
 }
 
@@ -99,7 +98,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
     return positions.sort((a, b) => a.x - b.x);
   }, [statistics, firstCapitalWithdrawalDecreaseYear, currentAge]);
 
-  const CustomLabel = ({ viewBox, text, symbol, color }: LabelProps) => {
+  const CustomLabel = ({ viewBox, text, color }: LabelProps) => {
     const x = (viewBox?.x ?? 0) as number;
     const currentLabel = labelPositions.find(pos => pos.x === x);
     const labelIndex = labelPositions.findIndex(pos => pos.x === x);
@@ -138,7 +137,6 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
               right: 5
             }}
           >
-            <span style={{ color, fontSize: '12px' }}>{symbol}</span>
             <span style={{ color, fontSize: '12px', fontWeight: 500 }}>
               {text}
             </span>
@@ -284,7 +282,6 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                   <CustomLabel
                     viewBox={props.viewBox}
                     text="Retired"
-                    symbol="⚑"
                     color="#3B82F6"
                   />
                 )}
@@ -303,7 +300,6 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                     <CustomLabel
                       viewBox={props.viewBox}
                       text="Depleted"
-                      symbol="⚠"
                       color="#EF4444"
                     />
                   )}
@@ -323,7 +319,6 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                     <CustomLabel
                       viewBox={props.viewBox}
                       text="Target"
-                      symbol="◎"
                       color="#22C55E"
                     />
                   )}
