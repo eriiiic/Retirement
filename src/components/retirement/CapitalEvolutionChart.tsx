@@ -421,6 +421,19 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
     return decreasePoint?.year;
   }, [graphData]);
 
+  // Get max Y value for chart
+  const maxYValue = useMemo(() => {
+    if (!graphData.length) return 'auto';
+    
+    const retirementYear = statistics.calculatedRetirementStartYear;
+    const retirementPoint = graphData.find(point => point.year === retirementYear);
+    
+    if (!retirementPoint?.capital) return 'auto';
+
+    // Fixed maximum value based on main retirement capital + 40%
+    return retirementPoint.capital * 1.4;
+  }, [graphData, statistics.calculatedRetirementStartYear]);
+
   // Check if capital is positive at target age for each delay
   const getPositiveDelays = useMemo(() => {
     if (!graphData.length) return new Set<number>();
@@ -440,19 +453,6 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
     
     return positiveDelays;
   }, [graphData, statistics.lifeExpectancy, currentAge]);
-
-  // Get max Y value for chart
-  const maxYValue = useMemo(() => {
-    if (!graphData.length) return 'auto';
-    
-    const retirementYear = statistics.calculatedRetirementStartYear;
-    const retirementPoint = graphData.find(point => point.year === retirementYear);
-    
-    if (!retirementPoint?.capital) return 'auto';
-
-    // Fixed maximum value based on main retirement capital + 40%
-    return retirementPoint.capital * 1.4;
-  }, [graphData, statistics.calculatedRetirementStartYear]);
 
   return (
     <div className="bg-gray-50 p-5 rounded-2xl shadow-md border border-gray-200">
@@ -642,7 +642,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
             )}
 
             {/* Banded area showing delayed retirement range - Updated to use selectedDelays */}
-            {selectedDelays.includes(5) && (
+            {selectedDelays.includes(5) && chartData.some(d => d.capitalMax !== undefined) && (
               <Area
                 type="monotone"
                 dataKey="capitalMax"
@@ -653,7 +653,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                 animationDuration={0}
               />
             )}
-            {selectedDelays.includes(4) && (
+            {selectedDelays.includes(4) && chartData.some(d => d.capital4Year !== undefined) && (
               <Area
                 type="monotone"
                 dataKey="capital4Year"
@@ -664,7 +664,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                 animationDuration={0}
               />
             )}
-            {selectedDelays.includes(3) && (
+            {selectedDelays.includes(3) && chartData.some(d => d.capital3Year !== undefined) && (
               <Area
                 type="monotone"
                 dataKey="capital3Year"
@@ -675,7 +675,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                 animationDuration={0}
               />
             )}
-            {selectedDelays.includes(2) && (
+            {selectedDelays.includes(2) && chartData.some(d => d.capital2Year !== undefined) && (
               <Area
                 type="monotone"
                 dataKey="capital2Year"
@@ -686,7 +686,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                 animationDuration={0}
               />
             )}
-            {selectedDelays.includes(1) && (
+            {selectedDelays.includes(1) && chartData.some(d => d.capitalMin !== undefined) && (
               <Area
                 type="monotone"
                 dataKey="capitalMin"
