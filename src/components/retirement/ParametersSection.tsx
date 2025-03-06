@@ -3,6 +3,102 @@ import { SimulatorParams, Statistics, FormatAmountFunction, GraphDataPoint } fro
 import FormulaModal from './FormulaModal';
 import { generateModernRetirementReport } from '../../utils/modernPdfGenerator';
 import { colors, typography, spacing, components, cx } from '../../styles/styleGuide';
+import { calculateInflationAdjustedValue } from '../../utils/financialCalculations';
+
+// Define the customStyles variable before the component
+const customStyles = `
+  .custom-input-width .text-input {
+    min-width: 160px !important;
+    width: 100% !important;
+  }
+
+  /* Desktop styles for monthly withdrawal (single line layout) */
+  .monthly-withdrawal-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  /* Button positioning for desktop */
+  .inflation-button-desktop {
+    flex-shrink: 0;
+    height: 32px;
+    z-index: 5;
+  }
+
+  /* Slider container styles - match proportions of other sliders */
+  .withdrawal-slider-wrapper {
+    flex: 2;
+    min-width: 120px;
+    max-width: calc(67% - 95px); /* 2/3 width minus button width */
+  }
+
+  /* Input form container styles */
+  .withdrawal-input-wrapper {
+    flex: 1;
+    min-width: 120px;
+    max-width: 33%; /* 1/3 width to match other inputs */
+  }
+
+  /* Special mobile styles for monthly withdrawal header */
+  @media (max-width: 639px) {
+    /* Make the header with title and button on one line */
+    .monthly-withdrawal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    
+    .monthly-withdrawal-title {
+      width: 45%;
+    }
+    
+    .inflation-button-mobile {
+      width: 50%;
+      justify-content: center;
+    }
+    
+    /* Hide desktop button on mobile */
+    .inflation-button-desktop {
+      display: none;
+    }
+    
+    /* Mobile specific styles for slider and input - side by side */
+    .monthly-withdrawal-row {
+      flex-direction: row; /* Keep as row on mobile for slider and input */
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .withdrawal-slider-wrapper {
+      width: 48%;
+      max-width: 48%;
+      flex: 1;
+      margin-top: 0;
+    }
+    
+    .withdrawal-input-wrapper {
+      width: 48%;
+      max-width: 48%;
+      flex: 1;
+      margin-top: 0;
+    }
+  }
+  
+  /* Hide mobile button on desktop */
+  @media (min-width: 640px) {
+    .inflation-button-mobile {
+      display: none;
+    }
+    
+    .monthly-withdrawal-header {
+      margin-bottom: 8px;
+    }
+  }
+`;
 
 interface ParametersSectionProps {
   params: SimulatorParams;
@@ -937,6 +1033,18 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     onParamChange
   ]);
 
+  useEffect(() => {
+    // Create a style element
+    const styleEl = document.createElement('style');
+    styleEl.innerHTML = customStyles;
+    document.head.appendChild(styleEl);
+    
+    // Clean up function
+    return () => {
+      document.head.removeChild(styleEl);
+    };
+  }, []);
+
   return (
     <div className={cx("bg-gray-50 rounded-lg border border-gray-200 shadow-sm overflow-hidden p-4")}>
       {/* Header with Title */}
@@ -1223,7 +1331,150 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 </div>
               </div>
 
-              {params.withdrawalMode === 'age' ? (
+              {params.withdrawalMode === 'amount' ? (
+                <div className="p-1">
+                  <div className="monthly-withdrawal-header">
+                    <h4 className="monthly-withdrawal-title text-xs font-medium text-purple-800 flex items-center mb-0.5 sm:mb-0.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Monthly Withdrawal
+                    </h4>
+                    
+                    {/* Mobile-only Inflation Adjusted Button */}
+                    <button
+                      onClick={() => onParamChange('inflationAdjustedWithdrawal', !params.inflationAdjustedWithdrawal)}
+                      className={`inflation-button-mobile p-1.5 px-2 rounded-lg transition-all flex items-center ${
+                        params.inflationAdjustedWithdrawal 
+                          ? 'bg-purple-600 text-white ring-1 ring-purple-300' 
+                          : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
+                      }`}
+                      title="Adjust the entered amount for inflation from today until retirement start"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                      <span className="text-xs font-medium whitespace-nowrap">
+                        Inflation Adjusted
+                      </span>
+                    </button>
+                  </div>
+                  
+                  {params.inflationAdjustedWithdrawal && (
+                    <p className="text-xs text-purple-600 italic mb-2">
+                      Amount will be adjusted for inflation from today until retirement. 
+                      {statistics.calculatedRetirementStartYear && (
+                        <span className="font-medium">
+                          {" "}Future value at retirement: {formatAmount(
+                            calculateInflationAdjustedValue(
+                              params.monthlyRetirementWithdrawal,
+                              params.inflation,
+                              statistics.calculatedRetirementStartYear - new Date().getFullYear()
+                            )
+                          )}
+                        </span>
+                      )}
+                    </p>
+                  )}
+                  
+                  <div className="monthly-withdrawal-row">
+                    {/* Desktop-only Inflation Adjusted Button */}
+                    <button
+                      onClick={() => onParamChange('inflationAdjustedWithdrawal', !params.inflationAdjustedWithdrawal)}
+                      className={`inflation-button-desktop p-1.5 px-2 rounded-lg transition-all flex items-center justify-center ${
+                        params.inflationAdjustedWithdrawal 
+                          ? 'bg-purple-600 text-white ring-1 ring-purple-300' 
+                          : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
+                      }`}
+                      title="Adjust the entered amount for inflation from today until retirement start"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                      <span className="text-xs font-medium whitespace-nowrap">
+                        Inflation Adjusted
+                      </span>
+                    </button>
+                    
+                    {/* Custom Slider Container - now always full width on mobile */}
+                    <div className="withdrawal-slider-wrapper">
+                      <div 
+                        ref={el => sliderContainerRefs.current["monthlyRetirementWithdrawal"] = el}
+                        className="relative h-8"
+                        onMouseDown={(e) => handleSliderMouseDown("monthlyRetirementWithdrawal", e)}
+                        onTouchStart={(e) => handleSliderTouchStart("monthlyRetirementWithdrawal", e)}
+                      >
+                        <div 
+                          className={components.form.slider.track}
+                          style={{ top: '50%', transform: 'translateY(-50%)', position: 'absolute', height: '8px', width: '100%', borderRadius: '8px' }}
+                        ></div>
+                        <div 
+                          className="absolute h-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500"
+                          style={{ 
+                            width: `${((params.monthlyRetirementWithdrawal - getSliderConfig("monthlyRetirementWithdrawal").min) / (getSliderConfig("monthlyRetirementWithdrawal").max - getSliderConfig("monthlyRetirementWithdrawal").min)) * 100}%`,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            height: '8px'
+                          }}
+                        ></div>
+                        <input
+                          ref={el => sliderRefs.current["monthlyRetirementWithdrawal"] = el}
+                          type="range"
+                          min={getSliderConfig("monthlyRetirementWithdrawal").min}
+                          max={getSliderConfig("monthlyRetirementWithdrawal").max}
+                          step={getSliderConfig("monthlyRetirementWithdrawal").step}
+                          value={params.monthlyRetirementWithdrawal}
+                          onChange={(e) => {
+                            const newValue = e.target.value;
+                            let numericValue = parseFloat(newValue);
+                            onParamChange("monthlyRetirementWithdrawal", numericValue);
+                            setInputValues(prev => ({ ...prev, monthlyRetirementWithdrawal: numericValue.toString() }));
+                          }}
+                          className="w-full h-2 appearance-none bg-transparent absolute z-10 cursor-pointer opacity-0"
+                          style={{ top: '50%', transform: 'translateY(-50%)' }}
+                        />
+                        <div 
+                          className="absolute w-4 h-4 bg-white border rounded-full shadow transition-all"
+                          style={{ 
+                            left: `${((params.monthlyRetirementWithdrawal - getSliderConfig("monthlyRetirementWithdrawal").min) / (getSliderConfig("monthlyRetirementWithdrawal").max - getSliderConfig("monthlyRetirementWithdrawal").min)) * 100}%`,
+                            top: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            borderWidth: draggingSlider === "monthlyRetirementWithdrawal" ? '2px' : '1px'
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                    
+                    {/* Custom Input Field */}
+                    <div className="withdrawal-input-wrapper">
+                      <div className="relative w-full">
+                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-sm text-gray-500">
+                          {getCurrencySymbol(params.currency)}
+                        </span>
+                        <input
+                          ref={el => inputRefs.current["monthlyRetirementWithdrawal"] = el}
+                          id="monthlyRetirementWithdrawal"
+                          type="text"
+                          inputMode="decimal"
+                          value={getDisplayValue('monthlyRetirementWithdrawal', inputValues.monthlyRetirementWithdrawal) === '0' ? '' : formatNumberForCurrency(getDisplayValue('monthlyRetirementWithdrawal', inputValues.monthlyRetirementWithdrawal), params.currency)}
+                          onChange={(e) => {
+                            const valueWithoutCurrency = removeCurrencySymbol(e.target.value);
+                            handleInputChange("monthlyRetirementWithdrawal", valueWithoutCurrency);
+                          }}
+                          onBlur={(e) => {
+                            const valueWithoutCurrency = removeCurrencySymbol(e.target.value);
+                            handleInputBlur("monthlyRetirementWithdrawal", valueWithoutCurrency);
+                          }}
+                          onFocus={() => handleInputFocus("monthlyRetirementWithdrawal")}
+                          placeholder="0"
+                          className="w-full rounded-lg border border-gray-300 py-1.5 pl-6 pr-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-right"
+                          aria-label="Monthly retirement withdrawal input"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : params.withdrawalMode === 'age' ? (
                 <div className="p-1">
                   <h4 className="text-xs font-medium text-purple-800 flex items-center mb-0.5">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1239,25 +1490,6 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                     false, 
                     false, 
                     "",
-                    true
-                  )}
-                </div>
-              ) : params.withdrawalMode === 'amount' ? (
-                <div className="p-1">
-                  <h4 className="text-xs font-medium text-purple-800 flex items-center mb-0.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Monthly Withdrawal
-                  </h4>
-                  {renderParameterInput(
-                    "", 
-                    "monthlyRetirementWithdrawal", 
-                    getDisplayValue('monthlyRetirementWithdrawal', inputValues.monthlyRetirementWithdrawal), 
-                    "0", 
-                    true,
-                    false,
-                    undefined,
                     true
                   )}
                 </div>

@@ -30,6 +30,7 @@ const RetirementSimulator = () => {
     maxAge: 95,
     compoundFrequency: 'monthly',
     autoCalculateRetirementAge: false,
+    inflationAdjustedWithdrawal: false,
   });
 
   // State for chart data
@@ -139,15 +140,28 @@ const RetirementSimulator = () => {
     let totalWithdrawn = 0;
     let isCapitalDepleted = false;
     
-    // Define currentMonthlyWithdrawal
-    let currentMonthlyWithdrawal;
+    // Calculate base withdrawal amount at retirement
+    let baseMonthlyWithdrawal;
     if (params.withdrawalMode === "age") {
-      currentMonthlyWithdrawal = calculateWithdrawal(capitalAtRetirement, retirementDuration);
+      baseMonthlyWithdrawal = calculateWithdrawal(capitalAtRetirement, retirementDuration);
     } else if (params.withdrawalMode === "rate" && params.withdrawalRate) {
-      currentMonthlyWithdrawal = calculateRateBasedWithdrawal(capitalAtRetirement, params.withdrawalRate);
+      baseMonthlyWithdrawal = calculateRateBasedWithdrawal(capitalAtRetirement, params.withdrawalRate);
     } else {
-      currentMonthlyWithdrawal = params.monthlyRetirementWithdrawal;
+      // For amount mode, calculate the inflation-adjusted value if needed
+      if (params.inflationAdjustedWithdrawal && params.withdrawalMode === "amount") {
+        const yearsUntilRetirement = retirementStartIndex;
+        baseMonthlyWithdrawal = calculateInflationAdjustedValue(
+          params.monthlyRetirementWithdrawal,
+          params.inflation,
+          yearsUntilRetirement
+        );
+      } else {
+        baseMonthlyWithdrawal = params.monthlyRetirementWithdrawal;
+      }
     }
+
+    // Start with the base withdrawal amount
+    let currentMonthlyWithdrawal = baseMonthlyWithdrawal;
 
     // Generate data points for each year
     for (let year = 0; year <= simulationDuration; year++) {
@@ -187,7 +201,6 @@ const RetirementSimulator = () => {
       
       // Monthly calculations for the year
       if (params.compoundFrequency === 'monthly') {
-        // Monthly compounding logic
         for (let month = 0; month < 12; month++) {
           if (capital <= 0) {
             capital = 0;
@@ -201,29 +214,16 @@ const RetirementSimulator = () => {
           annualInterest += interest;
           capital += interest;
           
-          // For transition year, gradually shift from investment to withdrawal
-          if (isTransitionYear) {
-            // If using rate-based withdrawal, recalculate the monthly amount at the beginning of each month
-            if (params.withdrawalMode === "rate" && params.withdrawalRate && month === 0) {
-              currentMonthlyWithdrawal = calculateRateBasedWithdrawal(capital, params.withdrawalRate);
-            }
+          if (isTransitionYear || inRetirementPhase) {
+            // Apply withdrawal
             capital -= currentMonthlyWithdrawal;
             annualWithdrawal += currentMonthlyWithdrawal;
             totalWithdrawn += currentMonthlyWithdrawal;
-          } else if (!inRetirementPhase) {
+          } else {
             // Regular investment phase
             capital += currentMonthlyInvestment;
             annualInvestment += currentMonthlyInvestment;
             totalInvested += currentMonthlyInvestment;
-          } else {
-            // Regular retirement phase
-            // If using rate-based withdrawal, recalculate the monthly amount at the beginning of each month
-            if (params.withdrawalMode === "rate" && params.withdrawalRate && month === 0) {
-              currentMonthlyWithdrawal = calculateRateBasedWithdrawal(capital, params.withdrawalRate);
-            }
-            capital -= currentMonthlyWithdrawal;
-            annualWithdrawal += currentMonthlyWithdrawal;
-            totalWithdrawn += currentMonthlyWithdrawal;
           }
           
           if (capital < 0) capital = 0;
@@ -272,14 +272,14 @@ const RetirementSimulator = () => {
         if (capital < 0) capital = 0;
       }
       
-      // Apply inflation adjustment at the end of each year
+      // Apply inflation adjustments at the end of each year
       if (!inRetirementPhase || isTransitionYear) {
         // Adjust monthly investment for inflation (annually)
         currentMonthlyInvestment *= (1 + params.inflation / 100);
       }
       
       if (inRetirementPhase || isTransitionYear) {
-        // Adjust monthly withdrawal for inflation (annually)
+        // Always adjust withdrawal for inflation during retirement
         currentMonthlyWithdrawal *= (1 + params.inflation / 100);
       }
       
@@ -324,7 +324,8 @@ const RetirementSimulator = () => {
     getRetirementYear,
     calculateCapitalAtRetirement,
     calculateWithdrawal,
-    monthlyReturn
+    monthlyReturn,
+    params.inflationAdjustedWithdrawal
   ]);
 
   // Use memoization for simulation data

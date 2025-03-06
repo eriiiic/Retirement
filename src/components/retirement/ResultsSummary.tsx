@@ -4,6 +4,7 @@ import { useWorker } from '../../hooks/useWorker';
 import { WorkerMessageType, WorkerResponse } from '../../types/worker';
 import { colors, typography, spacing, components, cx } from '../../styles/styleGuide';
 import FormulaModal from './FormulaModal';
+import { calculateInflationAdjustedValue } from '../../utils/financialCalculations';
 
 interface ResultsSummaryProps {
   statistics: Statistics;
@@ -637,11 +638,23 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <div className={cx(typography.size.sm, "text-gray-700")}>Monthly Withdrawal</div>
-                    <div className={cx(typography.size.sm, typography.weight.medium, "text-gray-700")}>
-                      <span className={colors.phases.retirement.text}>{formatDisplayValue(params.monthlyRetirementWithdrawal)}</span>
-                      <span className="mx-1 text-gray-400">→</span>
-                      <span className="text-red-600">{formatDisplayValue(statistics.finalMonthlyWithdrawalValue)}</span>
+                    <div className={cx(typography.size.lg, typography.weight.bold, "text-green-600")}>
+                      {formatDisplayValue(params.monthlyRetirementWithdrawal)}
+                      {params.inflationAdjustedWithdrawal && params.withdrawalMode === "amount" && (
+                        <span className="text-xs font-medium text-gray-500 ml-2">
+                          (Inflation-adjusted from today)
+                        </span>
+                      )}
                     </div>
+                    {params.inflationAdjustedWithdrawal && params.withdrawalMode === "amount" && (
+                      <div className={typography.style.caption}>
+                        {formatDisplayValue(calculateInflationAdjustedValue(
+                          params.monthlyRetirementWithdrawal,
+                          params.inflation,
+                          statistics.calculatedRetirementStartYear - new Date().getFullYear()
+                        ))} at retirement start
+                      </div>
+                    )}
                   </div>
                   <div className="h-8 w-full bg-gray-100 rounded-lg overflow-hidden border border-gray-200 relative">
                     <div 

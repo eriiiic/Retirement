@@ -32,6 +32,16 @@ export interface GraphDataPoint {
   totalWithdrawn: number;
   /** Whether this year is the target age */
   targetAge: boolean;
+  /** Capital with 1 year retirement delay */
+  capitalMin?: number;
+  /** Capital with 2 years retirement delay */
+  capital2Year?: number;
+  /** Capital with 3 years retirement delay */
+  capital3Year?: number;
+  /** Capital with 4 years retirement delay */
+  capital4Year?: number;
+  /** Capital with 5 years retirement delay */
+  capitalMax?: number;
 }
 
 /**
@@ -125,6 +135,8 @@ export interface SimulatorParams {
   withdrawalRate?: number;
   /** Whether to auto-calculate the optimal retirement age */
   autoCalculateRetirementAge: boolean;
+  /** Whether to adjust withdrawal amounts for inflation */
+  inflationAdjustedWithdrawal?: boolean;
 }
 
 /**

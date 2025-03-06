@@ -138,6 +138,7 @@ const FormulaModal: React.FC<FormulaModalProps> = ({ isOpen, onClose }) => {
                     <div className="mt-2 font-bold text-orange-800">€10,427</div>
                   </div>
                   <p className="mt-2 text-xs text-orange-700">This means your €5,000 monthly expenses today will cost €10,427 in 25 years.</p>
+                  <p className="mt-2 text-xs text-orange-700">When using inflation-adjusted withdrawals, this calculation is applied to your desired withdrawal amount from today until retirement.</p>
                 </div>
               </div>
             </div>

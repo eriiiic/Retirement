@@ -48,6 +48,7 @@ interface TooltipPayload {
     capital3Year?: number;
     capital4Year?: number;
     capitalMax?: number;
+    currency: Currency;
   };
 }
 
@@ -57,24 +58,182 @@ interface CustomTooltipProps {
   label?: string;
 }
 
+// Constants
+const DEFAULT_SELECTED_DELAYS = [1, 5];
+
+// CSS Classes
+const TOOLTIP_STYLES = {
+  container: cx(
+    'p-4 bg-white border border-gray-200 rounded-lg',
+    'shadow-[0_4px_12px_-2px_rgba(0,0,0,0.12)]',
+    'min-w-[280px]'
+  ),
+  header: 'flex items-center justify-between mb-3 pb-2.5 border-b border-gray-200',
+  yearAge: 'text-sm font-medium text-gray-600',
+  age: 'font-bold',
+  phase: 'px-2.5 py-1 rounded text-xs font-semibold border-[1.5px]',
+  mainCapital: 'text-sm font-bold mb-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent',
+  capitalValue: 'text-lg font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent',
+  investmentInfo: 'text-sm font-medium text-gray-600 mb-1',
+  investmentValue: 'text-base font-semibold text-gray-800',
+  delayedSection: 'mt-3 pt-3 border-t border-gray-200',
+  delayedTitle: 'text-[11px] uppercase font-semibold text-gray-500 tracking-wider mb-2',
+  delayedItem: 'flex justify-between items-center',
+  delayedLabel: 'text-[11px] font-medium text-gray-500',
+  delayedValue: 'text-xs font-semibold text-gray-700'
+};
+
+// Chart Configuration
+const CHART_CONFIG = {
+  HEIGHT: 400,
+  MARGINS: { top: 20, right: 30, left: 20, bottom: 5 },
+  STROKE_WIDTHS: {
+    MAIN: 3,
+    REFERENCE: 2,
+  },
+};
+
 const CustomLabel: React.FC<LabelProps> = ({ viewBox, text, color }) => {
   const icon = getIconForLabel(text);
-  return (
+  const labelWidth = 100; // Assuming the label width is 100px
+    return (
     <g>
-      <foreignObject x={viewBox.x - 120} y={viewBox.y + 10} width={100} height={40}>
+      <foreignObject x={viewBox.x - labelWidth + 4} y={viewBox.y + 4} width={labelWidth} height={40}>
         <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-1.5 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.12)]" style={{ borderWidth: 2, borderStyle: 'solid', borderColor: color }}>
           <FontAwesomeIcon icon={icon} className="text-sm" style={{ color }} />
           <span className="text-xs font-semibold" style={{ color }}>{text}</span>
+          </div>
+        </foreignObject>
+      </g>
+    );
+  };
+
+// Move CustomTooltip outside the main component
+const CustomTooltip: React.FC<CustomTooltipProps & { currency: Currency }> = React.memo(({ active, payload, label, currency }) => {
+    if (active && payload && payload.length) {
+    const mainCapital = payload.find((p) => p.dataKey === 'capital')?.value || 0;
+    const capitalInvested = payload.find((p) => p.dataKey === 'capitalWithoutInterest')?.value;
+      const age = payload[0]?.payload.age || 0;
+      const isRetirementPhase = payload[0]?.payload.retirement === "Yes";
+    const isCapitalZero = mainCapital <= 0;
+    const tooltipCurrency = payload[0]?.payload.currency as Currency || currency;
+
+    // Get all delayed retirement values directly from the payload's raw data
+    const { capitalMin, capital2Year, capital3Year, capital4Year, capitalMax } = payload[0]?.payload || {};
+
+    // Format function that includes currency
+    const formatWithCurrency = React.useCallback((amount: number | undefined) => {
+      if (amount === undefined || amount === null) return '';
+      
+      // Round the amount to remove decimals
+      const roundedAmount = Math.round(amount);
+      
+      // Format the amount based on currency locale
+      let formattedAmount;
+      if (tooltipCurrency === 'EUR') {
+        // Use European formatting (spaces for thousands)
+        formattedAmount = roundedAmount.toLocaleString('fr-FR', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+          useGrouping: true
+        });
+      } else {
+        // Use standard formatting for other currencies
+        formattedAmount = roundedAmount.toLocaleString('en-US', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+          useGrouping: true
+        });
+      }
+      
+      // Add currency symbol based on currency type
+      switch (tooltipCurrency) {
+        case 'USD':
+          return `$ ${formattedAmount}`;
+        case 'EUR':
+          return `${formattedAmount} €`;
+        case 'GBP':
+          return `£ ${formattedAmount}`;
+        case 'JPY':
+          return `¥ ${formattedAmount}`;
+        default:
+          return formattedAmount;
+      }
+    }, [tooltipCurrency]);
+
+      return (
+      <div className={TOOLTIP_STYLES.container}>
+        {/* Header */}
+        <div className={TOOLTIP_STYLES.header}>
+          <div>
+            <p className={TOOLTIP_STYLES.yearAge}>
+              Year {label} · <span className={cx(TOOLTIP_STYLES.age, isCapitalZero ? 'text-red-600' : 'text-gray-900')}>Age {age}</span>
+            </p>
+          </div>
+          <div className={cx(TOOLTIP_STYLES.phase, isRetirementPhase ? 'bg-purple-50 text-purple-800 border-purple-200' : 'bg-blue-50 text-blue-800 border-blue-200')}>
+            {isRetirementPhase ? 'Retirement' : 'Investment'}
+          </div>
         </div>
-      </foreignObject>
-    </g>
-  );
-};
+
+        {/* Main Capital Section */}
+        <div className="space-y-3">
+          <div>
+            <p className={TOOLTIP_STYLES.mainCapital}>
+              Capital with interests
+            </p>
+            <p className={TOOLTIP_STYLES.capitalValue}>
+              {formatWithCurrency(mainCapital)}
+            </p>
+          </div>
+
+          {/* Investment Phase Info */}
+          {!isRetirementPhase && capitalInvested !== null && capitalInvested !== undefined && (
+            <div>
+              <p className={TOOLTIP_STYLES.investmentInfo}>
+                Capital invested
+              </p>
+              <p className={TOOLTIP_STYLES.investmentValue}>
+                {formatWithCurrency(capitalInvested)}
+              </p>
+            </div>
+          )}
+
+          {/* Always show Delayed Retirement Section if values exist */}
+          {(capitalMin !== undefined || capital2Year !== undefined || capital3Year !== undefined || 
+            capital4Year !== undefined || capitalMax !== undefined) && (
+            <div className={TOOLTIP_STYLES.delayedSection}>
+              <p className={TOOLTIP_STYLES.delayedTitle}>
+                Delayed Retirement Scenarios
+              </p>
+              <div className="grid grid-cols-1 gap-1.5">
+                {[
+                  { delay: 1, value: capitalMin, label: '+1 year delay' },
+                  { delay: 2, value: capital2Year, label: '+2 years delay' },
+                  { delay: 3, value: capital3Year, label: '+3 years delay' },
+                  { delay: 4, value: capital4Year, label: '+4 years delay' },
+                  { delay: 5, value: capitalMax, label: '+5 years delay' }
+                ].filter(({ value }) => value !== undefined).map(({ delay, value, label }) => (
+                  <div key={delay} className={TOOLTIP_STYLES.delayedItem}>
+                    <p className={TOOLTIP_STYLES.delayedLabel}>
+                      {label}
+                    </p>
+                    <p className={TOOLTIP_STYLES.delayedValue}>
+                      {value !== undefined ? formatWithCurrency(value) : ''}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+    return null;
+});
 
 const getIconForLabel = (text: string) => {
   switch (text) {
-    case 'Retired':
-      return faBriefcase;
     case 'Depleted':
       return faTriangleExclamation;
     case 'Target':
@@ -82,6 +241,35 @@ const getIconForLabel = (text: string) => {
     default:
       return faBriefcase;
   }
+};
+
+// Helper function for calculating delayed scenarios
+const calculateDelayedScenario = (
+  initialCapital: number,
+  monthlyInvestment: number,
+  monthlyWithdrawal: number,
+  retirementYear: number,
+  delayYears: number,
+  currentYear: number,
+  annualReturnRate: number,
+  inflation: number
+) => {
+  let capital = initialCapital;
+  let investment = monthlyInvestment;
+  let withdrawal = monthlyWithdrawal;
+  
+  const delayedRetirementYear = retirementYear + delayYears;
+  const isRetired = currentYear >= delayedRetirementYear;
+  
+  if (!isRetired) {
+    capital = calculateFutureValue(capital, annualReturnRate, 1, investment, 'monthly');
+    investment *= (1 + inflation / 100);
+  } else {
+    capital = calculateFutureValue(capital, annualReturnRate, 1, -withdrawal, 'monthly');
+    withdrawal *= (1 + inflation / 100);
+  }
+  
+  return { capital, investment, withdrawal };
 };
 
 const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
@@ -93,33 +281,27 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
   annualReturnRate,
   params
 }) => {
-  const [selectedDelays, setSelectedDelays] = useState<number[]>([1, 5]); // Default: show min and max
+  const [selectedDelays, setSelectedDelays] = useState<number[]>(DEFAULT_SELECTED_DELAYS);
+
+  const targetYear = useMemo(() => 
+    new Date().getFullYear() + (statistics.lifeExpectancy - currentAge),
+    [statistics.lifeExpectancy, currentAge]
+  );
 
   // Calculate data for delayed retirement scenarios
   const delayedRetirementData = useMemo(() => {
     const currentYear = new Date().getFullYear();
     const retirementYear = statistics.calculatedRetirementStartYear;
     
-    // Initialize delayed scenario capitals
-    let delay1YearCapital = params.initialCapital;
-    let delay2YearCapital = params.initialCapital;
-    let delay3YearCapital = params.initialCapital;
-    let delay4YearCapital = params.initialCapital;
-    let delay5YearCapital = params.initialCapital;
-
-    let delay1YearMonthlyInvestment = params.monthlyInvestment;
-    let delay2YearMonthlyInvestment = params.monthlyInvestment;
-    let delay3YearMonthlyInvestment = params.monthlyInvestment;
-    let delay4YearMonthlyInvestment = params.monthlyInvestment;
-    let delay5YearMonthlyInvestment = params.monthlyInvestment;
-
-    let delay1YearMonthlyWithdrawal = params.monthlyRetirementWithdrawal;
-    let delay2YearMonthlyWithdrawal = params.monthlyRetirementWithdrawal;
-    let delay3YearMonthlyWithdrawal = params.monthlyRetirementWithdrawal;
-    let delay4YearMonthlyWithdrawal = params.monthlyRetirementWithdrawal;
-    let delay5YearMonthlyWithdrawal = params.monthlyRetirementWithdrawal;
+    // Initialize scenario states
+    const scenarios = {
+      delay1Year: { capital: params.initialCapital, investment: params.monthlyInvestment, withdrawal: params.monthlyRetirementWithdrawal },
+      delay2Year: { capital: params.initialCapital, investment: params.monthlyInvestment, withdrawal: params.monthlyRetirementWithdrawal },
+      delay3Year: { capital: params.initialCapital, investment: params.monthlyInvestment, withdrawal: params.monthlyRetirementWithdrawal },
+      delay4Year: { capital: params.initialCapital, investment: params.monthlyInvestment, withdrawal: params.monthlyRetirementWithdrawal },
+      delay5Year: { capital: params.initialCapital, investment: params.monthlyInvestment, withdrawal: params.monthlyRetirementWithdrawal }
+    };
     
-    // Create data points for each year
     return graphData.map((point, index) => {
       const yearIndex = point.year - currentYear;
       
@@ -133,135 +315,80 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
           capitalMax: point.capital
         };
       }
-      
-      const delay1Year = retirementYear + 1;
-      const delay2Year = retirementYear + 2;
-      const delay3Year = retirementYear + 3;
-      const delay4Year = retirementYear + 4;
-      const delay5Years = retirementYear + 5;
-      
-      // Calculate 1-year delay scenario
-      const isRetired1Year = point.year >= delay1Year;
-      if (!isRetired1Year) {
-        delay1YearCapital = calculateFutureValue(
-          delay1YearCapital,
-          annualReturnRate,
-          1,
-          delay1YearMonthlyInvestment,
-          'monthly'
-        );
-        delay1YearMonthlyInvestment *= (1 + params.inflation / 100);
-      } else {
-        delay1YearCapital = calculateFutureValue(
-          delay1YearCapital,
-          annualReturnRate,
-          1,
-          -delay1YearMonthlyWithdrawal,
-          'monthly'
-        );
-        delay1YearMonthlyWithdrawal *= (1 + params.inflation / 100);
-      }
 
-      // Calculate 2-year delay scenario
-      const isRetired2Year = point.year >= delay2Year;
-      if (!isRetired2Year) {
-        delay2YearCapital = calculateFutureValue(
-          delay2YearCapital,
-          annualReturnRate,
-          1,
-          delay2YearMonthlyInvestment,
-          'monthly'
-        );
-        delay2YearMonthlyInvestment *= (1 + params.inflation / 100);
-      } else {
-        delay2YearCapital = calculateFutureValue(
-          delay2YearCapital,
-          annualReturnRate,
-          1,
-          -delay2YearMonthlyWithdrawal,
-          'monthly'
-        );
-        delay2YearMonthlyWithdrawal *= (1 + params.inflation / 100);
-      }
+      // Calculate scenarios using helper function
+      const scenario1 = calculateDelayedScenario(
+        scenarios.delay1Year.capital,
+        scenarios.delay1Year.investment,
+        scenarios.delay1Year.withdrawal,
+        retirementYear,
+        1,
+        point.year,
+        annualReturnRate,
+        params.inflation
+      );
+      scenarios.delay1Year = scenario1;
 
-      // Calculate 3-year delay scenario
-      const isRetired3Year = point.year >= delay3Year;
-      if (!isRetired3Year) {
-        delay3YearCapital = calculateFutureValue(
-          delay3YearCapital,
-          annualReturnRate,
-          1,
-          delay3YearMonthlyInvestment,
-          'monthly'
-        );
-        delay3YearMonthlyInvestment *= (1 + params.inflation / 100);
-      } else {
-        delay3YearCapital = calculateFutureValue(
-          delay3YearCapital,
-          annualReturnRate,
-          1,
-          -delay3YearMonthlyWithdrawal,
-          'monthly'
-        );
-        delay3YearMonthlyWithdrawal *= (1 + params.inflation / 100);
-      }
+      const scenario2 = calculateDelayedScenario(
+        scenarios.delay2Year.capital,
+        scenarios.delay2Year.investment,
+        scenarios.delay2Year.withdrawal,
+        retirementYear,
+        2,
+        point.year,
+        annualReturnRate,
+        params.inflation
+      );
+      scenarios.delay2Year = scenario2;
 
-      // Calculate 4-year delay scenario
-      const isRetired4Year = point.year >= delay4Year;
-      if (!isRetired4Year) {
-        delay4YearCapital = calculateFutureValue(
-          delay4YearCapital,
-          annualReturnRate,
-          1,
-          delay4YearMonthlyInvestment,
-          'monthly'
-        );
-        delay4YearMonthlyInvestment *= (1 + params.inflation / 100);
-      } else {
-        delay4YearCapital = calculateFutureValue(
-          delay4YearCapital,
-          annualReturnRate,
-          1,
-          -delay4YearMonthlyWithdrawal,
-          'monthly'
-        );
-        delay4YearMonthlyWithdrawal *= (1 + params.inflation / 100);
-      }
-      
-      // Calculate 5-year delay scenario
-      const isRetired5Years = point.year >= delay5Years;
-      if (!isRetired5Years) {
-        delay5YearCapital = calculateFutureValue(
-          delay5YearCapital,
-          annualReturnRate,
-          1,
-          delay5YearMonthlyInvestment,
-          'monthly'
-        );
-        delay5YearMonthlyInvestment *= (1 + params.inflation / 100);
-      } else {
-        delay5YearCapital = calculateFutureValue(
-          delay5YearCapital,
-          annualReturnRate,
-          1,
-          -delay5YearMonthlyWithdrawal,
-          'monthly'
-        );
-        delay5YearMonthlyWithdrawal *= (1 + params.inflation / 100);
-      }
+      const scenario3 = calculateDelayedScenario(
+        scenarios.delay3Year.capital,
+        scenarios.delay3Year.investment,
+        scenarios.delay3Year.withdrawal,
+        retirementYear,
+        3,
+        point.year,
+        annualReturnRate,
+        params.inflation
+      );
+      scenarios.delay3Year = scenario3;
+
+      const scenario4 = calculateDelayedScenario(
+        scenarios.delay4Year.capital,
+        scenarios.delay4Year.investment,
+        scenarios.delay4Year.withdrawal,
+        retirementYear,
+        4,
+        point.year,
+        annualReturnRate,
+        params.inflation
+      );
+      scenarios.delay4Year = scenario4;
+
+      const scenario5 = calculateDelayedScenario(
+        scenarios.delay5Year.capital,
+        scenarios.delay5Year.investment,
+        scenarios.delay5Year.withdrawal,
+        retirementYear,
+        5,
+        point.year,
+        annualReturnRate,
+        params.inflation
+      );
+      scenarios.delay5Year = scenario5;
       
       return {
         ...point,
-        capitalMin: Math.max(0, Math.round(delay1YearCapital)),
-        capital2Year: Math.max(0, Math.round(delay2YearCapital)),
-        capital3Year: Math.max(0, Math.round(delay3YearCapital)),
-        capital4Year: Math.max(0, Math.round(delay4YearCapital)),
-        capitalMax: Math.max(0, Math.round(delay5YearCapital))
+        capitalMin: Math.max(0, Math.round(scenarios.delay1Year.capital)),
+        capital2Year: Math.max(0, Math.round(scenarios.delay2Year.capital)),
+        capital3Year: Math.max(0, Math.round(scenarios.delay3Year.capital)),
+        capital4Year: Math.max(0, Math.round(scenarios.delay4Year.capital)),
+        capitalMax: Math.max(0, Math.round(scenarios.delay5Year.capital))
       };
     });
   }, [
     graphData,
-    statistics,
+    statistics.calculatedRetirementStartYear,
     annualReturnRate,
     params.initialCapital,
     params.monthlyInvestment,
@@ -277,181 +404,6 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
       capitalWithoutInterest: point.retirement === "No" ? point.capitalWithoutInterest : null
     }));
   }, [delayedRetirementData]);
-
-  // Custom tooltip formatter
-  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
-    if (active && payload && payload.length) {
-      const mainCapital = payload.find((p) => p.dataKey === 'capital')?.value || 0;
-      const capitalInvested = payload.find((p) => p.dataKey === 'capitalWithoutInterest')?.value;
-      const age = payload[0]?.payload.age || 0;
-      const isRetirementPhase = payload[0]?.payload.retirement === "Yes";
-      const isCapitalZero = mainCapital <= 0;
-
-      // Get all delayed retirement values directly from the payload's raw data
-      const { capitalMin, capital2Year, capital3Year, capital4Year, capitalMax } = payload[0]?.payload || {};
-
-      // Format function that includes currency
-      const formatWithCurrency = (amount: number) => {
-        if (amount === undefined || amount === null) return '';
-        
-        // Round the amount to remove decimals
-        const roundedAmount = Math.round(amount);
-        
-        // Format the amount based on currency locale
-        let formattedAmount;
-        if (currency === 'EUR') {
-          // Use European formatting (spaces for thousands)
-          formattedAmount = roundedAmount.toLocaleString('fr-FR', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-            useGrouping: true
-          });
-        } else {
-          // Use standard formatting for other currencies
-          formattedAmount = roundedAmount.toLocaleString('en-US', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-            useGrouping: true
-          });
-        }
-        
-        // Add currency symbol based on currency type
-        switch (currency) {
-          case 'USD':
-            return `$ ${formattedAmount}`;
-          case 'EUR':
-            return `${formattedAmount} €`;
-          case 'GBP':
-            return `£ ${formattedAmount}`;
-          case 'JPY':
-            return `¥ ${formattedAmount}`;
-          default:
-            return formattedAmount;
-        }
-      };
-
-      return (
-        <div className={cx(
-          'p-4 bg-white border border-gray-200 rounded-lg',
-          'shadow-[0_4px_12px_-2px_rgba(0,0,0,0.12)]',
-          'min-w-[280px]'
-        )}>
-          {/* Header */}
-          <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-gray-200">
-            <div>
-              <p className={cx('text-sm font-medium text-gray-600')}>
-                Year {label} · <span className={cx(
-                  'font-bold',
-                  isCapitalZero ? 'text-red-600' : 'text-gray-900'
-                )}>Age {age}</span>
-              </p>
-            </div>
-            <div className={cx(
-              'px-2.5 py-1 rounded text-xs font-semibold border-[1.5px]',
-              isRetirementPhase 
-                ? 'bg-purple-50 text-purple-800 border-purple-200' 
-                : 'bg-blue-50 text-blue-800 border-blue-200'
-            )}>
-              {isRetirementPhase ? 'Retirement' : 'Investment'}
-            </div>
-          </div>
-
-          {/* Main Capital Section */}
-          <div className="space-y-3">
-            <div>
-              <p className={cx(
-                'text-sm font-bold mb-1.5',
-                'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'
-              )}>
-                Capital with interests
-              </p>
-              <p className={cx(
-                'text-lg font-bold tracking-tight',
-                'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'
-              )}>
-                {formatWithCurrency(mainCapital)}
-              </p>
-            </div>
-
-            {/* Investment Phase Info */}
-            {!isRetirementPhase && capitalInvested !== null && capitalInvested !== undefined && (
-              <div>
-                <p className={cx('text-sm font-medium text-gray-600 mb-1')}>
-                  Capital invested
-                </p>
-                <p className={cx('text-base font-semibold text-gray-800')}>
-                  {formatWithCurrency(capitalInvested)}
-                </p>
-              </div>
-            )}
-
-            {/* Always show Delayed Retirement Section if values exist */}
-            {(capitalMin !== undefined || capital2Year !== undefined || capital3Year !== undefined || 
-              capital4Year !== undefined || capitalMax !== undefined) && (
-              <div className="mt-3 pt-3 border-t border-gray-200">
-                <p className={cx('text-[11px] uppercase font-semibold text-gray-500 tracking-wider mb-2')}>
-                  Delayed Retirement Scenarios
-                </p>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {capitalMin !== undefined && (
-                    <div className="flex justify-between items-center">
-                      <p className={cx('text-[11px] font-medium text-gray-500')}>
-                        +1 year delay
-                      </p>
-                      <p className={cx('text-xs font-semibold text-gray-700')}>
-                        {formatWithCurrency(capitalMin)}
-                      </p>
-                    </div>
-                  )}
-                  {capital2Year !== undefined && (
-                    <div className="flex justify-between items-center">
-                      <p className={cx('text-[11px] font-medium text-gray-500')}>
-                        +2 years delay
-                      </p>
-                      <p className={cx('text-xs font-semibold text-gray-700')}>
-                        {formatWithCurrency(capital2Year)}
-                      </p>
-                    </div>
-                  )}
-                  {capital3Year !== undefined && (
-                    <div className="flex justify-between items-center">
-                      <p className={cx('text-[11px] font-medium text-gray-500')}>
-                        +3 years delay
-                      </p>
-                      <p className={cx('text-xs font-semibold text-gray-700')}>
-                        {formatWithCurrency(capital3Year)}
-                      </p>
-                    </div>
-                  )}
-                  {capital4Year !== undefined && (
-                    <div className="flex justify-between items-center">
-                      <p className={cx('text-[11px] font-medium text-gray-500')}>
-                        +4 years delay
-                      </p>
-                      <p className={cx('text-xs font-semibold text-gray-700')}>
-                        {formatWithCurrency(capital4Year)}
-                      </p>
-                    </div>
-                  )}
-                  {capitalMax !== undefined && (
-                    <div className="flex justify-between items-center">
-                      <p className={cx('text-[11px] font-medium text-gray-500')}>
-                        +5 years delay
-                      </p>
-                      <p className={cx('text-xs font-semibold text-gray-700')}>
-                        {formatWithCurrency(capitalMax)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   // Format Y-axis ticks
   const formatYAxis = (value: number): string => {
@@ -513,11 +465,18 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
     return Math.min(paddedCurrentMax, maxAllowedValue);
   }, [graphData, statistics.calculatedRetirementStartYear, chartData, selectedDelays]);
 
-  // Check if capital is positive at target age for each delay
+  // Generate custom ticks for Y-axis
+  const yAxisTicks = useMemo(() => {
+    const ticks = [];
+    const maxVal = typeof maxYValue === 'number' ? maxYValue : 0; // Ensure maxYValue is a number
+    for (let i = 0; i <= maxVal; i += 250000) {
+      ticks.push(i);
+    }
+    return ticks;
+  }, [maxYValue]);
+
   const getPositiveDelays = useMemo(() => {
     if (!graphData.length) return new Set<number>();
-    
-    const targetYear = new Date().getFullYear() + (statistics.lifeExpectancy - currentAge);
     const finalDataPoint = chartData.find(point => point.year === targetYear);
     
     if (!finalDataPoint) return new Set<number>();
@@ -531,10 +490,10 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
     if (finalDataPoint.capitalMax > 0) positiveDelays.add(5);
     
     return positiveDelays;
-  }, [chartData, statistics.lifeExpectancy, currentAge]);
+  }, [chartData, targetYear]);
 
   return (
-    <div className="bg-gray-50 p-5 rounded-2xl shadow-md border border-gray-200">
+    <div className="bg-gray-50 p-5 rounded-2xl shadow-md border border-gray-200 w-full max-w-full">
       <div className={cx("mb-6")}>
         <h3 className={cx(
           "inline-block mb-2",
@@ -544,42 +503,41 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
         )}>
           Capital Evolution Over Time
         </h3>
-        <p className={cx(typography.size.sm, "text-gray-600 mb-4")}>
-          Visualize your wealth growth over time, including compound interest gains. The shaded areas show how delaying retirement by 1-5 years could affect your financial future.
-        </p>
-        
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
-          <span className={cx(typography.size.sm, "text-gray-600")}>
-            Show delayed retirement scenarios:
+          <span className={cx(typography.size.sm, "text-gray-600 flex-grow")}>
+            Visualize your wealth growth over time, including compound interest gains.
           </span>
-          <div className="inline-flex rounded-lg shadow-sm">
-            {[1, 2, 3, 4, 5].map((delay, index) => {
-              const isPositive = getPositiveDelays.has(delay);
-              return (
-                <button
-                  key={delay}
-                  onClick={() => {
-                    setSelectedDelays(prev => 
-                      prev.includes(delay) 
-                        ? prev.filter(d => d !== delay)
-                        : [...prev, delay].sort()
-                    );
-                  }}
-                  className={cx(
-                    'px-3 py-1.5 text-xs font-semibold transition-all duration-200',
-                    'border-y border-r first:border-l first:rounded-l-lg last:rounded-r-lg',
-                    selectedDelays.includes(delay)
-                      ? isPositive
-                        ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white border-transparent'
-                        : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-transparent'
-                      : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50',
-                    index > 0 && selectedDelays.includes(delay) && selectedDelays.includes(delay - 1) && '-ml-[1px]'
-                  )}
-                >
-                  +{delay}y
-                </button>
-              );
-            })}
+          <div className="inline-flex items-center gap-2">
+            <span className={cx(typography.size.sm, "text-gray-600")}>Visualize delayed retirement scenarios:</span>
+            <div className="inline-flex rounded-lg shadow-sm">
+              {[1, 2, 3, 4, 5].map((delay, index) => {
+                const isPositive = getPositiveDelays.has(delay);
+                return (
+                  <button
+                    key={delay}
+                    onClick={() => {
+                      setSelectedDelays(prev => 
+                        prev.includes(delay) 
+                          ? prev.filter(d => d !== delay)
+                          : [...prev, delay].sort()
+                      );
+                    }}
+                    className={cx(
+                      'px-3 py-1.5 text-xs font-semibold transition-all duration-200',
+                      'border-y border-r first:border-l first:rounded-l-lg last:rounded-r-lg',
+                      selectedDelays.includes(delay)
+                        ? isPositive
+                          ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white border-transparent'
+                          : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-transparent'
+                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50',
+                      index > 0 && selectedDelays.includes(delay) && selectedDelays.includes(delay - 1) && '-ml-[1px]'
+                    )}
+                  >
+                    +{delay}y
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -637,8 +595,9 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
               tick={{ fill: colors.neutral[600], fontSize: 12 }}
               domain={[0, maxYValue]}
               allowDataOverflow={true}
+              ticks={yAxisTicks}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip currency={currency} />} />
             <Legend />
             
             {/* Reference line for last year before retirement */}
@@ -652,16 +611,16 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                 content={({ viewBox }) => {
                   const vb = viewBox as { x: number; y: number; width: number; height: number };
                   return (
-                    <CustomLabel
+                  <CustomLabel
                       viewBox={{
                         x: vb.x - 5,
                         y: vb.y,
                         width: vb.width,
                         height: vb.height
                       }}
-                      text="Retired"
-                      color="#3B82F6"
-                    />
+                    text="Retired"
+                    color="#3B82F6"
+                  />
                   );
                 }}
               />
@@ -678,16 +637,16 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                   content={({ viewBox }) => {
                     const vb = viewBox as { x: number; y: number; width: number; height: number };
                     return (
-                      <CustomLabel
+                    <CustomLabel
                         viewBox={{
                           x: vb.x - 5,
                           y: vb.y,
                           width: vb.width,
                           height: vb.height
                         }}
-                        text="Depleted"
-                        color="#EF4444"
-                      />
+                      text="Depleted"
+                      color="#EF4444"
+                    />
                     );
                   }}
                 />
@@ -705,16 +664,16 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                   content={({ viewBox }) => {
                     const vb = viewBox as { x: number; y: number; width: number; height: number };
                     return (
-                      <CustomLabel
+                    <CustomLabel
                         viewBox={{
                           x: vb.x - 5,
                           y: vb.y,
                           width: vb.width,
                           height: vb.height
                         }}
-                        text="Target"
-                        color="#22C55E"
-                      />
+                      text="Target"
+                      color="#22C55E"
+                    />
                     );
                   }}
                 />
