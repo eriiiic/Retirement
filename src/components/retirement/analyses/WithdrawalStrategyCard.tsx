@@ -61,6 +61,10 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
   const safeWithdrawalRate = 0.04;
   const isSafeRate = currentWithdrawalRate <= safeWithdrawalRate * 100;
   
+  // Calculate ideal withdrawal based on the 4% rule
+  const idealAnnualWithdrawal = capitalAtRetirement * safeWithdrawalRate;
+  const idealMonthlyWithdrawal = idealAnnualWithdrawal / 12;
+  
   // Calculate the optimal withdrawal rate to last exactly until target age
   const calculateOptimalWithdrawalRate = (): number => {
     // Start with a reasonable range
@@ -135,6 +139,21 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
   const currentExhaustionAge = retirementStartAge + currentExhaustionYears;
   const yearsGained = newExhaustionAge - currentExhaustionAge;
   
+  // Calculate ideal withdrawal exhaustion age
+  const calculateIdealExhaustionAge = (): number => {
+    const years = calculateYearsUntilExhaustion(
+      capitalAtRetirement,
+      idealAnnualWithdrawal,
+      annualReturnRate * 0.7, // Conservative return estimate
+      1,
+      100
+    );
+    
+    return retirementStartAge + years;
+  };
+  
+  const idealExhaustionAge = calculateIdealExhaustionAge();
+  
   return (
     <Card className="overflow-hidden lg:col-span-3">
       <div className="bg-gradient-to-r from-purple-50 to-purple-100 px-3 sm:px-4 py-2 sm:py-3 border-b border-purple-200 flex items-center justify-between">
@@ -163,7 +182,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
           </div>
           <div>
             <div className="text-sm text-gray-700 flex items-center gap-1.5">
-              <span>Optimized monthly withdrawal</span>
+              <span><span className="font-bold">Recommended</span> monthly withdrawal</span>
             </div>
             <div className="flex items-baseline mt-1">
               <PositiveMetric className="text-base">
@@ -172,6 +191,10 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
               <span className="text-xs text-purple-700 ml-1">
                 {reductionNeeded ? `(${formatPercentage(reductionPercent)} reduction)` : '(optimal rate)'}
               </span>
+            </div>
+            <div className="flex items-baseline text-[10px] text-purple-700">
+              <span>+{yearsGained > 0 ? Math.round(yearsGained) : 0} years of retirement coverage</span>
+              <span className="text-gray-500 ml-1">(until age {newExhaustionAge})</span>
             </div>
             {inflationAdjustedWithdrawal && withdrawalMode === "amount" && (
               <div className="text-[10px] text-purple-600 mt-0.5">
@@ -185,7 +208,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
           <div className="bg-gray-50 p-2 rounded-lg border border-gray-100">
             <div className="text-xs font-medium text-gray-500 flex items-center">
               <span className="h-2 w-2 rounded-full bg-gray-400 mr-1.5"></span>
-              Current withdrawal {inflationAdjustedWithdrawal ? '(inflation-adjusted)' : ''}
+              <span className="font-bold">Current</span>&nbsp;withdrawal {inflationAdjustedWithdrawal ? '(inflation-adjusted)' : ''}
             </div>
             <div className="text-sm font-semibold text-gray-700 mt-1">
               {formatDisplayValue(effectiveMonthlyWithdrawal)}/month
@@ -203,104 +226,119 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
           <div className="bg-purple-50 p-2 rounded-lg border border-purple-100">
             <div className="text-xs font-medium text-gray-500 flex items-center">
               <span className="h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
-              {isSafeRate ? 'Safe withdrawal' : 'Optimized withdrawal'} {inflationAdjustedWithdrawal ? '(inflation-adjusted)' : ''}
+              <span className="font-bold">Ideal</span>&nbsp;withdrawal {inflationAdjustedWithdrawal ? '(inflation-adjusted)' : ''}
             </div>
             <div className="text-sm font-semibold text-purple-700 mt-1">
-              {formatDisplayValue(optimizedMonthlyWithdrawal)}/month
+              {formatDisplayValue(idealMonthlyWithdrawal)}/month
             </div>
             <div className="text-[10px] text-purple-700">
-              {formatDisplayValue(optimalAnnualWithdrawal)}/year
+              {formatDisplayValue(idealAnnualWithdrawal)}/year
             </div>
             <div className="text-[10px] text-purple-700 mt-1">
-              Rate: {formatPercentage(optimalRate * 100)} (lasts until age {targetAge})
+              Rate: {formatPercentage(safeWithdrawalRate * 100)} (standard safe rate)
             </div>
           </div>
         </div>
         
         <div className="bg-purple-50 rounded-lg p-2.5 border border-purple-100 mb-2.5">
-          <div className="flex items-center mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            <div className="text-xs font-medium text-purple-800">Withdrawal Strategy Impact</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <div className="text-xs font-medium text-purple-800">Withdrawal Strategy Impact</div>
+            </div>
+            <div className="text-[10px] font-medium text-gray-500">
+              Target age: <span className="font-semibold">{targetAge}</span>
+            </div>
           </div>
           
-          <div className="space-y-2">
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <div className="text-xs text-gray-600">
-                  {reductionNeeded ? "Annual withdrawal adjustment" : "Potential annual increase"}
-                </div>
-                <div className="text-xs font-semibold text-purple-700">
-                  {reductionNeeded ? 
-                    `-${formatDisplayValue((effectiveMonthlyWithdrawal - optimizedMonthlyWithdrawal) * 12)}` :
-                    `+${formatDisplayValue((optimizedMonthlyWithdrawal - effectiveMonthlyWithdrawal) * 12)}`
-                  }
-                </div>
-              </div>
+          <div className="relative mt-1 mb-4 h-6 bg-gray-100 rounded-lg overflow-hidden">
+            <div className="absolute inset-0 flex items-center">
+              {/* Gray background for the entire timeline */}
+              <div className="h-full w-full bg-gray-200"></div>
               
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-gray-600">Optimal withdrawal rate</div>
-                <div className="text-xs font-semibold text-purple-700">
-                  {formatPercentage(optimalRate * 100)}
-                  <span className="text-xs text-gray-500 ml-1">
-                    ({optimalRate <= 0.04 ? "conservative" : optimalRate <= 0.05 ? "balanced" : "aggressive"})
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-purple-200 pt-2">
-              <div className="flex items-center justify-between mb-1">
-                <div className="text-xs text-gray-600">4% rule reference</div>
-                <div className="text-xs font-semibold text-purple-700">
-                  {formatPercentage(4.0)}
-                  <span className="text-xs text-gray-500 ml-1">
-                    (traditional safe rate)
-                  </span>
-                </div>
-              </div>
+              {/* Red section for capital depletion gap (if there is one) */}
+              {Math.max(currentExhaustionAge, newExhaustionAge, idealExhaustionAge) < targetAge && (
+                <div 
+                  className="absolute h-full right-0 bg-red-400 opacity-80" 
+                  style={{ 
+                    width: `${Math.min(100, ((targetAge - Math.max(currentExhaustionAge, newExhaustionAge, idealExhaustionAge)) / targetAge) * 100)}%` 
+                  }}
+                ></div>
+              )}
               
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-gray-600">Withdrawal safety assessment</div>
-                <div className="text-xs font-semibold text-blue-700">
-                  {optimalRate <= 0.04 ? 
-                    'Very safe, below 4% threshold' : 
-                    optimalRate <= 0.05 ? 
-                      'Reasonable for this time horizon' : 
-                      'Higher than traditional guidelines'
-                  }
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-purple-200 pt-2">
-              <div className="flex items-center justify-between mb-1">
-                <div className="text-xs text-gray-600">Longevity impact</div>
-                <div className="text-xs font-semibold text-purple-700">
-                  {yearsGained > 0 ? 
-                    `+${Math.round(yearsGained)} years with optimal rate` : 
-                    yearsGained < 0 ? 
-                      `${Math.round(yearsGained)} years with optimal rate` : 
-                      "Already optimal"
-                  }
-                </div>
-              </div>
+              {/* Blue section for current plan */}
+              <div 
+                className="absolute h-full left-0 bg-blue-400" 
+                style={{ width: `${Math.min(100, (currentExhaustionAge / targetAge) * 100)}%` }}
+              ></div>
               
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-gray-600">Capital projection</div>
-                <div className="text-xs font-semibold text-purple-700">
-                  {optimalRate > 0 ? 
-                    `Lasts until age ${targetAge}` : 
-                    "Potentially indefinite"
-                  }
-                  <span className="text-xs text-gray-500 ml-1">
-                    ({targetAge - 85 > 0 ? `+${targetAge - 85} years buffer` : "no buffer"})
-                  </span>
-                </div>
-              </div>
+              {/* Purple section for recommended plan (additional years) */}
+              {newExhaustionAge > currentExhaustionAge && (
+                <div 
+                  className="absolute h-full bg-purple-500 opacity-80" 
+                  style={{ 
+                    left: `${Math.min(100, (currentExhaustionAge / targetAge) * 100)}%`,
+                    width: `${Math.min(100, ((newExhaustionAge - currentExhaustionAge) / targetAge) * 100)}%` 
+                  }}
+                ></div>
+              )}
+              
+              {/* Green section for ideal plan (additional years beyond recommended) */}
+              {idealExhaustionAge > newExhaustionAge && (
+                <div 
+                  className="absolute h-full bg-green-500 opacity-80" 
+                  style={{ 
+                    left: `${Math.min(100, (newExhaustionAge / targetAge) * 100)}%`,
+                    width: `${Math.min(100, ((idealExhaustionAge - newExhaustionAge) / targetAge) * 100)}%` 
+                  }}
+                ></div>
+              )}
+              
+              {/* Target age line */}
+              <div 
+                className="absolute h-full w-0.5 bg-red-500 border-l border-dashed border-red-500 z-10" 
+                style={{ left: `${Math.min(100, (targetAge / targetAge) * 100)}%` }}
+              ></div>
             </div>
           </div>
+          
+          <div className="grid grid-cols-4 gap-2 text-[10px]">
+            <div className="flex flex-col items-center">
+              <div className="flex items-center mb-1">
+                <div className="w-2 h-2 bg-blue-400 rounded-full mr-1"></div>
+                <span className="text-gray-600">Current</span>
+              </div>
+              <span className="font-semibold text-gray-700">{currentExhaustionAge}</span>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <div className="flex items-center mb-1">
+                <div className="w-2 h-2 bg-purple-500 rounded-full mr-1"></div>
+                <span className="text-gray-600">Recommended</span>
+              </div>
+              <span className="font-semibold text-purple-700">{newExhaustionAge}</span>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <div className="flex items-center mb-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
+                <span className="text-gray-600">Ideal (4% rule)</span>
+              </div>
+              <span className="font-semibold text-green-700">{idealExhaustionAge}</span>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <div className="flex items-center mb-1">
+                <div className="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
+                <span className="text-gray-600">Target</span>
+              </div>
+              <span className="font-semibold text-red-700">{targetAge}</span>
+            </div>
+          </div>
+          
+          
         </div>
 
         {/* Risk assessment and recommendations */}
@@ -316,132 +354,120 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
               <div className="text-gray-600">
                 {risk === 'High' ? (
                   <>
-                    Your current withdrawal rate of {formatPercentage(currentWithdrawalRate)} is significantly higher than sustainable. Consider these strategies:
-                    <ul className="mt-1 list-disc pl-4 text-xs space-y-1">
-                      <li>Reduce to {formatDisplayValue(optimizedMonthlyWithdrawal)}/month ({formatPercentage(optimalRate * 100)} rate)</li>
-                      <li>Use a dynamic withdrawal approach: reduce in down markets, increase in strong markets</li>
-                      <li>Consider a "floor and ceiling" strategy with essential vs. discretionary spending</li>
+                    <span className="font-semibold text-red-600 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Critical: Your current withdrawal rate of {formatPercentage(currentWithdrawalRate)} is significantly higher than sustainable
+                    </span>
+                    <ul className="mt-2 list-disc pl-4 text-xs space-y-1.5">
+                      <li>Reduce to <span className="font-semibold text-green-600">{formatDisplayValue(optimizedMonthlyWithdrawal)}/month</span> (<span className="font-medium">{formatPercentage(optimalRate * 100)} rate</span>)</li>
+                      <li><span className="font-medium">Use a dynamic withdrawal approach:</span> reduce in down markets, increase in strong markets</li>
+                      <li><span className="font-medium">Consider a "floor and ceiling" strategy</span> with essential vs. discretionary spending</li>
                     </ul>
+                    <div className="bg-purple-50 border-l-4 border-purple-500 pl-3 py-1 mt-2 rounded-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-purple-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-purple-800 font-medium">Recommended Action:</span> Adjust withdrawal rate immediately to preserve capital
+                    </div>
                   </>
                 ) : risk === 'Medium' ? (
                   <>
-                    A withdrawal rate of {formatPercentage(optimalRate * 100)} balances spending with longevity. Consider these approaches:
-                    <ul className="mt-1 list-disc pl-4 text-xs space-y-1">
-                      <li>Adjust to {formatDisplayValue(optimizedMonthlyWithdrawal)}/month for optimal sustainability</li>
-                      <li>Implement a "bucket strategy" with 2-3 years of expenses in cash/bonds</li>
-                      <li>Consider part-time work in early retirement to reduce withdrawal pressure</li>
+                    <span className="font-semibold text-amber-600 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      Adjustment Needed: A withdrawal rate of {formatPercentage(optimalRate * 100)} balances spending with longevity
+                    </span>
+                    <ul className="mt-2 list-disc pl-4 text-xs space-y-1.5">
+                      <li>Adjust to <span className="font-semibold text-green-600">{formatDisplayValue(optimizedMonthlyWithdrawal)}/month</span> for optimal sustainability</li>
+                      <li><span className="font-medium">Implement a "bucket strategy"</span> with 2-3 years of expenses in cash/bonds</li>
+                      <li><span className="font-medium">Consider part-time work</span> in early retirement to reduce withdrawal pressure</li>
                     </ul>
+                    <div className="bg-purple-50 border-l-4 border-purple-500 pl-3 py-1 mt-2 rounded-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-purple-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-purple-800 font-medium">Recommended Action:</span> Implement a flexible withdrawal strategy
+                    </div>
                   </>
                 ) : (
                   <>
-                    Your withdrawal approach is {currentWithdrawalRate < optimalRate * 100 ? "more conservative than needed" : "well-balanced"}. Consider these optimizations:
-                    <ul className="mt-1 list-disc pl-4 text-xs space-y-1">
-                      <li>{currentWithdrawalRate < optimalRate * 100 ? `You could safely increase to ${formatDisplayValue(optimizedMonthlyWithdrawal)}/month` : `Your current withdrawal is sustainable long-term`}</li>
-                      <li>Focus on tax-efficient withdrawal sequencing (taxable → tax-deferred → tax-free)</li>
-                      <li>Consider Roth conversions in lower income years to optimize future flexibility</li>
+                    <span className="font-semibold text-green-600 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Your withdrawal approach is {currentWithdrawalRate < optimalRate * 100 ? "more conservative than needed" : "well-balanced"}
+                    </span>
+                    <ul className="mt-2 list-disc pl-4 text-xs space-y-1.5">
+                      <li>{currentWithdrawalRate < optimalRate * 100 ? 
+                        <span>You could safely increase to <span className="font-semibold text-green-600">{formatDisplayValue(optimizedMonthlyWithdrawal)}/month</span></span> : 
+                        <span>Your current withdrawal of <span className="font-semibold text-green-600">{formatDisplayValue(effectiveMonthlyWithdrawal)}</span> is sustainable long-term</span>}
+                      </li>
+                      <li><span className="font-medium">Focus on tax-efficient withdrawal sequencing</span> (taxable → tax-deferred → tax-free)</li>
+                      <li><span className="font-medium">Consider Roth conversions</span> in lower income years to optimize future flexibility</li>
                     </ul>
+                    {currentWithdrawalRate < optimalRate * 100 && (
+                      <div className="bg-purple-50 border-l-4 border-purple-500 pl-3 py-1 mt-2 rounded-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-purple-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-purple-800 font-medium">Optional Enhancement:</span> You could increase your monthly withdrawal by up to <span className="font-medium text-green-600">{formatDisplayValue(optimizedMonthlyWithdrawal - effectiveMonthlyWithdrawal)}</span>
+                      </div>
+                    )}
                   </>
                 )}
                 
                 {inflationAdjustedWithdrawal && withdrawalMode === "amount" && (
-                  <div className="mt-1 text-xs text-blue-600">
+                  <div className="mt-2 text-xs text-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                     Note: Values shown include estimated inflation adjustment, which increases future purchasing power.
                   </div>
                 )}
               </div>
             </div>
             
-            <div className="pl-4">
-              <ul className="list-disc space-y-1 text-gray-600">
-                {risk === 'High' ? (
-                  <>
-                    <li>Dynamic withdrawal strategy based on market performance</li>
-                    <li>Essential vs. discretionary spending separation</li>
-                    <li>Phased retirement to supplement income initially</li>
-                  </>
-                ) : risk === 'Medium' ? (
-                  <>
-                    <li>Variable withdrawal rates in early retirement years</li>
-                    <li>Bucket strategy for different time horizons</li>
-                    <li>Strategic withdrawals from different account types</li>
-                  </>
-                ) : (
-                  <>
-                    <li>Optimizing tax efficiency of withdrawals</li>
-                    <li>Creating flexibility for special expenses</li>
-                    <li>Building in buffers for market volatility</li>
-                  </>
-                )}
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Progress visualization */}
-        <div className="mt-3 bg-gray-50 rounded-lg p-2.5 border border-gray-100">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-xs font-medium text-gray-600">Withdrawal Impact on Retirement Duration</div>
-            <div className="text-[10px] text-gray-500">
-              Target: Age {retirementStartAge + 30}+
-            </div>
-          </div>
-          
-          <div className="space-y-3">
-            {/* Current withdrawal */}
-            <div>
-              <div className="flex justify-between text-[10px] mb-1">
-                <span className="text-gray-600">Current withdrawal plan</span>
-                <span className="text-gray-700">
-                  {retirementStartAge + 15 < targetAge ? `Capital may be exhausted at age ${retirementStartAge + 15}` : "Sustainable"}
-                </span>
+            <div className="border-t border-purple-200 pt-2">
+              <div className="flex items-center mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-purple-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <div className="text-xs font-medium text-purple-800">Impact Summary</div>
               </div>
-              <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className="absolute inset-y-0 left-0 bg-blue-400 rounded-full"
-                  style={{ 
-                    width: `${Math.min(100, ((retirementStartAge + 15 - retirementStartAge) / 30) * 100)}%` 
-                  }}
-                ></div>
+              
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                <div className="text-xs text-gray-600">Recommended withdrawal</div>
+                <div className="text-xs font-semibold text-purple-700">
+                  {formatDisplayValue(optimizedMonthlyWithdrawal)}/month
+                </div>
+                
+                <div className="text-xs text-gray-600">{reductionNeeded ? "Monthly reduction" : "Potential increase"}</div>
+                <div className="text-xs font-semibold text-purple-700">
+                  {reductionNeeded ? 
+                    `-${formatDisplayValue(effectiveMonthlyWithdrawal - optimizedMonthlyWithdrawal)}` :
+                    `+${formatDisplayValue(optimizedMonthlyWithdrawal - effectiveMonthlyWithdrawal)}`
+                  }
+                </div>
+                
+                <div className="text-xs text-gray-600">Withdrawal rate</div>
+                <div className="text-xs font-semibold text-purple-700">
+                  {formatPercentage(optimalRate * 100)} vs. {formatPercentage(currentWithdrawalRate)}
+                </div>
+                
+                <div className="text-xs text-gray-600">Years extended</div>
+                <div className="text-xs font-semibold text-purple-700">
+                  +{Math.max(0, Math.round(yearsGained))} years (until age {newExhaustionAge})
+                </div>
               </div>
             </div>
             
-            {/* With reduced withdrawals */}
-            <div>
-              <div className="flex justify-between text-[10px] mb-1">
-                <span className="text-gray-600">With optimized withdrawals</span>
-                <span className="text-purple-700">
-                  {newExhaustionAge >= targetAge ? `Capital lasts until age ${newExhaustionAge} ✓` : `Capital lasts until age ${newExhaustionAge} (target: ${targetAge})`}
-                </span>
-              </div>
-              <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className="absolute inset-y-0 left-0 bg-blue-400 rounded-full"
-                  style={{ 
-                    width: `${Math.min(100, ((retirementStartAge + 15 - retirementStartAge) / 30) * 100)}%` 
-                  }}
-                ></div>
-                <div 
-                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full"
-                  style={{ 
-                    width: `${Math.min(100, ((newExhaustionAge - retirementStartAge) / 30) * 100)}%`,
-                    opacity: '0.8'
-                  }}
-                ></div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-2 flex flex-wrap gap-2 text-[10px]">
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-blue-400 rounded-full mr-1"></div>
-              <span className="text-gray-600">Current plan</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full mr-1"></div>
-              <span className="text-gray-600">Optimized withdrawals</span>
-            </div>
           </div>
         </div>
+
+
       </div>
     </Card>
   );
