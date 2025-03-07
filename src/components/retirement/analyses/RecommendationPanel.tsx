@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FormatAmountFunction } from '../types';
 import { colors, typography, spacing, components, cx } from '../../../styles/styleGuide';
 import { SectionTitle, Card } from '../../common/StyledComponents';
+import { calculateDelayedScenario } from '../../../utils/financialCalculations';
 
 // Helper function for consistent percentage formatting with 1 decimal place
 const formatPercentage = (value: number): string => {
@@ -22,7 +23,23 @@ interface RecommendationPanelProps {
     safe: number;
     isSafe: boolean;
   };
-  optimalDelayYears?: number;
+  capitalAtRetirement: number;
+  totalNeededCapital: number;
+  monthlyRetirementWithdrawal: number;
+  annualReturnRate: number;
+  params: {
+    initialCapital: number;
+    monthlyInvestment: number;
+    withdrawalMode: string;
+    maxAge: number;
+    inflation: number;
+  };
+  statistics: {
+    calculatedRetirementStartYear: number;
+    exhaustionAge?: number;
+  };
+  currentAge: number;
+  risk: 'High' | 'Medium' | 'Low';
 }
 
 // Update Modal component to match RiskAssessmentCard tooltip style
@@ -209,8 +226,109 @@ const RecommendationItem = React.memo(({
 export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
   recommendations,
   withdrawalRate,
-  optimalDelayYears = 0
+  capitalAtRetirement,
+  totalNeededCapital,
+  monthlyRetirementWithdrawal,
+  annualReturnRate,
+  params,
+  statistics,
+  currentAge,
+  risk
 }) => {
+  // Calculate optimalDelayYears using the same logic as RetirementDelayCard
+  const calculateOptimalDelayYears = useMemo(() => {
+    // Handle case when necessary data is missing
+    if (!capitalAtRetirement || !totalNeededCapital || !monthlyRetirementWithdrawal || !annualReturnRate) {
+      return risk === 'High' ? 4 : risk === 'Medium' ? 2 : 0;
+    }
+
+    const currentYear = new Date().getFullYear();
+    const retirementYear = statistics.calculatedRetirementStartYear;
+    const targetMaxAge = params.withdrawalMode === "age" ? params.maxAge : 95;
+    
+    // Calculate the year when user reaches target max age
+    const targetYear = currentYear + (targetMaxAge - currentAge);
+    
+    // Check if capital is already exhausted at target age with current plan
+    const capitalEvolution = [];
+    let scenario = {
+      capital: params.initialCapital,
+      investment: params.monthlyInvestment,
+      withdrawal: monthlyRetirementWithdrawal
+    };
+    
+    // Simulate from current year to target year with original retirement plan
+    for (let year = currentYear; year <= targetYear; year++) {
+      scenario = calculateDelayedScenario(
+        scenario.capital,
+        scenario.investment,
+        scenario.withdrawal,
+        retirementYear,
+        0, // No delay
+        year,
+        annualReturnRate,
+        params.inflation
+      );
+      
+      capitalEvolution.push({
+        year,
+        capital: scenario.capital
+      });
+    }
+    
+    // Check if capital is exhausted at target age
+    const finalCapital = capitalEvolution[capitalEvolution.length - 1].capital;
+    
+    // If capital isn't exhausted at target age, no need for delay
+    if (finalCapital > 0) {
+      return 0;
+    }
+    
+    // If capital gets exhausted, calculate various delay scenarios
+    for (let delayYears = 1; delayYears <= 5; delayYears++) {
+      // Initialize scenario for this delay option
+      scenario = {
+        capital: params.initialCapital,
+        investment: params.monthlyInvestment,
+        withdrawal: monthlyRetirementWithdrawal
+      };
+      
+      const delayedRetirementYear = retirementYear + delayYears;
+      const delayCapitalEvolution = [];
+      
+      // Simulate from current year to target year with delayed retirement
+      for (let year = currentYear; year <= targetYear; year++) {
+        scenario = calculateDelayedScenario(
+          scenario.capital,
+          scenario.investment,
+          scenario.withdrawal,
+          retirementYear,
+          delayYears,
+          year,
+          annualReturnRate,
+          params.inflation
+        );
+        
+        delayCapitalEvolution.push({
+          year,
+          capital: scenario.capital
+        });
+      }
+      
+      // Check if capital remains positive at target age with this delay
+      const delayFinalCapital = delayCapitalEvolution[delayCapitalEvolution.length - 1].capital;
+      
+      if (delayFinalCapital > 0) {
+        return delayYears;
+      }
+    }
+    
+    // If we reach here, even 5 years delay isn't enough, so recommend maximum
+    return 5;
+  }, [risk, capitalAtRetirement, totalNeededCapital, monthlyRetirementWithdrawal, annualReturnRate, params, statistics, currentAge]);
+
+  const optimalDelayYears = calculateOptimalDelayYears;
+
   return (
     <Card className="overflow-hidden lg:col-span-2">
       <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 px-3 sm:px-4 py-2 sm:py-3 border-b border-indigo-200 flex items-center">
@@ -243,13 +361,36 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
             return priorityOrder[a.priority] - priorityOrder[b.priority];
           })
           .slice(0, 3)
-          .map((rec, index) => (
-            <RecommendationItem 
-              key={index} 
-              recommendation={rec} 
-              index={index}
-            />
-          ))
+          .map((rec, index) => {
+            // Modify recommendation if it's about delaying retirement
+            if (rec.change.toLowerCase().includes('delay') && rec.change.toLowerCase().includes('retirement')) {
+              return (
+                <RecommendationItem 
+                  key={index} 
+                  recommendation={{
+                    ...rec,
+                    change: optimalDelayYears > 0 
+                      ? `Delay retirement by ${optimalDelayYears} ${optimalDelayYears === 1 ? 'year' : 'years'}`
+                      : rec.change,
+                    impact: optimalDelayYears > 0
+                      ? `This delay will significantly improve your retirement security`
+                      : rec.impact,
+                    impact_detail: optimalDelayYears > 0
+                      ? `Consider part-time work or consulting during this period to maintain income`
+                      : rec.impact_detail
+                  }}
+                  index={index}
+                />
+              );
+            }
+            return (
+              <RecommendationItem 
+                key={index} 
+                recommendation={rec} 
+                index={index}
+              />
+            );
+          })
         }
 
         <div className="bg-gray-50 rounded-lg p-2 border border-gray-200 mt-2">
@@ -324,36 +465,50 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
         <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-lg p-2.5 border border-indigo-100">
           <div className="text-xs space-y-2">
             <div>
-              <div className="text-xs font-medium text-indigo-800 mb-1 flex items-center">
+              <div className="text-xs font-medium text-indigo-800 mb-1.5 flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
                 Implementation Strategy
               </div>
-              <div className="text-gray-600">
+              
+              <div className="text-gray-600 mb-2">
                 {withdrawalRate.isSafe ? (
-                  <>
-                    Your withdrawal rate is within safe parameters. Focus on optimizing your strategy:
+                  <div>
+                    <span className="font-semibold text-green-700 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Your withdrawal rate is within safe parameters
+                    </span>
                     <ul className="mt-1 list-disc pl-4 text-xs space-y-1">
                       <li>Implement highest priority recommendations first</li>
                       <li>Optional 1-2 year retirement delay for additional security</li>
                       <li>Consider tax-efficient withdrawal sequencing</li>
                     </ul>
-                  </>
+                  </div>
                 ) : withdrawalRate.current <= 6 ? (
-                  <>
-                    Your withdrawal rate needs attention to improve sustainability:
+                  <div>
+                    <span className="font-semibold text-amber-700 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Your withdrawal rate needs attention
+                    </span>
                     <ul className="mt-1 list-disc pl-4 text-xs space-y-1">
                       <li>Address recommended actions to strengthen your plan</li>
-                      <li>{optimalDelayYears > 0 ? 
-                          `Consider delaying retirement by ${optimalDelayYears} ${optimalDelayYears === 1 ? 'year' : 'years'} to improve security` :
-                          'Review retirement timing to improve security'}</li>
+                      <li>Review retirement timing to improve security</li>
                       <li>Evaluate flexible spending strategies for non-essential expenses</li>
                     </ul>
-                  </>
+                  </div>
                 ) : (
-                  <>
-                    Your withdrawal rate requires significant adjustment for long-term sustainability:
+                  <div>
+                    <span className="font-semibold text-red-700 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Your withdrawal rate requires significant adjustment
+                    </span>
                     <ul className="mt-1 list-disc pl-4 text-xs space-y-1">
                       <li>Take critical actions immediately to address financial sustainability</li>
                       <li>{optimalDelayYears > 0 ? 
@@ -361,24 +516,35 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                           'Significant retirement delay recommended'}</li>
                       <li>Develop a timeline with milestone checks to monitor progress</li>
                     </ul>
-                  </>
+                  </div>
                 )}
               </div>
-            </div>
-            
-            <div className="border-t border-indigo-200 pt-2">
-              <div className="flex items-center justify-between mb-1">
-                <div className="text-xs text-gray-600">Implementation approach</div>
-                <div className="text-xs font-semibold text-indigo-700">
-                  {withdrawalRate.isSafe ? 'Optimization focus' : withdrawalRate.current <= 6 ? 'Balanced adjustment' : 'Critical intervention'}
-                </div>
-              </div>
               
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-gray-600">Expected impact timeframe</div>
-                <div className="text-xs font-semibold text-indigo-700">
-                  {withdrawalRate.isSafe ? 'Long-term growth' : withdrawalRate.current <= 6 ? 'Medium-term improvement' : 'Short-term stabilization'}
-                </div>
+              <div className="bg-indigo-50 border-l-4 border-indigo-500 pl-3 py-1.5 rounded-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-indigo-800 font-medium">Recommended Action:</span>
+                <span className="text-xs ml-1">
+                  {withdrawalRate.isSafe 
+                    ? 'Continue with your investment strategy and monitor quarterly'
+                    : withdrawalRate.current <= 6 
+                      ? optimalDelayYears > 0
+                        ? `Delay retirement by ${optimalDelayYears} ${optimalDelayYears === 1 ? 'year' : 'years'} and implement recommended adjustments`
+                        : 'Implement recommended adjustments with moderate urgency'
+                      : optimalDelayYears > 0
+                        ? `Delay retirement by ${optimalDelayYears} ${optimalDelayYears === 1 ? 'year' : 'years'} and take immediate corrective action`
+                        : 'Take immediate corrective action to stabilize your financial future'}
+                </span>
+                {!withdrawalRate.isSafe && (
+                  <div className="mt-1 text-xs">
+                    <li><span className="text-indigo-700 font-medium">Priority:</span> {withdrawalRate.current <= 6 ? 'Medium' : 'High'}</li>
+                    <li><span className="text-indigo-700 font-medium">Timeline:</span> {withdrawalRate.current <= 6 ? '3-6 months' : '1-3 months'}</li>
+                    {optimalDelayYears > 0 && (
+                      <li><span className="text-indigo-700 font-medium">Recommended delay:</span> {optimalDelayYears} {optimalDelayYears === 1 ? 'year' : 'years'}</li>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

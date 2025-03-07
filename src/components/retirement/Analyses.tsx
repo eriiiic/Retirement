@@ -190,7 +190,14 @@ export const Analyses: React.FC<AnalysesProps> = ({
         <RecommendationPanel 
           recommendations={analyses.recommendations}
           withdrawalRate={analyses.withdrawalRate}
-          optimalDelayYears={analyses.runningOut.risk === 'High' ? 4 : analyses.runningOut.risk === 'Medium' ? 2 : 0}
+          capitalAtRetirement={statistics.capitalAtRetirement}
+          totalNeededCapital={statistics.totalNeededCapital}
+          monthlyRetirementWithdrawal={params.monthlyRetirementWithdrawal}
+          annualReturnRate={params.annualReturnRate}
+          params={params}
+          statistics={statistics}
+          currentAge={params.currentAge}
+          risk={analyses.runningOut.risk}
         />
         
         {/* 3. Delaying retirement impact card */}
@@ -206,6 +213,9 @@ export const Analyses: React.FC<AnalysesProps> = ({
           params={params}
           statistics={statistics}
           currentAge={params.currentAge}
+          inflationAdjustedWithdrawal={params.inflationAdjustedWithdrawal}
+          withdrawalMode={params.withdrawalMode}
+          inflation={params.inflation}
         />
         
         {/* Second row: 2 cards spanning wider */}
