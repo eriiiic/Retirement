@@ -589,14 +589,16 @@ const RetirementSimulator = () => {
           />
         )}
       </section>
-
-      <section className={cx("pt-0 pb-3 sm:pb-6 max-w-6xl mx-auto mb-0 mt-0")}>
+    
+     <section className={cx("pt-0 pb-3 sm:pb-6 max-w-6xl mx-auto mb-0 mt-0")}>
+        {/* Temporarily disabled Analyses section
         <Analyses
           statistics={statistics}
           params={params}
           formatAmount={formatAmount}
           currency={params.currency}
         />
+        */}
       </section>
 
       <section className={cx("pt-0 pb-3 sm:pb-6 max-w-6xl mx-auto mb-0 mt-0")}>
