@@ -22,7 +22,8 @@ import {
   formatChartValue, 
   findRetirementStartIndex, 
   findCapitalWithdrawalDecreaseYear,
-  calculateDelayedRetirementImpact
+  calculateDelayedRetirementImpact,
+  calculateInflationAdjustedValue
 } from '../../utils/financialCalculations';
 
 interface CapitalEvolutionChartProps {
@@ -55,7 +56,15 @@ interface TooltipPayload {
     capital3Year?: number;
     capital4Year?: number;
     capitalMax?: number;
+    withdrawalMin?: number;
+    withdrawal2Year?: number;
+    withdrawal3Year?: number;
+    withdrawal4Year?: number;
+    withdrawalMax?: number;
     currency: Currency;
+    variation?: number;
+    annualInterest?: number;
+    annualWithdrawal?: number;
   };
 }
 
@@ -73,7 +82,7 @@ const TOOLTIP_STYLES = {
   container: cx(
     'p-3 sm:p-4 bg-white border border-gray-200 rounded-lg',
     'shadow-[0_4px_12px_-2px_rgba(0,0,0,0.12)]',
-    'min-w-[240px] sm:min-w-[280px] max-w-[90vw] sm:max-w-[320px]'
+    'min-w-[260px] sm:min-w-[300px] max-w-[95vw] sm:max-w-[350px]'
   ),
   header: 'flex items-center justify-between mb-2 sm:mb-3 pb-2 border-b border-gray-200',
   yearAge: 'text-xs sm:text-sm font-medium text-gray-600',
@@ -85,9 +94,15 @@ const TOOLTIP_STYLES = {
   investmentValue: 'text-sm sm:text-base font-semibold text-gray-800',
   delayedSection: 'mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-200',
   delayedTitle: 'text-[10px] sm:text-[11px] uppercase font-semibold text-gray-500 tracking-wider mb-1 sm:mb-2',
-  delayedItem: 'flex justify-between items-center',
-  delayedLabel: 'text-[10px] sm:text-[11px] font-medium text-gray-500',
-  delayedValue: 'text-[10px] sm:text-xs font-semibold text-gray-700'
+  delayedItem: 'px-2 py-1.5 rounded-md transition-colors hover:bg-gray-50',
+  delayedLabel: 'text-[11px] sm:text-[12px] font-medium text-gray-700',
+  delayedValue: 'text-[11px] sm:text-xs font-semibold text-gray-700',
+  badge: 'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium',
+  separator: 'border-t border-gray-100 my-1.5',
+  growthBadge: 'flex items-center gap-1 text-[10px] sm:text-[11px] font-medium rounded-full px-1.5 py-0.5',
+  comparisonTable: 'w-full mt-2 text-[11px] border-separate border-spacing-x-1',
+  tableHeader: 'font-medium text-left text-gray-500 pb-1',
+  tableCell: 'py-0.5'
 };
 
 // Chart Configuration
@@ -172,10 +187,24 @@ const CustomTooltip: React.FC<CustomTooltipProps & { currency: Currency }> = Rea
     const isRetirementPhase = payload[0]?.payload.retirement === "Yes";
     const isCapitalZero = mainCapital <= 0;
     const tooltipCurrency = payload[0]?.payload.currency as Currency || currency;
+    const variation = payload[0]?.payload.variation || 0;
+    const annualInterest = payload[0]?.payload.annualInterest || 0;
+    const annualWithdrawal = payload[0]?.payload.annualWithdrawal || 0;
     
     // For smaller screens, only show selected delayed scenarios to save space
-    const { capitalMin, capital2Year, capital3Year, capital4Year, capitalMax } = payload[0]?.payload || {};
+    const { 
+      capitalMin, capitalMax
+    } = payload[0]?.payload || {};
+    
     const isMobile = window.innerWidth < 640; // Detect mobile screen
+    
+    // Calculate growth percentage
+    const growthPercentage = capitalInvested && capitalInvested > 0 
+      ? ((mainCapital - capitalInvested) / capitalInvested) * 100
+      : 0;
+    
+    // Determine if this is a positive or negative growth year
+    const isPositiveVariation = variation > 0;
     
     return (
       <div className={TOOLTIP_STYLES.container}>
@@ -194,19 +223,65 @@ const CustomTooltip: React.FC<CustomTooltipProps & { currency: Currency }> = Rea
         {/* Main Capital Section */}
         <div className="space-y-2 sm:space-y-3">
           <div>
-            <p className={TOOLTIP_STYLES.mainCapital}>
-              Capital with interests
-            </p>
+            <div className="flex items-center justify-between mb-1">
+              <p className={TOOLTIP_STYLES.mainCapital}>
+                Total Capital
+              </p>
+              {growthPercentage !== 0 && (
+                <span className={cx(
+                  TOOLTIP_STYLES.growthBadge, 
+                  growthPercentage > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                )}>
+                  <span>{growthPercentage > 0 ? '↑' : '↓'}</span>
+                  <span>{Math.abs(growthPercentage).toFixed(1)}%</span>
+                </span>
+              )}
+            </div>
             <p className={TOOLTIP_STYLES.capitalValue}>
               {formatWithCurrency(mainCapital, tooltipCurrency)}
             </p>
           </div>
 
-          {/* Investment Phase Info - Only show on non-mobile or if retirement phase */}
+          {/* Annual variation */}
+          {!isCapitalZero && (
+            <div className="mt-1.5">
+              <div className="flex justify-between items-center mb-1">
+                <p className="text-xs font-medium text-gray-600">
+                  Annual Change
+                </p>
+                <span className={cx(
+                  TOOLTIP_STYLES.badge,
+                  isPositiveVariation ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                )}>
+                  {isPositiveVariation ? '+' : ''}{formatWithCurrency(variation, tooltipCurrency)}
+                </span>
+              </div>
+              
+              {annualInterest > 0 && (
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500">Interest Earned</span>
+                  <span className="font-medium text-gray-700">
+                    {formatWithCurrency(annualInterest, tooltipCurrency)}
+                  </span>
+                </div>
+              )}
+              
+              {isRetirementPhase && annualWithdrawal > 0 && (
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-500">Withdrawal</span>
+                  <span className="font-medium text-gray-700">
+                    {formatWithCurrency(annualWithdrawal, tooltipCurrency)}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Investment Phase Info */}
           {(!isMobile || !isRetirementPhase) && capitalInvested !== null && capitalInvested !== undefined && (
-            <div>
+            <div className="mt-1.5">
               <p className={TOOLTIP_STYLES.investmentInfo}>
-                Capital invested
+                Capital Invested
               </p>
               <p className={TOOLTIP_STYLES.investmentValue}>
                 {formatWithCurrency(capitalInvested, tooltipCurrency)}
@@ -214,35 +289,17 @@ const CustomTooltip: React.FC<CustomTooltipProps & { currency: Currency }> = Rea
             </div>
           )}
 
-          {/* Delayed Retirement Section - Simplified for mobile */}
-          {(capitalMin !== undefined || capital2Year !== undefined || capital3Year !== undefined || 
-            capital4Year !== undefined || capitalMax !== undefined) && (
-            <div className={TOOLTIP_STYLES.delayedSection}>
-              <p className={TOOLTIP_STYLES.delayedTitle}>
-                {isMobile ? "Delayed Scenarios" : "Delayed Retirement Scenarios"}
-              </p>
-              <div className="grid grid-cols-1 gap-1">
-                {[
-                  { delay: 1, value: capitalMin, label: '+1 year' },
-                  { delay: 2, value: capital2Year, label: '+2 years' },
-                  { delay: 3, value: capital3Year, label: '+3 years' },
-                  { delay: 5, value: capitalMax, label: '+5 years' }
-                ].filter(({ value, delay }) => {
-                  // On mobile, only show a subset of values
-                  if (isMobile) {
-                    return (delay === 1 || delay === 5) && value !== undefined;
-                  }
-                  return value !== undefined;
-                }).map(({ delay, value, label }) => (
-                  <div key={delay} className={TOOLTIP_STYLES.delayedItem}>
-                    <p className={TOOLTIP_STYLES.delayedLabel}>
-                      {label}
-                    </p>
-                    <p className={TOOLTIP_STYLES.delayedValue}>
-                      {value !== undefined ? formatWithCurrency(value, tooltipCurrency) : ''}
-                    </p>
-                  </div>
-                ))}
+          {/* Reduced Delayed Retirement Section - Just key info */}
+          {capitalMin !== undefined && capitalMax !== undefined && (
+            <div className="mt-2 border-t border-gray-100 pt-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-gray-500 font-medium">Delay +5yr impact</span>
+                <span className={cx(
+                  "font-medium",
+                  capitalMax > mainCapital ? "text-green-600" : "text-red-600"
+                )}>
+                  {formatWithCurrency(capitalMax - mainCapital, tooltipCurrency)}
+                </span>
               </div>
             </div>
           )}
@@ -286,11 +343,30 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
     const retirementYear = statistics.calculatedRetirementStartYear;
     
     // Initialize scenario states - use an array instead of separate objects
-    const scenarios = Array.from({ length: 5 }, () => ({
-      capital: params.initialCapital,
-      investment: params.monthlyInvestment,
-      withdrawal: params.monthlyRetirementWithdrawal
-    }));
+    const scenarios = Array.from({ length: 5 }, (_, i) => {
+      const delayYears = i + 1;
+      // For each delay scenario, calculate the proper inflation-adjusted withdrawal
+      // that would be used at the start of the delayed retirement
+      let adjustedWithdrawal = params.monthlyRetirementWithdrawal;
+      
+      // Apply inflation adjustment to the base monthly withdrawal for the delay period
+      // This ensures we start with the correct withdrawal amount adjusted for inflation
+      // between now and the delayed retirement year
+      if (params.inflationAdjustedWithdrawal) {
+        const yearsUntilRetirement = retirementYear - currentYear + delayYears;
+        adjustedWithdrawal = calculateInflationAdjustedValue(
+          params.monthlyRetirementWithdrawal,
+          params.inflation,
+          yearsUntilRetirement
+        );
+      }
+      
+      return {
+        capital: params.initialCapital,
+        investment: params.monthlyInvestment,
+        withdrawal: adjustedWithdrawal
+      };
+    });
     
     return graphData.map((point, index) => {
       const yearIndex = point.year - currentYear;
@@ -323,7 +399,14 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
           annualReturnRate,
           params.inflation
         );
-        scenarios[i] = scenario;
+        
+        // Update all three values in the scenario state
+        scenarios[i] = {
+          capital: scenario.capital,
+          investment: scenario.investment,
+          withdrawal: scenario.withdrawal // Ensure we use the updated withdrawal amount
+        };
+        
         delayValues.push(Math.max(0, Math.round(scenario.capital)));
       }
       
@@ -333,7 +416,13 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
         capital2Year: delayValues[1],
         capital3Year: delayValues[2],
         capital4Year: delayValues[3],
-        capitalMax: delayValues[4]
+        capitalMax: delayValues[4],
+        // Include withdrawal amounts for each delayed scenario
+        withdrawalMin: scenarios[0].withdrawal,
+        withdrawal2Year: scenarios[1].withdrawal,
+        withdrawal3Year: scenarios[2].withdrawal,
+        withdrawal4Year: scenarios[3].withdrawal,
+        withdrawalMax: scenarios[4].withdrawal
       };
     });
   }, [
@@ -343,7 +432,8 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
     params.initialCapital,
     params.monthlyInvestment,
     params.monthlyRetirementWithdrawal,
-    params.inflation
+    params.inflation,
+    params.inflationAdjustedWithdrawal
   ]);
 
   // Prepare data with investment phase only for capitalWithoutInterest
@@ -518,7 +608,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
         {/* Reference line for capital withdrawal decrease */}
         {firstCapitalWithdrawalDecreaseYear && (
           <ReferenceLine
-            x={firstCapitalWithdrawalDecreaseYear - 1}
+            x={firstCapitalWithdrawalDecreaseYear}
             stroke="#EF4444"
             strokeWidth={strokeWidth}
           >

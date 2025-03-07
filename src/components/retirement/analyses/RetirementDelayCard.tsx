@@ -1,13 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { FormatAmountFunction } from '../types';
+import { FormatAmountFunction, WithdrawalMode } from '../types';
 import { colors, typography, spacing, components, cx } from '../../../styles/styleGuide';
 import { SectionTitle, Card, PositiveMetric } from '../../common/StyledComponents';
 import { calculateYearsUntilExhaustion, calculateDelayedScenario, calculateDelayedRetirementImpact } from '../../../utils/financialCalculations';
-
-// Helper function for consistent percentage formatting with 1 decimal place
-const formatPercentage = (value: number): string => {
-  return `${value.toFixed(1)}%`;
-};
+import { formatPercentage } from '../../../utils/formatters';
 
 interface RetirementDelayCardProps {
   risk: 'High' | 'Medium' | 'Low';
@@ -21,6 +17,9 @@ interface RetirementDelayCardProps {
   params: any;
   statistics: any;
   currentAge: number;
+  inflationAdjustedWithdrawal?: boolean;
+  withdrawalMode?: WithdrawalMode;
+  inflation?: number;
 }
 
 export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
@@ -34,7 +33,10 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
   annualReturnRate = 5,
   params,
   statistics,
-  currentAge
+  currentAge,
+  inflationAdjustedWithdrawal,
+  withdrawalMode,
+  inflation
 }) => {
   // State to track which section is being hovered
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
@@ -47,10 +49,24 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     setTooltipPosition({ x: e.clientX, y: e.clientY });
   };
 
+  // Get effective withdrawal amount considering inflation adjustment
+  const getEffectiveWithdrawalAmount = () => {
+    if (inflationAdjustedWithdrawal && withdrawalMode === "amount" && inflation !== undefined) {
+      // Calculate years until retirement
+      const yearsUntilRetirement = retirementStartAge - currentAge;
+      
+      // Calculate inflation-adjusted withdrawal
+      return monthlyRetirementWithdrawal * Math.pow(1 + inflation / 100, yearsUntilRetirement);
+    }
+    return monthlyRetirementWithdrawal;
+  };
+
+  const effectiveMonthlyWithdrawal = getEffectiveWithdrawalAmount();
+
   // Calculate optimal delay years based on capital exhaustion at target age
   const calculateOptimalDelayYears = useMemo(() => {
     // Handle case when necessary data is missing
-    if (!capitalAtRetirement || !totalNeededCapital || !monthlyRetirementWithdrawal || !annualReturnRate) {
+    if (!capitalAtRetirement || !totalNeededCapital || !effectiveMonthlyWithdrawal || !annualReturnRate) {
       return risk === 'High' ? 4 : risk === 'Medium' ? 2 : 0;
     }
 
@@ -66,7 +82,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     let scenario = {
       capital: params.initialCapital,
       investment: params.monthlyInvestment,
-      withdrawal: params.monthlyRetirementWithdrawal
+      withdrawal: effectiveMonthlyWithdrawal // Use inflation-adjusted withdrawal
     };
     
     // Simulate from current year to target year with original retirement plan
@@ -101,7 +117,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     const exhaustionYear = capitalEvolution.findIndex(point => point.capital <= 0);
     const actualExhaustionYear = exhaustionYear >= 0 ? 
       capitalEvolution[exhaustionYear].year : 
-      targetYear + 1;  // If not found, set to beyond target
+      targetYear + 1;
     
     console.log(`Capital exhausted at age ${actualExhaustionYear - currentYear + currentAge} with current plan`);
     
@@ -111,7 +127,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
       scenario = {
         capital: params.initialCapital,
         investment: params.monthlyInvestment,
-        withdrawal: params.monthlyRetirementWithdrawal
+        withdrawal: effectiveMonthlyWithdrawal // Use inflation-adjusted withdrawal
       };
       
       const delayedRetirementYear = retirementYear + delayYears;
@@ -150,14 +166,14 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     // If we reach here, even 5 years delay isn't enough, so recommend maximum
     console.log("Even 5 years delay isn't enough, recommending maximum delay");
     return 5;
-  }, [risk, capitalAtRetirement, totalNeededCapital, monthlyRetirementWithdrawal, annualReturnRate, params, statistics, currentAge]);
+  }, [risk, capitalAtRetirement, totalNeededCapital, effectiveMonthlyWithdrawal, annualReturnRate, params, statistics, currentAge]);
 
   // Calculate optimal delay years
   const optimalDelayYears = calculateOptimalDelayYears;
   
   // Check if maximum delay (5 years) is insufficient
   const isMaxDelayInsufficient = useMemo(() => {
-    if (!capitalAtRetirement || !totalNeededCapital || !monthlyRetirementWithdrawal || !annualReturnRate) {
+    if (!capitalAtRetirement || !totalNeededCapital || !effectiveMonthlyWithdrawal || !annualReturnRate) {
       return false;
     }
 
@@ -170,7 +186,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     let scenario = {
       capital: params.initialCapital,
       investment: params.monthlyInvestment,
-      withdrawal: monthlyRetirementWithdrawal
+      withdrawal: effectiveMonthlyWithdrawal // Use inflation-adjusted withdrawal
     };
     
     // Simulate from current year to target year with 5-year delayed retirement
@@ -189,7 +205,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     
     // Check if capital is still exhausted at target age even with max delay
     return scenario.capital <= 0;
-  }, [capitalAtRetirement, totalNeededCapital, monthlyRetirementWithdrawal, annualReturnRate, statistics, params, currentAge]);
+  }, [capitalAtRetirement, totalNeededCapital, effectiveMonthlyWithdrawal, annualReturnRate, statistics, params, currentAge]);
   
   // Calculate percentage of gap that would be closed with recommended delay
   const gapClosurePercentage = useMemo(() => {
@@ -201,7 +217,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     const result = calculateDelayedRetirementImpact(
       params.initialCapital,
       params.monthlyInvestment,
-      monthlyRetirementWithdrawal,
+      effectiveMonthlyWithdrawal,
       statistics.calculatedRetirementStartYear,
       optimalDelayYears,
       annualReturnRate,
@@ -209,7 +225,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     );
 
     return Math.min(100, (result.delayedCapitalAtRetirement / totalNeededCapital) * 100);
-  }, [capitalAtRetirement, totalNeededCapital, monthlyRetirementWithdrawal, annualReturnRate, optimalDelayYears, statistics, params]);
+  }, [capitalAtRetirement, totalNeededCapital, effectiveMonthlyWithdrawal, annualReturnRate, optimalDelayYears, statistics, params]);
 
   // Calculate optimized retirement age
   const optimizedRetirementAge = retirementStartAge + optimalDelayYears;
@@ -228,13 +244,13 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     return calculateDelayedRetirementImpact(
       params.initialCapital,
       params.monthlyInvestment,
-      monthlyRetirementWithdrawal,
+      effectiveMonthlyWithdrawal,
       statistics.calculatedRetirementStartYear,
       optimalDelayYears,
       annualReturnRate,
       params.inflation
     );
-  }, [capitalAtRetirement, optimalDelayYears, params, statistics, monthlyRetirementWithdrawal, annualReturnRate]);
+  }, [capitalAtRetirement, optimalDelayYears, params, statistics, effectiveMonthlyWithdrawal, annualReturnRate]);
   
   // Use the results from the shared function
   const optimizedCapital = delayImpactResult.delayedCapitalAtRetirement;
@@ -243,7 +259,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
 
   // Calculate years until exhaustion improvement
   const yearsUntilExhaustionImprovement = useMemo(() => {
-    if (!capitalAtRetirement || !monthlyRetirementWithdrawal || !annualReturnRate || optimalDelayYears === 0) {
+    if (!capitalAtRetirement || !effectiveMonthlyWithdrawal || !annualReturnRate || optimalDelayYears === 0) {
       return 0;
     }
 
@@ -320,11 +336,11 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     
     // Calculate years of improvement
     return delayedExhaustionYear - originalExhaustionYear;
-  }, [capitalAtRetirement, monthlyRetirementWithdrawal, annualReturnRate, optimalDelayYears, statistics, params, currentAge]);
+  }, [capitalAtRetirement, effectiveMonthlyWithdrawal, annualReturnRate, optimalDelayYears, statistics, params, currentAge]);
 
   // Get all delay scenarios for display in the UI
   const delayScenarios = useMemo(() => {
-    if (!capitalAtRetirement || !monthlyRetirementWithdrawal || !annualReturnRate) {
+    if (!capitalAtRetirement || !effectiveMonthlyWithdrawal || !annualReturnRate) {
       return [
         { years: 1, capital: capitalAtRetirement + yearDelayImpact },
         { years: 3, capital: capitalAtRetirement + yearDelayImpact * 3 },
@@ -338,7 +354,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
       const result = calculateDelayedRetirementImpact(
         params.initialCapital,
         params.monthlyInvestment,
-        monthlyRetirementWithdrawal,
+        effectiveMonthlyWithdrawal,
         statistics.calculatedRetirementStartYear,
         delayYears,
         annualReturnRate,
@@ -350,7 +366,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
         capital: result.delayedCapitalAtRetirement
       };
     });
-  }, [capitalAtRetirement, yearDelayImpact, monthlyRetirementWithdrawal, annualReturnRate, statistics, params.inflation, params.initialCapital, params.monthlyInvestment]);
+  }, [capitalAtRetirement, yearDelayImpact, effectiveMonthlyWithdrawal, annualReturnRate, statistics, params.inflation, params.initialCapital, params.monthlyInvestment]);
 
   // Get tooltip content for each section
   const getTooltipContent = (sectionType: string) => {
@@ -396,7 +412,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
 
   // Calculate projected capital at max age
   const projectedFinalCapital = useMemo(() => {
-    if (!capitalAtRetirement || !monthlyRetirementWithdrawal || !annualReturnRate) {
+    if (!capitalAtRetirement || !effectiveMonthlyWithdrawal || !annualReturnRate) {
       return 0;
     }
 
@@ -409,7 +425,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     let scenario = {
       capital: capitalAtRetirement,
       investment: 0, // No more investments during retirement
-      withdrawal: monthlyRetirementWithdrawal
+      withdrawal: effectiveMonthlyWithdrawal // Use inflation-adjusted withdrawal
     };
     
     // Simulate from retirement year to target year
@@ -427,7 +443,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     }
     
     return scenario.capital;
-  }, [capitalAtRetirement, monthlyRetirementWithdrawal, annualReturnRate, params.inflation, params.maxAge, statistics.calculatedRetirementStartYear, currentAge]);
+  }, [capitalAtRetirement, effectiveMonthlyWithdrawal, annualReturnRate, params.inflation, params.maxAge, statistics.calculatedRetirementStartYear, currentAge]);
 
   return (
     <>
@@ -581,14 +597,18 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
                           </span>
                           <ul className="mt-2 list-disc pl-4 text-xs space-y-1.5">
                             <li>Current capital ({formatDisplayValue(capitalAtRetirement)}) is sufficient <span className="font-medium text-orange-600">but has limited buffer</span></li>
-                            <li>A 1-2 year delay would add <span className="font-semibold text-green-600">{formatDisplayValue(delayScenarios[1]?.capital - capitalAtRetirement)}</span> to your capital <span className="font-medium">({Math.ceil((delayScenarios[1]?.capital - capitalAtRetirement) / (monthlyRetirementWithdrawal * 12))} additional years of safety)</span></li>
+                            <li>A 1-2 year delay would add <span className="font-semibold text-green-600">{formatDisplayValue(delayScenarios[1]?.capital - capitalAtRetirement)}</span> to your capital <span className="font-medium">({Math.ceil((delayScenarios[1]?.capital - capitalAtRetirement) / (effectiveMonthlyWithdrawal * 12))} additional years of safety)</span></li>
                             <li>This creates a safety margin against market volatility, with projected capital at target age: <span className="font-medium">{formatDisplayValue(Math.max(0, projectedFinalCapital + (delayScenarios[1]?.capital - capitalAtRetirement)))}</span></li>
                           </ul>
-                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1 mt-2 rounded-sm">
+                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1.5 mt-2 rounded-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span className="text-blue-800 font-medium">Recommended Action:</span> Consider a short delay for significantly improved financial security
+                            <div className="mt-1 text-xs">
+                              <li><span className="text-blue-700 font-medium">Capital impact:</span> {formatDisplayValue(delayScenarios[0]?.capital - capitalAtRetirement)} added</li>
+                              <li><span className="text-blue-700 font-medium">Projected retirement age:</span> {retirementStartAge + 1}</li>
+                            </div>
                           </div>
                         </>
                       ) : (
@@ -600,16 +620,20 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
                             Critical: Delay retirement by {optimalDelayYears} {optimalDelayYears === 1 ? 'year' : 'years'}
                           </span>
                           <ul className="mt-2 list-disc pl-4 text-xs space-y-1.5">
-                            <li>Without delay, your capital would be <span className="font-medium text-red-600">exhausted before target age</span> <span className="font-medium text-orange-600">(around age {statistics.exhaustionAge || Math.floor(retirementStartAge + (capitalAtRetirement / (monthlyRetirementWithdrawal * 12)))})</span></li>
-                            <li>Delaying adds <span className="font-semibold text-green-600">{formatDisplayValue(additionalCapital)}</span> to your retirement capital <span className="font-medium">({Math.ceil(additionalCapital / (monthlyRetirementWithdrawal * 12))} additional years of safety)</span></li>
+                            <li>Without delay, your capital would be <span className="font-medium text-red-600">exhausted before target age</span> <span className="font-medium text-orange-600">(around age {statistics.exhaustionAge || Math.floor(retirementStartAge + (capitalAtRetirement / (effectiveMonthlyWithdrawal * 12)))})</span></li>
+                            <li>Delaying adds <span className="font-semibold text-green-600">{formatDisplayValue(additionalCapital)}</span> to your retirement capital <span className="font-medium">({Math.ceil(additionalCapital / (effectiveMonthlyWithdrawal * 12))} additional years of safety)</span></li>
                             <li>This addresses <span className="font-medium text-green-600">{formatPercentage(gapClosurePercentage)}</span> of your capital gap</li>
                             <li>Extends capital longevity by <span className="font-medium">{yearsUntilExhaustionImprovement} years</span></li>
                           </ul>
-                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1 mt-2 rounded-sm">
+                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1.5 mt-2 rounded-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span className="text-blue-800 font-medium">Recommended Action:</span> Consider consulting or flexible work arrangements
+                            <div className="mt-1 text-xs">
+                              <li><span className="text-blue-700 font-medium">Capital impact:</span> {formatDisplayValue(additionalCapital)} added</li>
+                              <li><span className="text-blue-700 font-medium">Projected retirement age:</span> {retirementStartAge + optimalDelayYears}</li>
+                            </div>
                           </div>
                         </>
                       )}
@@ -629,11 +653,15 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
                             <li>Continue with your current investment and withdrawal strategy</li>
                             <li className="text-orange-600">Consider a 1-year delay for an additional <span className="font-medium">{formatDisplayValue(yearDelayImpact)}</span> safety margin</li>
                           </ul>
-                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1 mt-2 rounded-sm">
+                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1.5 mt-2 rounded-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span className="text-blue-800 font-medium">Action:</span> Maintain regular reviews and consider extending work period
+                            <div className="mt-1 text-xs">
+                              <li><span className="text-blue-700 font-medium">Capital impact:</span> {formatDisplayValue(yearDelayImpact)} per year</li>
+                              <li><span className="text-blue-700 font-medium">Current retirement age:</span> {retirementStartAge}</li>
+                            </div>
                           </div>
                         </>
                       ) : (
@@ -645,16 +673,20 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
                             Timing Adjustment Needed
                           </span>
                           <ul className="mt-2 list-disc pl-4 text-xs space-y-1.5">
-                            <li>Without delay, your capital would be exhausted before target age <span className="font-medium text-orange-600">(around age {statistics.exhaustionAge || Math.floor(retirementStartAge + (capitalAtRetirement / (monthlyRetirementWithdrawal * 12)))})</span></li>
-                            <li>Delaying adds <span className="font-semibold text-green-600">{formatDisplayValue(additionalCapital)}</span> to your retirement capital <span className="font-medium">({Math.ceil(additionalCapital / (monthlyRetirementWithdrawal * 12))} additional years of safety)</span></li>
+                            <li>Without delay, your capital would be exhausted before target age <span className="font-medium text-orange-600">(around age {statistics.exhaustionAge || Math.floor(retirementStartAge + (capitalAtRetirement / (effectiveMonthlyWithdrawal * 12)))})</span></li>
+                            <li>Delaying adds <span className="font-semibold text-green-600">{formatDisplayValue(additionalCapital)}</span> to your retirement capital <span className="font-medium">({Math.ceil(additionalCapital / (effectiveMonthlyWithdrawal * 12))} additional years of safety)</span></li>
                             <li>This addresses <span className="font-medium text-green-600">{formatPercentage(gapClosurePercentage)}</span> of your capital gap</li>
                             <li>Extends capital longevity by <span className="font-medium">{yearsUntilExhaustionImprovement} years</span></li>
                           </ul>
-                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1 mt-2 rounded-sm">
+                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1.5 mt-2 rounded-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span className="text-blue-800 font-medium">Recommended Action:</span> Consider consulting or part-time work during this period
+                            <div className="mt-1 text-xs">
+                              <span className="text-blue-700 font-medium">Capital impact:</span> {formatDisplayValue(additionalCapital)} added |
+                              <span className="text-blue-700 font-medium ml-1">Projected retirement age:</span> {retirementStartAge + optimalDelayYears}
+                            </div>
                           </div>
                         </>
                       )}
@@ -663,7 +695,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
                     <>
                       {optimalDelayYears === 0 ? (
                         <>
-                          {projectedFinalCapital > monthlyRetirementWithdrawal * 12 * 5 ? (
+                          {projectedFinalCapital > effectiveMonthlyWithdrawal * 12 * 5 ? (
                             <span className="font-semibold text-green-600 flex items-center">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -685,12 +717,16 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
                             <li>Potential for legacy planning: <span className="font-medium text-green-600">{formatDisplayValue(Math.max(0, projectedFinalCapital))}</span> estimated at end of plan</li>
                             <li>You have flexibility to increase withdrawals by up to <span className="font-medium text-green-600">{formatPercentage(Math.min(30, (projectedFinalCapital / capitalAtRetirement) * 10))}</span> if desired</li>
                           </ul>
-                          {projectedFinalCapital < monthlyRetirementWithdrawal * 12 * 5 && (
-                            <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1 mt-2 rounded-sm">
+                          {projectedFinalCapital < effectiveMonthlyWithdrawal * 12 * 5 && (
+                            <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1.5 mt-2 rounded-sm">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
-                              <span className="text-blue-800 font-medium">Optional Enhancement:</span> Consider a 1-year delay for an additional <span className="font-medium text-green-600">{formatDisplayValue(delayScenarios[0]?.capital - capitalAtRetirement)}</span> buffer ({Math.ceil((delayScenarios[0]?.capital - capitalAtRetirement) / (monthlyRetirementWithdrawal * 12))} extra years of safety)
+                              <span className="text-blue-800 font-medium">Optional Enhancement:</span> Consider a 1-year delay for an additional <span className="font-medium text-green-600">{formatDisplayValue(delayScenarios[0]?.capital - capitalAtRetirement)}</span> buffer ({Math.ceil((delayScenarios[0]?.capital - capitalAtRetirement) / (effectiveMonthlyWithdrawal * 12))} extra years of safety)
+                              <div className="mt-1 text-xs">
+                                <span className="text-blue-700 font-medium">Projected retirement age:</span> {retirementStartAge + 1} |
+                                <span className="text-blue-700 font-medium ml-1">Estimated final capital:</span> {formatDisplayValue(Math.max(0, projectedFinalCapital + (delayScenarios[0]?.capital - capitalAtRetirement)))}
+                              </div>
                             </div>
                           )}
                         </>
@@ -703,16 +739,20 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
                             Recommended: Delay retirement by {optimalDelayYears} {optimalDelayYears === 1 ? 'year' : 'years'}
                           </span>
                           <ul className="mt-2 list-disc pl-4 text-xs space-y-1.5">
-                            <li>Without delay, your capital would be exhausted before target age <span className="font-medium text-orange-600">(around age {statistics.exhaustionAge || Math.floor(retirementStartAge + (capitalAtRetirement / (monthlyRetirementWithdrawal * 12)))})</span></li>
-                            <li>Delaying adds <span className="font-semibold text-green-600">{formatDisplayValue(additionalCapital)}</span> to your retirement capital <span className="font-medium">({Math.ceil(additionalCapital / (monthlyRetirementWithdrawal * 12))} additional years of safety)</span></li>
+                            <li>Without delay, your capital would be exhausted before target age <span className="font-medium text-orange-600">(around age {statistics.exhaustionAge || Math.floor(retirementStartAge + (capitalAtRetirement / (effectiveMonthlyWithdrawal * 12)))})</span></li>
+                            <li>Delaying adds <span className="font-semibold text-green-600">{formatDisplayValue(additionalCapital)}</span> to your retirement capital <span className="font-medium">({Math.ceil(additionalCapital / (effectiveMonthlyWithdrawal * 12))} additional years of safety)</span></li>
                             <li>This addresses <span className="font-medium text-green-600">{formatPercentage(gapClosurePercentage)}</span> of your capital gap</li>
                             <li>Extends capital longevity by <span className="font-medium">{yearsUntilExhaustionImprovement} years</span></li>
                           </ul>
-                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1 mt-2 rounded-sm">
+                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1.5 mt-2 rounded-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span className="text-blue-800 font-medium">Recommended Action:</span> Consider consulting or flexible work arrangements during this short extension
+                            <span className="text-blue-800 font-medium">Recommended Action:</span> Consider part-time work, consulting, or phased retirement
+                            <div className="mt-1 text-xs">
+                              <span className="text-blue-700 font-medium">Capital impact:</span> {formatDisplayValue(additionalCapital)} added |
+                              <span className="text-blue-700 font-medium ml-1">Projected retirement age:</span> {retirementStartAge + optimalDelayYears}
+                            </div>
                           </div>
                         </>
                       )}
@@ -721,26 +761,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
                 </div>
               </div>
               
-              <div className="border-t border-blue-200 pt-2">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="text-xs text-gray-600">Capital impact assessment</div>
-                  <div className="text-xs font-semibold text-blue-700">
-                    {risk === 'High' ? 'Substantial improvement needed' : risk === 'Medium' ? 'Moderate enhancement recommended' : 'Optional optimization'}
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-gray-600">Projected retirement age</div>
-                  <div className="text-xs font-semibold text-blue-700">
-                    {retirementStartAge} {optimalDelayYears > 0 ? `→ ${optimizedRetirementAge}` : ''}
-                    {optimalDelayYears > 0 && (
-                      <span className="text-xs text-gray-500 ml-1">
-                        (+{optimalDelayYears} {optimalDelayYears === 1 ? 'year' : 'years'})
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>

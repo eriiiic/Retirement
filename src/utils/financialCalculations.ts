@@ -579,4 +579,176 @@ export const calculateDelayedRetirementImpact = (
     capitalIncrease,
     percentageIncrease
   };
+};
+
+/**
+ * Calculate optimal investment adjustments to reach retirement goals.
+ * This function determines both realistic and ideal investment amounts based on current plan.
+ * 
+ * @param currentMonthlyInvestment Current monthly investment amount
+ * @param capitalAtRetirement Projected capital at retirement with current plan
+ * @param totalNeededCapital Total capital needed for retirement goals
+ * @param yearsUntilRetirement Years until retirement begins
+ * @param annualReturnRate Annual return rate percentage
+ * @param monthlyRetirementWithdrawal Planned monthly withdrawal during retirement
+ * @param targetAge Target retirement end age
+ * @param currentAge Current age of the person
+ * @param retirementStartAge Age at which retirement begins
+ * @returns Object containing recommended and ideal investment values with impact metrics
+ */
+export const calculateRecommendedInvestment = (
+  currentMonthlyInvestment: number,
+  capitalAtRetirement: number,
+  totalNeededCapital: number,
+  yearsUntilRetirement: number,
+  annualReturnRate: number,
+  monthlyRetirementWithdrawal: number,
+  targetAge: number = 95,
+  currentAge: number = 30,
+  retirementStartAge: number = 65
+): {
+  realistic: {
+    monthlyAmount: number;
+    percentageIncrease: number;
+    additionalCapital: number;
+    additionalYears: number;
+    newCapitalAtRetirement: number;
+    percentOfTarget: number;
+  };
+  ideal: {
+    monthlyAmount: number;
+    percentageIncrease: number;
+    additionalCapital: number;
+    newCapitalAtRetirement: number;
+    percentOfTarget: number;
+  };
+} => {
+  // Get capital gap
+  const capitalGap = Math.max(0, totalNeededCapital - capitalAtRetirement);
+  
+  // Calculate the annual withdrawal for years calculation
+  const annualWithdrawal = monthlyRetirementWithdrawal * 12;
+  
+  // Calculate years retirement will last with current plan
+  const currentYearsUntilExhaustion = calculateYearsUntilExhaustion(
+    capitalAtRetirement,
+    annualWithdrawal,
+    annualReturnRate,
+    0.85, // Slightly more conservative for planning
+    100
+  );
+  
+  // Convert to age at exhaustion
+  const exhaustionAge = retirementStartAge + currentYearsUntilExhaustion;
+  
+  // Determine if there's a shortfall vs. target age
+  const ageShortfall = Math.max(0, targetAge - exhaustionAge);
+  
+  // Calculate additional capital needed for each year of retirement
+  const capitalPerYear = annualWithdrawal * (1 - 1 / Math.pow(1 + annualReturnRate / 100, 1));
+  
+  // Calculate additional capital needed to reach target age
+  const additionalCapitalNeeded = ageShortfall * capitalPerYear;
+  
+  // REALISTIC CALCULATION
+  // Determine a realistic investment increase (cap at 40% increase)
+  let realisticPercentageIncrease: number;
+  
+  if (capitalGap > 0) {
+    // Different increases based on the relative size of the gap
+    const gapRatio = capitalGap / capitalAtRetirement;
+    
+    if (gapRatio > 0.5) {
+      // Large gap - recommend 30-40% increase
+      realisticPercentageIncrease = Math.min(0.4, Math.max(0.3, gapRatio * 0.4));
+    } else if (gapRatio > 0.2) {
+      // Medium gap - recommend 15-30% increase
+      realisticPercentageIncrease = Math.min(0.3, Math.max(0.15, gapRatio * 0.3));
+    } else {
+      // Small gap - recommend 10-15% increase
+      realisticPercentageIncrease = Math.min(0.15, Math.max(0.1, gapRatio * 0.25));
+    }
+  } else {
+    // No gap, but recommend small optimization of 5-10%
+    realisticPercentageIncrease = 0.05 + (Math.random() * 0.05);
+  }
+  
+  // Calculate the realistic monthly amount
+  const realisticMonthlyIncrease = currentMonthlyInvestment * realisticPercentageIncrease;
+  const realisticMonthlyAmount = currentMonthlyInvestment + realisticMonthlyIncrease;
+  
+  // Calculate the impact of this realistic increase
+  const realisticAdditionalContributions = realisticMonthlyIncrease * 12 * yearsUntilRetirement;
+  
+  // Calculate estimated returns on additional contributions (simplified)
+  const annualRateDecimal = annualReturnRate / 100;
+  const realisticEstimatedReturns = realisticAdditionalContributions * (Math.pow(1 + annualRateDecimal, yearsUntilRetirement / 2) - 1);
+  
+  // Total benefit at retirement from realistic increase
+  const realisticAdditionalCapital = realisticAdditionalContributions + realisticEstimatedReturns;
+  const realisticNewCapitalAtRetirement = capitalAtRetirement + realisticAdditionalCapital;
+  
+  // Calculate additional years this would provide
+  const realisticAdditionalYears = annualWithdrawal > 0 
+    ? Math.round((realisticAdditionalCapital / annualWithdrawal) * (1 - 1 / Math.pow(1 + annualRateDecimal, 1)))
+    : 0;
+  
+  // Calculate percent of target for realistic scenario
+  const realisticPercentOfTarget = (realisticNewCapitalAtRetirement / totalNeededCapital) * 100;
+  
+  // IDEAL CALCULATION
+  // Calculate the monthly investment needed to meet the total needed capital
+  // Consider constraints on the maximum viable increase (cap at 100% increase for reality)
+  const idealAdditionalCapitalNeeded = Math.max(0, totalNeededCapital - capitalAtRetirement);
+  
+  // Using future value formula to determine how much additional monthly investment is needed
+  // to close the gap over the remaining years until retirement
+  const monthlyRateDecimal = Math.pow(1 + annualRateDecimal, 1/12) - 1;
+  const totalMonths = yearsUntilRetirement * 12;
+  
+  // Calculate monthly investment needed to close the gap
+  // FV = PMT * ((1 + r)^n - 1) / r
+  // Therefore, PMT = FV * r / ((1 + r)^n - 1)
+  let idealMonthlyAdditional = 0;
+  
+  if (totalMonths > 0 && monthlyRateDecimal > 0) {
+    idealMonthlyAdditional = idealAdditionalCapitalNeeded * monthlyRateDecimal / 
+      (Math.pow(1 + monthlyRateDecimal, totalMonths) - 1);
+  } else if (totalMonths > 0) {
+    // If rate is zero, use simple division
+    idealMonthlyAdditional = idealAdditionalCapitalNeeded / totalMonths;
+  }
+  
+  // Cap the ideal monthly amount to be at most 100% more than current
+  const maxIdealIncrease = currentMonthlyInvestment;
+  const cappedIdealAdditional = Math.min(idealMonthlyAdditional, maxIdealIncrease);
+  const idealMonthlyAmount = currentMonthlyInvestment + cappedIdealAdditional;
+  const idealPercentageIncrease = cappedIdealAdditional / currentMonthlyInvestment;
+  
+  // Calculate the impact if the ideal increase was applied
+  const idealAdditionalContributions = cappedIdealAdditional * 12 * yearsUntilRetirement;
+  const idealEstimatedReturns = idealAdditionalContributions * (Math.pow(1 + annualRateDecimal, yearsUntilRetirement / 2) - 1);
+  const idealTotalBenefit = idealAdditionalContributions + idealEstimatedReturns;
+  const idealNewCapitalAtRetirement = capitalAtRetirement + idealTotalBenefit;
+  
+  // Calculate percent of target for ideal scenario
+  const idealPercentOfTarget = (idealNewCapitalAtRetirement / totalNeededCapital) * 100;
+  
+  return {
+    realistic: {
+      monthlyAmount: realisticMonthlyAmount,
+      percentageIncrease: realisticPercentageIncrease * 100,
+      additionalCapital: realisticAdditionalCapital,
+      additionalYears: realisticAdditionalYears,
+      newCapitalAtRetirement: realisticNewCapitalAtRetirement,
+      percentOfTarget: realisticPercentOfTarget
+    },
+    ideal: {
+      monthlyAmount: idealMonthlyAmount,
+      percentageIncrease: idealPercentageIncrease * 100,
+      additionalCapital: idealTotalBenefit,
+      newCapitalAtRetirement: idealNewCapitalAtRetirement,
+      percentOfTarget: idealPercentOfTarget
+    }
+  };
 }; 
