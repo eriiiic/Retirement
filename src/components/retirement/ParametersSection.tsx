@@ -1048,7 +1048,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   return (
     <div className={cx("bg-gray-50 rounded-lg border border-gray-200 shadow-sm overflow-hidden p-4")}>
       {/* Header with Title */}
-      <div className={cx("flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 pb-2 border-b border-gray-200")}>
+      <div className={cx("flex flex-col sm:flex-row justify-between items-start sm:items-center pb-2")}>
         <div>
           <h2 className="text-xl font-semibold text-gradient mb-1 sm:mb-0">Define Your Plan</h2>
           <p className={typography.style.subtitle}>Tailor your personal path to financial freedom</p>
@@ -1147,467 +1147,465 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         </div>
       </div>
 
-      {/* Combined Parameters Section - All inputs on same page */}
-      <div className={cx(components.container.section, "mb-3")}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* Current Status Section - Optimized */}
-          <div className={cx("bg-gradient-to-b from-blue-50 to-white rounded-lg border border-blue-100 shadow-sm p-1 overflow-hidden")}>
-            <h3 className={cx("text-xs font-semibold text-blue-800 uppercase tracking-wider px-2 mb-0.5 py-0.5 flex items-center")}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Current Status
-            </h3>
-            <div className={cx("space-y-0")}>
-              <div className="p-1">
-                <h4 className="text-xs font-medium text-blue-800 flex items-center mb-0.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      {/* Grid layout directly in the component */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+        {/* Current Status Section - Optimized */}
+        <div className={cx("bg-gradient-to-b from-blue-50 to-white rounded-lg border border-blue-100 shadow-sm p-1 overflow-hidden")}>
+          <h3 className={cx("text-xs font-semibold text-blue-800 uppercase tracking-wider px-2 mb-0.5 py-0.5 flex items-center")}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Current Status
+          </h3>
+          <div className={cx("space-y-0")}>
+            <div className="p-1">
+              <h4 className="text-xs font-medium text-blue-800 flex items-center mb-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Initial Capital
+              </h4>
+              {renderParameterInput(
+                "", 
+                "initialCapital", 
+                getDisplayValue('initialCapital', inputValues.initialCapital), 
+                "150,000", 
+                true,
+                false,
+                undefined,
+                true
+              )}
+            </div>
+            
+            <div className="p-1">
+              <h4 className="text-xs font-medium text-blue-800 flex items-center mb-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Current Age
+              </h4>
+              {renderParameterInput(
+                "", 
+                "currentAge", 
+                inputValues.currentAge, 
+                "46", 
+                false, 
+                false, 
+                "",
+                true
+              )}
+            </div>
+            
+            <div className="p-1">
+              <h4 className="text-xs font-medium text-blue-800 flex items-center mb-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                </svg>
+                Monthly Investment
+              </h4>
+              {renderParameterInput(
+                "", 
+                "monthlyInvestment", 
+                getDisplayValue('monthlyInvestment', inputValues.monthlyInvestment), 
+                "500", 
+                true,
+                false,
+                undefined,
+                true
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Retirement Plan Section - Optimized */}
+        <div className="bg-gradient-to-b from-purple-50 to-white rounded-lg border border-purple-100 shadow-sm p-1 overflow-hidden">
+          <h3 className="text-xs font-semibold text-purple-800 uppercase tracking-wider px-2 mb-0.5 py-0.5 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Retirement Plan
+          </h3>
+          <div className="space-y-0">
+            {/* Custom wrapper for retirement age parameter */}
+            <div className="p-1">
+              {/* First row - add label and the auto-calculated tag when active */}
+              <div className="flex justify-between items-center mb-0.5">
+                <h4 className="text-xs font-medium text-purple-800 flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Initial Capital
+                  Retirement Age
+                  {autoCalculateRetirementAge && (
+                    <span className="ml-1.5 text-xs text-purple-600 font-normal">(Auto-calculated)</span>
+                  )}
                 </h4>
-                {renderParameterInput(
-                  "", 
-                  "initialCapital", 
-                  getDisplayValue('initialCapital', inputValues.initialCapital), 
-                  "150,000", 
-                  true,
-                  false,
-                  undefined,
-                  true
-                )}
               </div>
               
-              <div className="p-1">
-                <h4 className="text-xs font-medium text-blue-800 flex items-center mb-0.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              {/* Second row - auto-calculate button and slider */}
+              <div className="flex items-center">
+                {/* Auto-calculate button - now wider with explicit text */}
+                <button
+                  onClick={toggleAutoRetirementCalculation}
+                  className={`flex-shrink-0 mr-2 p-1.5 px-3 rounded-lg transition-all flex items-center w-32 sm:w-36 ${
+                    autoCalculateRetirementAge 
+                      ? 'bg-purple-600 text-white ring-1 ring-purple-300' 
+                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
+                  }`}
+                  title="Calculate ideal retirement age for financial independence"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 sm:mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  Current Age
+                  <span className="text-xs font-medium">
+                    {autoCalculateRetirementAge ? "Auto-calc" : "Auto-calc"}
+                  </span>
+                </button>
+                
+                {/* Standard parameter input with reduced width */}
+                <div className={`flex-1 ${autoCalculateRetirementAge ? "opacity-70 pointer-events-none" : ""}`}>
+                  {renderParameterInput(
+                    "", // Empty label since we've added it manually above
+                    "retirementInput", 
+                    inputValues.retirementInput, 
+                    "65", 
+                    false, 
+                    false, 
+                    "",
+                    true // Include slider
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Withdrawal Strategy - Optimized */}
+            <div className="mb-1 p-1">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                <div>
+                  <h3 className="text-xs font-medium text-purple-800 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Withdrawal Strategy
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5 ml-4.5">
+                    {params.withdrawalMode === 'amount'
+                      ? "Specify how much you want to withdraw each month"
+                      : params.withdrawalMode === 'age'
+                        ? "Set a target age and we'll calculate a sustainable withdrawal"
+                        : "Define a withdrawal rate as percentage of your capital"}
+                  </p>
+                </div>
+                <div className="flex w-full sm:w-auto border border-purple-200 rounded-lg overflow-hidden shadow-sm">
+                  <button 
+                    className={`flex-1 px-3 py-1.5 text-xs font-medium transition-all ${
+                      params.withdrawalMode === 'amount'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-purple-50'
+                    }`}
+                    onClick={() => onParamChange('withdrawalMode', 'amount')}
+                  >
+                    Amount
+                  </button>
+                  <button 
+                    className={`flex-1 px-3 py-1.5 text-xs font-medium transition-all ${
+                      params.withdrawalMode === 'age'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-purple-50'
+                    }`}
+                    onClick={() => onParamChange('withdrawalMode', 'age')}
+                  >
+                    Target Age
+                  </button>
+                  <button 
+                    className={`flex-1 px-3 py-1.5 text-xs font-medium transition-all ${
+                      params.withdrawalMode === 'rate'
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-purple-50'
+                    }`}
+                    onClick={() => onParamChange('withdrawalMode', 'rate')}
+                  >
+                    Rate
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {params.withdrawalMode === 'amount' ? (
+              <div className="p-1">
+                <div className="monthly-withdrawal-header">
+                  <h4 className="monthly-withdrawal-title text-xs font-medium text-purple-800 flex items-center mb-0.5 sm:mb-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Monthly Withdrawal
+                  </h4>
+                  
+                  {/* Mobile-only Inflation Adjusted Button */}
+                  <button
+                    onClick={() => onParamChange('inflationAdjustedWithdrawal', !params.inflationAdjustedWithdrawal)}
+                    className={`inflation-button-mobile p-1.5 px-2 rounded-lg transition-all flex items-center ${
+                      params.inflationAdjustedWithdrawal 
+                        ? 'bg-purple-600 text-white ring-1 ring-purple-300' 
+                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
+                    }`}
+                    title="Adjust the entered amount for inflation from today until retirement start"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                    <span className="text-xs font-medium whitespace-nowrap">
+                      Inflation Adjusted
+                    </span>
+                  </button>
+                </div>
+                
+                {params.inflationAdjustedWithdrawal && (
+                  <p className="text-xs text-purple-600 italic mb-2">
+                    Amount will be adjusted for inflation from today until retirement. 
+                    {statistics.calculatedRetirementStartYear && (
+                      <span className="font-medium">
+                        {" "}Future value at retirement: {formatAmount(
+                          calculateInflationAdjustedValue(
+                            params.monthlyRetirementWithdrawal,
+                            params.inflation,
+                            statistics.calculatedRetirementStartYear - new Date().getFullYear()
+                          )
+                        )}
+                      </span>
+                    )}
+                  </p>
+                )}
+                
+                <div className="monthly-withdrawal-row">
+                  {/* Desktop-only Inflation Adjusted Button */}
+                  <button
+                    onClick={() => onParamChange('inflationAdjustedWithdrawal', !params.inflationAdjustedWithdrawal)}
+                    className={`inflation-button-desktop p-1.5 px-2 rounded-lg transition-all flex items-center justify-center ${
+                      params.inflationAdjustedWithdrawal 
+                        ? 'bg-purple-600 text-white ring-1 ring-purple-300' 
+                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
+                    }`}
+                    title="Adjust the entered amount for inflation from today until retirement start"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                    <span className="text-xs font-medium whitespace-nowrap">
+                      Inflation Adjusted
+                    </span>
+                  </button>
+                  
+                  {/* Custom Slider Container - now always full width on mobile */}
+                  <div className="withdrawal-slider-wrapper">
+                    <div 
+                      ref={el => sliderContainerRefs.current["monthlyRetirementWithdrawal"] = el}
+                      className="relative h-8"
+                      onMouseDown={(e) => handleSliderMouseDown("monthlyRetirementWithdrawal", e)}
+                      onTouchStart={(e) => handleSliderTouchStart("monthlyRetirementWithdrawal", e)}
+                    >
+                      <div 
+                        className={components.form.slider.track}
+                        style={{ top: '50%', transform: 'translateY(-50%)', position: 'absolute', height: '8px', width: '100%', borderRadius: '8px' }}
+                      ></div>
+                      <div 
+                        className="absolute h-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500"
+                        style={{ 
+                          width: `${((params.monthlyRetirementWithdrawal - getSliderConfig("monthlyRetirementWithdrawal").min) / (getSliderConfig("monthlyRetirementWithdrawal").max - getSliderConfig("monthlyRetirementWithdrawal").min)) * 100}%`,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          height: '8px'
+                        }}
+                      ></div>
+                      <input
+                        ref={el => sliderRefs.current["monthlyRetirementWithdrawal"] = el}
+                        type="range"
+                        min={getSliderConfig("monthlyRetirementWithdrawal").min}
+                        max={getSliderConfig("monthlyRetirementWithdrawal").max}
+                        step={getSliderConfig("monthlyRetirementWithdrawal").step}
+                        value={params.monthlyRetirementWithdrawal}
+                        onChange={(e) => {
+                          const newValue = e.target.value;
+                          let numericValue = parseFloat(newValue);
+                          onParamChange("monthlyRetirementWithdrawal", numericValue);
+                          setInputValues(prev => ({ ...prev, monthlyRetirementWithdrawal: numericValue.toString() }));
+                        }}
+                        className="w-full h-2 appearance-none bg-transparent absolute z-10 cursor-pointer opacity-0"
+                        style={{ top: '50%', transform: 'translateY(-50%)' }}
+                      />
+                      <div 
+                        className="absolute w-4 h-4 bg-white border rounded-full shadow transition-all"
+                        style={{ 
+                          left: `${((params.monthlyRetirementWithdrawal - getSliderConfig("monthlyRetirementWithdrawal").min) / (getSliderConfig("monthlyRetirementWithdrawal").max - getSliderConfig("monthlyRetirementWithdrawal").min)) * 100}%`,
+                          top: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          borderWidth: draggingSlider === "monthlyRetirementWithdrawal" ? '2px' : '1px'
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  {/* Custom Input Field */}
+                  <div className="withdrawal-input-wrapper">
+                    <div className="relative w-full">
+                      <span className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-sm text-gray-500">
+                        {getCurrencySymbol(params.currency)}
+                      </span>
+                      <input
+                        ref={el => inputRefs.current["monthlyRetirementWithdrawal"] = el}
+                        id="monthlyRetirementWithdrawal"
+                        type="text"
+                        inputMode="decimal"
+                        value={getDisplayValue('monthlyRetirementWithdrawal', inputValues.monthlyRetirementWithdrawal) === '0' ? '' : formatNumberForCurrency(getDisplayValue('monthlyRetirementWithdrawal', inputValues.monthlyRetirementWithdrawal), params.currency)}
+                        onChange={(e) => {
+                          const valueWithoutCurrency = removeCurrencySymbol(e.target.value);
+                          handleInputChange("monthlyRetirementWithdrawal", valueWithoutCurrency);
+                        }}
+                        onBlur={(e) => {
+                          const valueWithoutCurrency = removeCurrencySymbol(e.target.value);
+                          handleInputBlur("monthlyRetirementWithdrawal", valueWithoutCurrency);
+                        }}
+                        onFocus={() => handleInputFocus("monthlyRetirementWithdrawal")}
+                        placeholder="0"
+                        className="w-full rounded-lg border border-gray-300 py-1.5 pl-6 pr-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-right"
+                        aria-label="Monthly retirement withdrawal input"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : params.withdrawalMode === 'age' ? (
+              <div className="p-1">
+                <h4 className="text-xs font-medium text-purple-800 flex items-center mb-0.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Target Age
                 </h4>
                 {renderParameterInput(
                   "", 
-                  "currentAge", 
-                  inputValues.currentAge, 
-                  "46", 
+                  "maxAge", 
+                  inputValues.maxAge, 
+                  "95", 
                   false, 
                   false, 
                   "",
                   true
                 )}
               </div>
-              
+            ) : (
               <div className="p-1">
-                <h4 className="text-xs font-medium text-blue-800 flex items-center mb-0.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                <h4 className="text-xs font-medium text-purple-800 flex items-center mb-0.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
-                  Monthly Investment
+                  Withdrawal Rate
                 </h4>
                 {renderParameterInput(
                   "", 
-                  "monthlyInvestment", 
-                  getDisplayValue('monthlyInvestment', inputValues.monthlyInvestment), 
-                  "500", 
+                  "withdrawalRate", 
+                  inputValues.withdrawalRate, 
+                  "4", 
+                  false, 
                   true,
-                  false,
                   undefined,
                   true
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* Retirement Plan Section - Optimized */}
-          <div className="bg-gradient-to-b from-purple-50 to-white rounded-lg border border-purple-100 shadow-sm p-1 overflow-hidden">
-            <h3 className="text-xs font-semibold text-purple-800 uppercase tracking-wider px-2 mb-0.5 py-0.5 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              Retirement Plan
-            </h3>
-            <div className="space-y-0">
-              {/* Custom wrapper for retirement age parameter */}
-              <div className="p-1">
-                {/* First row - add label and the auto-calculated tag when active */}
-                <div className="flex justify-between items-center mb-0.5">
-                  <h4 className="text-xs font-medium text-purple-800 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Retirement Age
-                    {autoCalculateRetirementAge && (
-                      <span className="ml-1.5 text-xs text-purple-600 font-normal">(Auto-calculated)</span>
-                    )}
-                  </h4>
-                </div>
-                
-                {/* Second row - auto-calculate button and slider */}
-                <div className="flex items-center">
-                  {/* Auto-calculate button - now wider with explicit text */}
-                  <button
-                    onClick={toggleAutoRetirementCalculation}
-                    className={`flex-shrink-0 mr-2 p-1.5 px-3 rounded-lg transition-all flex items-center w-32 sm:w-36 ${
-                      autoCalculateRetirementAge 
-                        ? 'bg-purple-600 text-white ring-1 ring-purple-300' 
-                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
-                    }`}
-                    title="Calculate ideal retirement age for financial independence"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 sm:mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    <span className="text-xs font-medium">
-                      {autoCalculateRetirementAge ? "Auto-calc" : "Auto-calc"}
-                    </span>
-                  </button>
-                  
-                  {/* Standard parameter input with reduced width */}
-                  <div className={`flex-1 ${autoCalculateRetirementAge ? "opacity-70 pointer-events-none" : ""}`}>
-                    {renderParameterInput(
-                      "", // Empty label since we've added it manually above
-                      "retirementInput", 
-                      inputValues.retirementInput, 
-                      "65", 
-                      false, 
-                      false, 
-                      "",
-                      true // Include slider
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Withdrawal Strategy - Optimized */}
-              <div className="mb-1 p-1">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                  <div>
-                    <h3 className="text-xs font-medium text-purple-800 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Withdrawal Strategy
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-0.5 ml-4.5">
-                      {params.withdrawalMode === 'amount'
-                        ? "Specify how much you want to withdraw each month"
-                        : params.withdrawalMode === 'age'
-                          ? "Set a target age and we'll calculate a sustainable withdrawal"
-                          : "Define a withdrawal rate as percentage of your capital"}
-                    </p>
-                  </div>
-                  <div className="flex w-full sm:w-auto border border-purple-200 rounded-lg overflow-hidden shadow-sm">
-                    <button 
-                      className={`flex-1 px-3 py-1.5 text-xs font-medium transition-all ${
-                        params.withdrawalMode === 'amount'
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-white text-gray-700 hover:bg-purple-50'
-                      }`}
-                      onClick={() => onParamChange('withdrawalMode', 'amount')}
-                    >
-                      Amount
-                    </button>
-                    <button 
-                      className={`flex-1 px-3 py-1.5 text-xs font-medium transition-all ${
-                        params.withdrawalMode === 'age'
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-white text-gray-700 hover:bg-purple-50'
-                      }`}
-                      onClick={() => onParamChange('withdrawalMode', 'age')}
-                    >
-                      Target Age
-                    </button>
-                    <button 
-                      className={`flex-1 px-3 py-1.5 text-xs font-medium transition-all ${
-                        params.withdrawalMode === 'rate'
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-white text-gray-700 hover:bg-purple-50'
-                      }`}
-                      onClick={() => onParamChange('withdrawalMode', 'rate')}
-                    >
-                      Rate
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {params.withdrawalMode === 'amount' ? (
-                <div className="p-1">
-                  <div className="monthly-withdrawal-header">
-                    <h4 className="monthly-withdrawal-title text-xs font-medium text-purple-800 flex items-center mb-0.5 sm:mb-0.5">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Monthly Withdrawal
-                    </h4>
-                    
-                    {/* Mobile-only Inflation Adjusted Button */}
-                    <button
-                      onClick={() => onParamChange('inflationAdjustedWithdrawal', !params.inflationAdjustedWithdrawal)}
-                      className={`inflation-button-mobile p-1.5 px-2 rounded-lg transition-all flex items-center ${
-                        params.inflationAdjustedWithdrawal 
-                          ? 'bg-purple-600 text-white ring-1 ring-purple-300' 
-                          : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
-                      }`}
-                      title="Adjust the entered amount for inflation from today until retirement start"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                      </svg>
-                      <span className="text-xs font-medium whitespace-nowrap">
-                        Inflation Adjusted
-                      </span>
-                    </button>
-                  </div>
-                  
-                  {params.inflationAdjustedWithdrawal && (
-                    <p className="text-xs text-purple-600 italic mb-2">
-                      Amount will be adjusted for inflation from today until retirement. 
-                      {statistics.calculatedRetirementStartYear && (
-                        <span className="font-medium">
-                          {" "}Future value at retirement: {formatAmount(
-                            calculateInflationAdjustedValue(
-                              params.monthlyRetirementWithdrawal,
-                              params.inflation,
-                              statistics.calculatedRetirementStartYear - new Date().getFullYear()
-                            )
-                          )}
-                        </span>
-                      )}
-                    </p>
-                  )}
-                  
-                  <div className="monthly-withdrawal-row">
-                    {/* Desktop-only Inflation Adjusted Button */}
-                    <button
-                      onClick={() => onParamChange('inflationAdjustedWithdrawal', !params.inflationAdjustedWithdrawal)}
-                      className={`inflation-button-desktop p-1.5 px-2 rounded-lg transition-all flex items-center justify-center ${
-                        params.inflationAdjustedWithdrawal 
-                          ? 'bg-purple-600 text-white ring-1 ring-purple-300' 
-                          : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
-                      }`}
-                      title="Adjust the entered amount for inflation from today until retirement start"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                      </svg>
-                      <span className="text-xs font-medium whitespace-nowrap">
-                        Inflation Adjusted
-                      </span>
-                    </button>
-                    
-                    {/* Custom Slider Container - now always full width on mobile */}
-                    <div className="withdrawal-slider-wrapper">
-                      <div 
-                        ref={el => sliderContainerRefs.current["monthlyRetirementWithdrawal"] = el}
-                        className="relative h-8"
-                        onMouseDown={(e) => handleSliderMouseDown("monthlyRetirementWithdrawal", e)}
-                        onTouchStart={(e) => handleSliderTouchStart("monthlyRetirementWithdrawal", e)}
-                      >
-                        <div 
-                          className={components.form.slider.track}
-                          style={{ top: '50%', transform: 'translateY(-50%)', position: 'absolute', height: '8px', width: '100%', borderRadius: '8px' }}
-                        ></div>
-                        <div 
-                          className="absolute h-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500"
-                          style={{ 
-                            width: `${((params.monthlyRetirementWithdrawal - getSliderConfig("monthlyRetirementWithdrawal").min) / (getSliderConfig("monthlyRetirementWithdrawal").max - getSliderConfig("monthlyRetirementWithdrawal").min)) * 100}%`,
-                            top: '50%',
-                            transform: 'translateY(-50%)',
-                            height: '8px'
-                          }}
-                        ></div>
-                        <input
-                          ref={el => sliderRefs.current["monthlyRetirementWithdrawal"] = el}
-                          type="range"
-                          min={getSliderConfig("monthlyRetirementWithdrawal").min}
-                          max={getSliderConfig("monthlyRetirementWithdrawal").max}
-                          step={getSliderConfig("monthlyRetirementWithdrawal").step}
-                          value={params.monthlyRetirementWithdrawal}
-                          onChange={(e) => {
-                            const newValue = e.target.value;
-                            let numericValue = parseFloat(newValue);
-                            onParamChange("monthlyRetirementWithdrawal", numericValue);
-                            setInputValues(prev => ({ ...prev, monthlyRetirementWithdrawal: numericValue.toString() }));
-                          }}
-                          className="w-full h-2 appearance-none bg-transparent absolute z-10 cursor-pointer opacity-0"
-                          style={{ top: '50%', transform: 'translateY(-50%)' }}
-                        />
-                        <div 
-                          className="absolute w-4 h-4 bg-white border rounded-full shadow transition-all"
-                          style={{ 
-                            left: `${((params.monthlyRetirementWithdrawal - getSliderConfig("monthlyRetirementWithdrawal").min) / (getSliderConfig("monthlyRetirementWithdrawal").max - getSliderConfig("monthlyRetirementWithdrawal").min)) * 100}%`,
-                            top: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            borderWidth: draggingSlider === "monthlyRetirementWithdrawal" ? '2px' : '1px'
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                    
-                    {/* Custom Input Field */}
-                    <div className="withdrawal-input-wrapper">
-                      <div className="relative w-full">
-                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-sm text-gray-500">
-                          {getCurrencySymbol(params.currency)}
-                        </span>
-                        <input
-                          ref={el => inputRefs.current["monthlyRetirementWithdrawal"] = el}
-                          id="monthlyRetirementWithdrawal"
-                          type="text"
-                          inputMode="decimal"
-                          value={getDisplayValue('monthlyRetirementWithdrawal', inputValues.monthlyRetirementWithdrawal) === '0' ? '' : formatNumberForCurrency(getDisplayValue('monthlyRetirementWithdrawal', inputValues.monthlyRetirementWithdrawal), params.currency)}
-                          onChange={(e) => {
-                            const valueWithoutCurrency = removeCurrencySymbol(e.target.value);
-                            handleInputChange("monthlyRetirementWithdrawal", valueWithoutCurrency);
-                          }}
-                          onBlur={(e) => {
-                            const valueWithoutCurrency = removeCurrencySymbol(e.target.value);
-                            handleInputBlur("monthlyRetirementWithdrawal", valueWithoutCurrency);
-                          }}
-                          onFocus={() => handleInputFocus("monthlyRetirementWithdrawal")}
-                          placeholder="0"
-                          className="w-full rounded-lg border border-gray-300 py-1.5 pl-6 pr-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-right"
-                          aria-label="Monthly retirement withdrawal input"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : params.withdrawalMode === 'age' ? (
-                <div className="p-1">
-                  <h4 className="text-xs font-medium text-purple-800 flex items-center mb-0.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Target Age
-                  </h4>
-                  {renderParameterInput(
-                    "", 
-                    "maxAge", 
-                    inputValues.maxAge, 
-                    "95", 
-                    false, 
-                    false, 
-                    "",
-                    true
-                  )}
-                </div>
-              ) : (
-                <div className="p-1">
-                  <h4 className="text-xs font-medium text-purple-800 flex items-center mb-0.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                    Withdrawal Rate
-                  </h4>
-                  {renderParameterInput(
-                    "", 
-                    "withdrawalRate", 
-                    inputValues.withdrawalRate, 
-                    "4", 
-                    false, 
-                    true,
-                    undefined,
-                    true
-                  )}
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
-        
-        {/* Market Assumptions Section - Optimized */}
-        <div className="mt-3 bg-gradient-to-b from-green-50 to-white rounded-lg border border-green-100 shadow-sm p-1 overflow-hidden">
-          <h3 className="text-xs font-semibold text-green-800 uppercase tracking-wider px-2 mb-2 py-0.5 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Market Assumptions
-          </h3>
-          <p className="text-xs text-gray-600 italic px-2 mb-3 ml-5">
-            These settings affect how your investments grow over time and how inflation impacts your withdrawal purchasing power.
-          </p>
+      </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            {/* Annual Return Rate */}
-            <div className="bg-white rounded-lg border border-green-100 shadow-sm p-1">
-              <h4 className="text-xs font-medium text-green-800 flex items-center mb-0.5">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
-                Annual Return
-              </h4>
-              {renderParameterInput(
-                "Expected return on investments", 
-                "annualReturnRate", 
-                inputValues.annualReturnRate, 
-                "5", 
-                false, 
-                true,
-                undefined,
-                true // Include slider
-              )}
-            </div>
-            
-            {/* Inflation Rate */}
-            <div className="bg-white rounded-lg border border-green-100 shadow-sm p-1">
-              <h4 className="text-xs font-medium text-green-800 flex items-center mb-0.5">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Inflation
-              </h4>
-              {renderParameterInput(
-                "Annual inflation rate", 
-                "inflation", 
-                inputValues.inflation, 
-                "2", 
-                false, 
-                true,
-                undefined,
-                true // Include slider
-              )}
-            </div>
-            
-            {/* Compound Frequency */}
-            <div className="bg-white rounded-lg border border-green-100 shadow-sm p-1">
-              <h4 className="text-xs font-medium text-green-800 flex items-center mb-0.5">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Compound Frequency
-              </h4>
-              <div className="p-1">
-                <p className="text-xs text-gray-600 mb-2">
-                  {params.compoundFrequency === 'monthly'
-                    ? "Interest compounded monthly (higher returns)"
-                    : "Interest compounded annually"}
-                </p>
-                <div className="flex border border-green-200 rounded-lg overflow-hidden shadow-sm mt-2">
-                  <button 
-                    className={`px-3 py-1 text-xs font-medium transition-all flex-1 ${
-                      params.compoundFrequency === 'monthly'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-green-50'
-                    }`}
-                    onClick={() => onParamChange('compoundFrequency', 'monthly')}
-                    aria-label="Set monthly compounding"
-                  >
-                    Monthly
-                  </button>
-                  <button 
-                    className={`px-3 py-1 text-xs font-medium transition-all flex-1 ${
-                      params.compoundFrequency === 'annual'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-green-50'
-                    }`}
-                    onClick={() => onParamChange('compoundFrequency', 'annual')}
-                    aria-label="Set annual compounding"
-                  >
-                    Annual
-                  </button>
-                </div>
+      {/* Market Assumptions Section - Optimized */}
+      <div className="mt-3 bg-gradient-to-b from-green-50 to-white rounded-lg border border-green-100 shadow-sm p-1 overflow-hidden">
+        <h3 className="text-xs font-semibold text-green-800 uppercase tracking-wider px-2 mb-2 py-0.5 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Market Assumptions
+        </h3>
+        <p className="text-xs text-gray-600 italic px-2 mb-3 ml-5">
+          These settings affect how your investments grow over time and how inflation impacts your withdrawal purchasing power.
+        </p>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          {/* Annual Return Rate */}
+          <div className="bg-white rounded-lg border border-green-100 shadow-sm p-1">
+            <h4 className="text-xs font-medium text-green-800 flex items-center mb-0.5">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+              Annual Return
+            </h4>
+            {renderParameterInput(
+              "Expected return on investments", 
+              "annualReturnRate", 
+              inputValues.annualReturnRate, 
+              "5", 
+              false, 
+              true,
+              undefined,
+              true // Include slider
+            )}
+          </div>
+          
+          {/* Inflation Rate */}
+          <div className="bg-white rounded-lg border border-green-100 shadow-sm p-1">
+            <h4 className="text-xs font-medium text-green-800 flex items-center mb-0.5">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Inflation
+            </h4>
+            {renderParameterInput(
+              "Annual inflation rate", 
+              "inflation", 
+              inputValues.inflation, 
+              "2", 
+              false, 
+              true,
+              undefined,
+              true // Include slider
+            )}
+          </div>
+          
+          {/* Compound Frequency */}
+          <div className="bg-white rounded-lg border border-green-100 shadow-sm p-1">
+            <h4 className="text-xs font-medium text-green-800 flex items-center mb-0.5">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Compound Frequency
+            </h4>
+            <div className="p-1">
+              <p className="text-xs text-gray-600 mb-2">
+                {params.compoundFrequency === 'monthly'
+                  ? "Interest compounded monthly (higher returns)"
+                  : "Interest compounded annually"}
+              </p>
+              <div className="flex border border-green-200 rounded-lg overflow-hidden shadow-sm mt-2">
+                <button 
+                  className={`px-3 py-1 text-xs font-medium transition-all flex-1 ${
+                    params.compoundFrequency === 'monthly'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-green-50'
+                  }`}
+                  onClick={() => onParamChange('compoundFrequency', 'monthly')}
+                  aria-label="Set monthly compounding"
+                >
+                  Monthly
+                </button>
+                <button 
+                  className={`px-3 py-1 text-xs font-medium transition-all flex-1 ${
+                    params.compoundFrequency === 'annual'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-green-50'
+                  }`}
+                  onClick={() => onParamChange('compoundFrequency', 'annual')}
+                  aria-label="Set annual compounding"
+                >
+                  Annual
+                </button>
               </div>
             </div>
           </div>

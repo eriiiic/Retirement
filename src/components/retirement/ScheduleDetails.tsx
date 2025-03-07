@@ -3,6 +3,7 @@ import { GraphDataPoint, FormatAmountFunction, SortConfig, FilterPhase, Currency
 import { useWorker } from '../../hooks/useWorker';
 import { WorkerMessageType, WorkerResponse } from '../../types/worker';
 import { FixedSizeList as List } from 'react-window';
+import { calculatePhaseSummary } from '../../utils/financialCalculations';
 
 // Add global styles for custom scrollbar
 const scrollbarStyles = `
@@ -364,41 +365,10 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
     return () => window.removeEventListener('resize', setCssVars);
   }, []);
 
-  // Compute summary data for each phase
-  const { investmentSummary, retirementSummary } = useMemo(() => {
-    if (!processedData.length) {
-      return {
-        investmentSummary: null,
-        retirementSummary: null
-      };
-    }
-
-    const investmentData = processedData.filter(entry => entry.retirement === "No");
-    const retirementData = processedData.filter(entry => entry.retirement === "Yes");
-
-    const calculatePhaseSummary = (data: GraphDataPoint[]) => {
-      if (!data.length) return null;
-      
-      const firstEntry = data[0];
-      const lastEntry = data[data.length - 1];
-      
-      const totalInterest = data.reduce((sum, entry) => sum + entry.annualInterest, 0);
-      const totalInvestment = data.reduce((sum, entry) => sum + entry.annualInvestment, 0);
-      const totalWithdrawal = data.reduce((sum, entry) => sum + entry.annualWithdrawal, 0);
-      
-      return {
-        years: data.length,
-        startYear: firstEntry.year,
-        endYear: lastEntry.year,
-        startAge: firstEntry.age,
-        endAge: lastEntry.age,
-        startCapital: firstEntry.capital - firstEntry.variation,
-        endCapital: lastEntry.capital,
-        totalInterest,
-        totalInvestment,
-        totalWithdrawal
-      };
-    };
+  // Calculate phase summaries
+  const phaseSummaries = useMemo(() => {
+    const investmentData = processedData.filter(point => point.retirement === "No");
+    const retirementData = processedData.filter(point => point.retirement === "Yes");
 
     return {
       investmentSummary: calculatePhaseSummary(investmentData),
@@ -409,8 +379,8 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
   // Add console logs for debugging
   useEffect(() => {
     console.log("Processed Data:", processedData);
-    console.log("Retirement Summary:", retirementSummary);
-  }, [processedData, retirementSummary]);
+    console.log("Retirement Summary:", phaseSummaries.retirementSummary);
+  }, [processedData, phaseSummaries.retirementSummary]);
 
   const handleSort = (key: keyof GraphDataPoint) => {
     const direction = 
@@ -598,18 +568,18 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Investment Phase Summary */}
-        {investmentSummary && (
+        {phaseSummaries.investmentSummary && (
           <PhaseSummaryTile
             title="Investment Phase"
-            years={investmentSummary.years}
-            startYear={investmentSummary.startYear}
-            endYear={investmentSummary.endYear}
-            startAge={investmentSummary.startAge}
-            endAge={investmentSummary.endAge}
-            startCapital={investmentSummary.startCapital}
-            endCapital={investmentSummary.endCapital}
-            totalInterest={investmentSummary.totalInterest}
-            totalInvestment={investmentSummary.totalInvestment}
+            years={phaseSummaries.investmentSummary.years}
+            startYear={phaseSummaries.investmentSummary.startYear}
+            endYear={phaseSummaries.investmentSummary.endYear}
+            startAge={phaseSummaries.investmentSummary.startAge}
+            endAge={phaseSummaries.investmentSummary.endAge}
+            startCapital={phaseSummaries.investmentSummary.startCapital}
+            endCapital={phaseSummaries.investmentSummary.endCapital}
+            totalInterest={phaseSummaries.investmentSummary.totalInterest}
+            totalInvestment={phaseSummaries.investmentSummary.totalInvestment}
             formatAmount={formatDisplayValue}
             colorClasses={{
               bgGradient: 'bg-gradient-to-r from-blue-500 to-indigo-600',
@@ -621,18 +591,18 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
         )}
 
         {/* Retirement Phase Summary */}
-        {retirementSummary && (
+        {phaseSummaries.retirementSummary && (
           <PhaseSummaryTile
             title="Retirement Phase"
-            years={retirementSummary.years}
-            startYear={retirementSummary.startYear}
-            endYear={retirementSummary.endYear}
-            startAge={retirementSummary.startAge}
-            endAge={retirementSummary.endAge}
-            startCapital={retirementSummary.startCapital}
-            endCapital={retirementSummary.endCapital}
-            totalInterest={retirementSummary.totalInterest}
-            totalWithdrawal={retirementSummary.totalWithdrawal}
+            years={phaseSummaries.retirementSummary.years}
+            startYear={phaseSummaries.retirementSummary.startYear}
+            endYear={phaseSummaries.retirementSummary.endYear}
+            startAge={phaseSummaries.retirementSummary.startAge}
+            endAge={phaseSummaries.retirementSummary.endAge}
+            startCapital={phaseSummaries.retirementSummary.startCapital}
+            endCapital={phaseSummaries.retirementSummary.endCapital}
+            totalInterest={phaseSummaries.retirementSummary.totalInterest}
+            totalWithdrawal={phaseSummaries.retirementSummary.totalWithdrawal}
             formatAmount={formatDisplayValue}
             colorClasses={{
               bgGradient: 'bg-gradient-to-r from-purple-500 to-pink-600',

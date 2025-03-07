@@ -11,7 +11,8 @@ import {
   calculateWithdrawalAmount, 
   calculateCapitalNeeded,
   calculateInflationAdjustedValue,
-  calculateRateBasedWithdrawal
+  calculateRateBasedWithdrawal,
+  calculateEffectiveRetirementDuration
 } from '../utils/financialCalculations';
 import { colors, components, typography, spacing, cx } from '../styles/styleGuide';
 
@@ -388,12 +389,10 @@ const RetirementSimulator = () => {
       let effectiveRetirementDuration = retirementDuration;
       
       if (params.withdrawalMode === "amount" && capitalExhausted) {
-        const retirementYearIndex = graphData.findIndex(item => item.retirement === "Yes");
-        const exhaustionIndex = graphData.length - 1;
-        
-        if (retirementYearIndex !== -1) {
-          effectiveRetirementDuration = exhaustionIndex - retirementYearIndex + 1;
-        }
+        effectiveRetirementDuration = calculateEffectiveRetirementDuration(
+          graphData, 
+          retirementDuration
+        );
       }
       
       return calculateCapitalNeeded(

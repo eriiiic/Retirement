@@ -1,4 +1,4 @@
-        import * as financial from 'financial';
+import * as financial from 'financial';
 
 /**
  * Financial calculation utilities for retirement planning
@@ -266,5 +266,317 @@ export const calculateCapitalMetrics = (
     totalInvestedAmount,
     growthAmount,
     growthPercentage
+  };
+};
+
+/**
+ * Calculate delayed retirement scenario
+ * 
+ * IMPORTANT: This function is used in multiple places throughout the application to ensure
+ * consistency in delayed retirement calculations:
+ * - CapitalEvolutionChart.tsx - For visualizing different delay scenarios
+ * - RetirementDelayCard.tsx - For calculating optimal delay years and showing recommendations
+ * - useRetirementAnalyses.ts - For calculating yearDelayImpact
+ * 
+ * Any changes to this function may affect multiple components! Always ensure all components
+ * are using the same calculation methodology.
+ * 
+ * @param initialCapital Initial capital amount
+ * @param monthlyInvestment Monthly investment amount
+ * @param monthlyWithdrawal Monthly withdrawal in retirement
+ * @param retirementYear Planned retirement year
+ * @param delayYears Number of years to delay retirement
+ * @param currentYear Current simulation year
+ * @param annualReturnRate Annual return rate percentage
+ * @param inflation Annual inflation rate percentage
+ * @returns Updated capital after 1 year in the delayed scenario
+ */
+export const calculateDelayedScenario = (
+  initialCapital: number,
+  monthlyInvestment: number,
+  monthlyWithdrawal: number,
+  retirementYear: number,
+  delayYears: number,
+  currentYear: number,
+  annualReturnRate: number,
+  inflation: number
+): { 
+  capital: number;
+  investment: number;
+  withdrawal: number;
+} => {
+  let capital = initialCapital;
+  let investment = monthlyInvestment;
+  let withdrawal = monthlyWithdrawal;
+  
+  const delayedRetirementYear = retirementYear + delayYears;
+  const isRetired = currentYear >= delayedRetirementYear;
+  
+  if (!isRetired) {
+    // Investment phase: apply returns on capital + monthly investments
+    capital = calculateFutureValue(capital, annualReturnRate, 1, investment, 'monthly');
+    investment *= (1 + inflation / 100);
+  } else {
+    // Retirement phase: apply returns on capital - monthly withdrawals
+    // Note: The withdrawal is already inflation-adjusted through the progression of the simulation
+    // We don't need to explicitly adjust it for the delay period
+    capital = calculateFutureValue(capital, annualReturnRate, 1, -withdrawal, 'monthly');
+    withdrawal *= (1 + inflation / 100); // Adjust withdrawal for next year's inflation
+  }
+  
+  return { 
+    capital, 
+    investment, 
+    withdrawal 
+  };
+};
+
+/**
+ * Calculate remaining time to retirement
+ * @param retirementYear Year of planned retirement
+ * @returns Object with years, months, days, and hours or null if already retired
+ */
+export const calculateTimeToRetirement = (retirementYear: number): {
+  years: number;
+  months: number;
+  days: number;
+  hours: number;
+} | null => {
+  const now = new Date();
+  const retirementDate = new Date(retirementYear, 0, 1); // January 1st of retirement year
+  
+  const difference = retirementDate.getTime() - now.getTime();
+  
+  if (difference <= 0) return null;
+  
+  const years = Math.floor(difference / (1000 * 60 * 60 * 24 * 365));
+  const months = Math.floor((difference % (1000 * 60 * 60 * 24 * 365)) / (1000 * 60 * 60 * 24 * 30));
+  const days = Math.floor((difference % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  
+  return { years, months, days, hours };
+};
+
+/**
+ * Format large numbers for display in charts
+ * @param value Number to format
+ * @returns Formatted string with K for thousands and M for millions
+ */
+export const formatChartValue = (value: number): string => {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1)}M`;
+  } else if (value >= 1000) {
+    return `${(value / 1000).toFixed(0)}K`;
+  }
+  return value.toString();
+};
+
+/**
+ * Calculate phase summary metrics for schedule details
+ * @param data Array of data points representing a phase
+ * @returns Summary metrics for the phase
+ */
+export const calculatePhaseSummary = (data: any[]): {
+  years: number;
+  startYear: number;
+  endYear: number;
+  startAge: number;
+  endAge: number;
+  startCapital: number;
+  endCapital: number;
+  totalInterest: number;
+  totalInvestment: number;
+  totalWithdrawal: number;
+} | null => {
+  if (!data.length) return null;
+  
+  const firstEntry = data[0];
+  const lastEntry = data[data.length - 1];
+  
+  const totalInterest = data.reduce((sum, entry) => sum + entry.annualInterest, 0);
+  const totalInvestment = data.reduce((sum, entry) => sum + entry.annualInvestment, 0);
+  const totalWithdrawal = data.reduce((sum, entry) => sum + entry.annualWithdrawal, 0);
+  
+  return {
+    years: data.length,
+    startYear: firstEntry.year,
+    endYear: lastEntry.year,
+    startAge: firstEntry.age,
+    endAge: lastEntry.age,
+    startCapital: firstEntry.capital - firstEntry.variation,
+    endCapital: lastEntry.capital,
+    totalInterest,
+    totalInvestment,
+    totalWithdrawal
+  };
+};
+
+/**
+ * Find retirement start index in graph data
+ * @param graphData Array of graph data points
+ * @returns Index of the first retirement point or -1 if not found
+ */
+export const findRetirementStartIndex = (graphData: any[]): number => {
+  return graphData.findIndex(point => point.retirement === "Yes");
+};
+
+/**
+ * Find the year when capital withdrawals start decreasing
+ * @param graphData Array of graph data points
+ * @returns The year when withdrawals start decreasing or null if not applicable
+ */
+export const findCapitalWithdrawalDecreaseYear = (graphData: any[]): number | null => {
+  const retirementIndex = findRetirementStartIndex(graphData);
+  if (retirementIndex === -1) return null;
+
+  const decreasePoint = graphData.slice(retirementIndex).find((point, index, arr) => 
+    index > 0 && point.annualWithdrawal < arr[index - 1].annualWithdrawal
+  );
+  return decreasePoint?.year || null;
+};
+
+/**
+ * Calculate effective retirement duration when capital gets exhausted
+ * @param graphData Array of graph data points
+ * @param defaultDuration Default retirement duration if not exhausted
+ * @returns Effective retirement duration in years
+ */
+export const calculateEffectiveRetirementDuration = (
+  graphData: any[], 
+  defaultDuration: number
+): number => {
+  const retirementYearIndex = findRetirementStartIndex(graphData);
+  const exhaustionIndex = graphData.length - 1;
+  
+  if (retirementYearIndex !== -1) {
+    return exhaustionIndex - retirementYearIndex + 1;
+  }
+  
+  return defaultDuration;
+};
+
+/**
+ * Calculate how many years a capital will last with given withdrawal and return rates
+ * @param capital Initial capital amount
+ * @param annualWithdrawal Annual withdrawal amount
+ * @param annualReturnRate Annual return rate percentage
+ * @param conservativeMultiplier Multiplier to apply to return rate for conservative estimate (default 0.7)
+ * @param maxYears Maximum years to calculate (to prevent infinite loops)
+ * @returns Number of years the capital will last
+ */
+export const calculateYearsUntilExhaustion = (
+  capital: number,
+  annualWithdrawal: number,
+  annualReturnRate: number,
+  conservativeMultiplier: number = 0.7,
+  maxYears: number = 50
+): number => {
+  const conservativeReturnRate = annualReturnRate * conservativeMultiplier / 100;
+  let remainingCapital = capital;
+  let years = 0;
+  
+  while (remainingCapital > 0 && years < maxYears) {
+    const annualReturn = remainingCapital * conservativeReturnRate;
+    remainingCapital = remainingCapital + annualReturn - annualWithdrawal;
+    if (remainingCapital > 0) years++;
+  }
+  
+  return years;
+};
+
+/**
+ * Calculate the impact of delaying retirement by a specified number of years.
+ * This function provides a consistent calculation method to be used across all components.
+ * 
+ * @param initialCapital The initial capital at the start of simulation (NOT capital at retirement)
+ * @param monthlyInvestment Monthly investment amount
+ * @param monthlyWithdrawal Monthly withdrawal amount during retirement
+ * @param retirementYear Original planned retirement year
+ * @param delayYears Number of years to delay retirement
+ * @param annualReturnRate Annual return rate percentage
+ * @param inflation Annual inflation rate percentage
+ * @param currentYear Current year for simulation start (optional, defaults to current year)
+ * @returns Object containing capital at delayed retirement and other metrics
+ */
+export const calculateDelayedRetirementImpact = (
+  initialCapital: number,
+  monthlyInvestment: number,
+  monthlyWithdrawal: number,
+  retirementYear: number,
+  delayYears: number,
+  annualReturnRate: number,
+  inflation: number,
+  currentYear: number = new Date().getFullYear()
+): {
+  originalCapitalAtRetirement: number;
+  delayedCapitalAtRetirement: number;
+  capitalIncrease: number;
+  percentageIncrease: number;
+} => {
+  // Initialize scenarios for both original and delayed retirement
+  let originalScenario = {
+    capital: initialCapital,
+    investment: monthlyInvestment,
+    withdrawal: monthlyWithdrawal
+  };
+  
+  let delayedScenario = {
+    capital: initialCapital,
+    investment: monthlyInvestment,
+    withdrawal: monthlyWithdrawal
+  };
+  
+  // Calculate the delayed retirement year
+  const delayedRetirementYear = retirementYear + delayYears;
+  
+  // Variable to store capital at original retirement year
+  let originalCapitalAtRetirementValue = 0;
+  
+  // Simulate year by year from current year to max(retirement, delayedRetirement)
+  for (let year = currentYear; year <= delayedRetirementYear; year++) {
+    // Update original retirement scenario
+    originalScenario = calculateDelayedScenario(
+      originalScenario.capital,
+      originalScenario.investment,
+      originalScenario.withdrawal,
+      retirementYear,
+      0, // No delay for original scenario
+      year,
+      annualReturnRate,
+      inflation
+    );
+    
+    // Update delayed retirement scenario
+    delayedScenario = calculateDelayedScenario(
+      delayedScenario.capital,
+      delayedScenario.investment,
+      delayedScenario.withdrawal,
+      retirementYear,
+      delayYears,
+      year,
+      annualReturnRate,
+      inflation
+    );
+    
+    // Capture capital at original retirement year
+    if (year === retirementYear) {
+      originalCapitalAtRetirementValue = originalScenario.capital;
+    }
+  }
+  
+  // Capital at the end of delayed retirement
+  const delayedCapitalAtRetirement = delayedScenario.capital;
+  
+  // Calculate the increase in capital
+  const capitalIncrease = delayedCapitalAtRetirement - originalCapitalAtRetirementValue;
+  
+  // Calculate percentage increase
+  const percentageIncrease = (capitalIncrease / originalCapitalAtRetirementValue) * 100;
+  
+  return {
+    originalCapitalAtRetirement: originalCapitalAtRetirementValue,
+    delayedCapitalAtRetirement,
+    capitalIncrease,
+    percentageIncrease
   };
 }; 

@@ -4,7 +4,7 @@ import { useWorker } from '../../hooks/useWorker';
 import { WorkerMessageType, WorkerResponse } from '../../types/worker';
 import { colors, typography, spacing, components, cx } from '../../styles/styleGuide';
 import FormulaModal from './FormulaModal';
-import { calculateInflationAdjustedValue } from '../../utils/financialCalculations';
+import { calculateInflationAdjustedValue, calculateTimeToRetirement } from '../../utils/financialCalculations';
 
 interface ResultsSummaryProps {
   statistics: Statistics;
@@ -108,25 +108,11 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
   // Add state for countdown
   const [countdown, setCountdown] = useState<CountdownTime>({ years: 0, months: 0, days: 0, hours: 0 });
   
-  // Add effect for countdown calculation
+  // Countdown to retirement
   useEffect(() => {
-    if (!summaryState.status.isOnTrack || statistics.isCapitalExhausted) return;
-
+    // Replace the calculateTimeLeft function with the imported function
     const calculateTimeLeft = () => {
-      const now = new Date();
-      const retirementYear = statistics.calculatedRetirementStartYear;
-      const retirementDate = new Date(retirementYear, 0, 1); // January 1st of retirement year
-      
-      const difference = retirementDate.getTime() - now.getTime();
-      
-      if (difference <= 0) return null;
-      
-      const years = Math.floor(difference / (1000 * 60 * 60 * 24 * 365));
-      const months = Math.floor((difference % (1000 * 60 * 60 * 24 * 365)) / (1000 * 60 * 60 * 24 * 30));
-      const days = Math.floor((difference % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      
-      return { years, months, days, hours };
+      return calculateTimeToRetirement(statistics.calculatedRetirementStartYear);
     };
 
     const updateCountdown = () => {
@@ -140,7 +126,7 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
     const timer = setInterval(updateCountdown, 1000 * 60 * 60); // Update every hour
 
     return () => clearInterval(timer);
-  }, [summaryState.status.isOnTrack, statistics.calculatedRetirementStartYear, statistics.isCapitalExhausted]);
+  }, [statistics.calculatedRetirementStartYear]);
 
   useEffect(() => {
     // Generate graph data from statistics
