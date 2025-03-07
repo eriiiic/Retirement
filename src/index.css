@@ -2,6 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Gradient text utility */
+.text-gradient {
+  @apply bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent;
+}
+
+/* Animation for attention */
+@keyframes attention-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+}
+
+.animate-attention-pulse {
+  animation: attention-pulse 1.5s ease-in-out;
+}
+
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 1.5s ease-in-out infinite;
+}
+
+@keyframes ping-slow {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-ping-slow {
+  animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
 @layer base {
   html {
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
@@ -77,5 +140,46 @@
     animation: gradient-flow 20s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
     border-radius: 9999px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Safari-specific fixes */
+@supports (-webkit-hyphens:none) {
+  /* Fix text gradient in Safari */
+  .text-gradient {
+    background: linear-gradient(90deg, #4f46e5, #9333ea);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: #4f46e5; /* Fallback color */
+  }
+
+  /* Fix SVG display in Safari */
+  svg {
+    display: block;
+  }
+
+  /* Fix chart container in Safari */
+  .recharts-responsive-container {
+    min-height: 400px !important;
+    height: 400px !important;
+    width: 100% !important;
+  }
+
+  /* Fix overflow issues in Safari */
+  .recharts-wrapper {
+    overflow: visible !important;
+  }
+
+  /* Ensure proper z-index for tooltips */
+  .recharts-tooltip-wrapper {
+    z-index: 1000 !important;
+  }
+
+  /* Fix flex layout issues */
+  .flex {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
   }
 }
