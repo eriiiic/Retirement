@@ -6,6 +6,7 @@ import Analyses from './retirement/Analyses';
 import ScheduleDetails from './retirement/ScheduleDetails';
 import CapitalEvolutionChart from './retirement/CapitalEvolutionChart';
 import Footer from './common/Footer';
+import { SectionContainer } from './common/StyledComponents';
 import { 
   calculateFutureValue, 
   calculateWithdrawalAmount, 
@@ -15,6 +16,7 @@ import {
   calculateEffectiveRetirementDuration
 } from '../utils/financialCalculations';
 import { colors, components, typography, spacing, cx } from '../styles/styleGuide';
+import { isSafari } from '../utils/browserDetection';
 
 const RetirementSimulator = () => {
   // Initialize simulator parameters
@@ -39,6 +41,14 @@ const RetirementSimulator = () => {
   
   // Memoize currentYear to avoid multiple Date instantiations
   const currentYear = useMemo(() => new Date().getFullYear(), []);
+
+  // State for Safari detection
+  const [isSafariBrowser, setIsSafariBrowser] = useState(false);
+  
+  // Detect Safari browser on component mount
+  useEffect(() => {
+    setIsSafariBrowser(isSafari());
+  }, []);
 
   // Format numbers for display based on currency
   const formatAmount = useCallback((amount: number): string => {
@@ -545,19 +555,26 @@ const RetirementSimulator = () => {
   ]);
 
   return (
-    <div className={cx(components.container.card, "p-3 sm:p-6 max-w-6xl mx-auto mt-0")}>
-      <div className={cx("mb-6 sm:mb-8 text-center mt-0")}>
-        <div className={cx("inline-block mb-4 px-4 py-2 bg-gray-100/70 rounded-lg shadow-sm mt-0")}>
-          <h1 className={cx(typography.size["3xl"], typography.weight.bold, "text-gradient mt-0")}>
-            AI-Powered Retirement & Investment Calculator
-          </h1>
+    <div className={cx(components.container.card, spacing.responsive.sm, "max-w-6xl mx-auto mt-0")}>
+      {/* Page Header with Gradient Background */}
+      <div className="mb-6 rounded-xl overflow-hidden shadow-lg">
+        <div className={`py-8 px-6 ${isSafariBrowser ? 'bg-indigo-600' : 'bg-gradient-to-r from-indigo-600 to-purple-600'} relative`}>
+          {/* Safari-specific overlay gradient using background-image */}
+          {isSafariBrowser && (
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f46e5,#9333ea)] opacity-90"></div>
+          )}
+          <div className="mb-4 sm:mb-5 text-center relative z-10">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
+              AI-Powered Retirement & Investment Calculator
+            </h1>
+            <p className="text-gray-100 text-sm sm:text-base max-w-2xl mx-auto font-medium">
+              Leverage advanced AI algorithms to plan your financial future with precision. Calculate how compound interest grows your investments with intelligent projections.
+            </p>
+          </div>
         </div>
-        <p className={cx(typography.size.sm, "text-gray-800 max-w-2xl mx-auto mt-0", typography.weight.medium)}>
-          Leverage advanced AI algorithms to plan your financial future with precision. Calculate how compound interest grows your investments with intelligent projections.
-        </p>
       </div>
       
-      <section className={cx("pt-0 pb-3 sm:pb-6 max-w-6xl mx-auto mb-0 mt-0")}>
+      <SectionContainer>
         <ParametersSection 
           params={params}
           statistics={statistics}
@@ -565,18 +582,18 @@ const RetirementSimulator = () => {
           onParamChange={handleParamChange}
           graphData={graphData}
         />
-      </section>
+      </SectionContainer>
 
-      <section className={cx("pt-0 pb-3 sm:pb-6 max-w-6xl mx-auto mb-0 mt-0")}>
+      <SectionContainer>
         <ResultsSummary
           statistics={statistics}
           params={params}
           formatAmount={formatAmount}
           currency={params.currency}
         />
-      </section>
+      </SectionContainer>
       
-      <section className={cx("pt-0 pb-3 sm:pb-6 max-w-6xl mx-auto mb-0 mt-0")}>
+      <SectionContainer title="Capital Evolution">
         {graphData.length > 0 && statistics && (
           <CapitalEvolutionChart
             graphData={graphData}
@@ -588,9 +605,9 @@ const RetirementSimulator = () => {
             params={params}
           />
         )}
-      </section>
+      </SectionContainer>
     
-     <section className={cx("pt-0 pb-3 sm:pb-6 max-w-6xl mx-auto mb-0 mt-0")}>
+      <SectionContainer title="Retirement Analyses" subtitle="Advanced metrics and insights for your retirement plan">
         {// Temporarily disabled Analyses section
         <Analyses
           statistics={statistics}
@@ -599,15 +616,15 @@ const RetirementSimulator = () => {
           currency={params.currency}
         />
         }
-      </section>
-
-      <section className={cx("pt-0 pb-3 sm:pb-6 max-w-6xl mx-auto mb-0 mt-0")}>
-        <ScheduleDetails 
+      </SectionContainer>
+      
+      <SectionContainer title="Year-by-Year Schedule" subtitle="Detailed breakdown of your retirement journey">
+        <ScheduleDetails
           graphData={graphData}
           formatAmount={formatAmount}
           currency={params.currency}
         />
-      </section>
+      </SectionContainer>
       
       <Footer />
     </div>

@@ -247,18 +247,22 @@ const FIREPage: React.FC = () => {
       </Helmet>
 
       {/* Page Header with Gradient Background */}
-      <div className="mb-10 rounded-xl overflow-hidden shadow-lg">
-        <div className={`py-12 px-6 ${isSafariBrowser ? 'bg-indigo-600' : 'bg-gradient-to-r from-indigo-600 to-purple-600'}`}>
-          <div className="mb-6 sm:mb-8 text-center">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
+      <div className="mb-6 rounded-xl overflow-hidden shadow-lg">
+        <div className={`py-8 px-6 ${isSafariBrowser ? 'bg-indigo-600' : 'bg-gradient-to-r from-indigo-600 to-purple-600'} relative`}>
+          {/* Safari-specific overlay gradient using background-image */}
+          {isSafariBrowser && (
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f46e5,#9333ea)] opacity-90"></div>
+          )}
+          <div className="mb-4 sm:mb-5 text-center relative z-10">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
               FIRE: Financial Independence, Retire Early
             </h1>
             <p className="text-gray-100 text-sm sm:text-base max-w-2xl mx-auto font-medium">
               Learn how the FIRE movement can help you achieve financial freedom, escape the 9-5 grind,
               and design a life centered around your passions and priorities.
             </p>
-            <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-lg py-3 px-4 inline-block">
-              <nav className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm">
+            <div className="mt-4 bg-white/10 backdrop-blur-sm rounded-lg py-2 px-4 inline-block">
+              <nav className="flex flex-wrap justify-center gap-3 sm:gap-5 text-sm">
                 <a href="#what-is-fire" className="text-white hover:text-indigo-200 font-medium transition-colors">What is FIRE?</a>
                 <a href="#fire-formula" className="text-white hover:text-indigo-200 font-medium transition-colors">FIRE Formula</a>
                 <a href="#fire-types" className="text-white hover:text-indigo-200 font-medium transition-colors">Types of FIRE</a>
@@ -679,7 +683,7 @@ const FIREPage: React.FC = () => {
               className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-indigo-200 text-base font-medium rounded-md text-white hover:bg-white/10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               Explore Compound Interest
             </a>

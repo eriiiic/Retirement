@@ -52,6 +52,14 @@ const FAQItem: React.FC<FAQItemProps> = ({ question, answer }) => {
 };
 
 const CompoundInterestPage: React.FC = () => {
+  // State for Safari detection
+  const [isSafariBrowser, setIsSafariBrowser] = useState(false);
+  
+  // Detect Safari browser on component mount
+  useEffect(() => {
+    setIsSafariBrowser(isSafari());
+  }, []);
+
   // State for interactive formula example
   const [principal, setPrincipal] = useState(5000);
   const [rate, setRate] = useState(8);
@@ -202,18 +210,22 @@ const CompoundInterestPage: React.FC = () => {
       </Helmet>
 
       {/* Page Header with Gradient Background */}
-      <div className="mb-10 rounded-xl overflow-hidden shadow-lg">
-        <div className={`py-12 px-6 ${isSafari() ? 'bg-indigo-600' : 'bg-gradient-to-r from-indigo-600 to-purple-600'}`}>
-          <div className="mb-6 sm:mb-8 text-center">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
+      <div className="mb-6 rounded-xl overflow-hidden shadow-lg">
+        <div className={`py-8 px-6 ${isSafariBrowser ? 'bg-indigo-600' : 'bg-gradient-to-r from-indigo-600 to-purple-600'} relative`}>
+          {/* Safari-specific overlay gradient using background-image */}
+          {isSafariBrowser && (
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f46e5,#9333ea)] opacity-90"></div>
+          )}
+          <div className="mb-4 sm:mb-5 text-center relative z-10">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
               Understanding Compound Interest: Your Path to Financial Growth
             </h1>
             <p className="text-gray-100 text-sm sm:text-base max-w-2xl mx-auto font-medium">
               Learn how compound interest can transform your savings into substantial wealth over time, 
               and why it's considered one of the most powerful forces in financial planning.
             </p>
-            <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-lg py-3 px-4 inline-block">
-              <nav className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm">
+            <div className="mt-4 bg-white/10 backdrop-blur-sm rounded-lg py-2 px-4 inline-block">
+              <nav className="flex flex-wrap justify-center gap-3 sm:gap-5 text-sm">
                 <a href="#what-is-compound-interest" className="text-white hover:text-indigo-200 font-medium transition-colors">What is Compound Interest?</a>
                 <a href="#compound-formula" className="text-white hover:text-indigo-200 font-medium transition-colors">Formula</a>
                 <a href="#investment-growth" className="text-white hover:text-indigo-200 font-medium transition-colors">Investment Growth</a>
