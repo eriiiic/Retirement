@@ -1,10 +1,38 @@
-# Allow all web crawlers
+# robots.txt for FIRE Calculator
+
 User-agent: *
 Allow: /
+Allow: /blog/
+Allow: /calculator/
+Allow: /compound-interest/
+Allow: /resources/
+
+# Disallow development and administrative areas
+Disallow: /admin/
+Disallow: /wp-admin/
+Disallow: /dev/
+Disallow: /drafts/
+Disallow: /test/
+
+# Disallow API endpoints and data files
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /*.xml$
+Disallow: /*.txt$
+Allow: /sitemap.xml
+
+# Don't crawl source files
+Disallow: /*.js$
+Disallow: /*.ts$
+Disallow: /*.tsx$
+Disallow: /*.map$
+Disallow: /*.css$
+
+# Allow main CSS for rendering
+Allow: /static/css/*.css
 
 # Sitemap location
-Sitemap: https://FIRECalculator.ai/sitemap.xml
+Sitemap: https://firecalculator.ai/sitemap.xml
 
-# Disallow specific directories if needed
-# Disallow: /private/
-# Disallow: /api/ 
+# Crawl delay for better server performance
+Crawl-delay: 10 
