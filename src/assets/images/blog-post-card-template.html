@@ -1,0 +1,135 @@
+
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Blog Post Social Card</title>
+      <style>
+          body {
+              margin: 0;
+              padding: 0;
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          }
+          
+          .card {
+              width: 1200px;
+              height: 630px;
+              background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+              color: white;
+              padding: 40px;
+              box-sizing: border-box;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              position: relative;
+              overflow: hidden;
+          }
+          
+          .card::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              right: 0;
+              width: 400px;
+              height: 400px;
+              background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+              border-radius: 50%;
+              transform: translate(100px, -200px);
+          }
+          
+          .card::after {
+              content: '';
+              position: absolute;
+              bottom: 0;
+              left: 0;
+              width: 100%;
+              height: 50%;
+              background: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 100%);
+              z-index: 1;
+          }
+          
+          .logo {
+              font-size: 32px;
+              font-weight: bold;
+              margin-bottom: 5px;
+              position: relative;
+              z-index: 2;
+          }
+          
+          .logo span {
+              color: #93c5fd;
+          }
+          
+          .title-area {
+              position: relative;
+              z-index: 2;
+          }
+          
+          .category {
+              display: inline-block;
+              background-color: rgba(255, 255, 255, 0.2);
+              padding: 8px 16px;
+              border-radius: 4px;
+              font-size: 20px;
+              margin-bottom: 16px;
+          }
+          
+          .title {
+              font-size: 64px;
+              font-weight: bold;
+              margin-bottom: 16px;
+              line-height: 1.2;
+              text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+          }
+          
+          .description {
+              font-size: 32px;
+              opacity: 0.9;
+              max-width: 800px;
+              line-height: 1.4;
+              margin-bottom: 40px;
+              text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+          }
+          
+          .footer {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              font-size: 24px;
+              opacity: 0.8;
+              position: relative;
+              z-index: 2;
+          }
+          
+          .pattern {
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+              opacity: 0.2;
+          }
+      </style>
+  </head>
+  <body>
+      <div class="card">
+          <div class="pattern"></div>
+          <div>
+              <div class="logo">FIRE<span>Calculator.ai</span></div>
+              <div class="title-area">
+                  <div class="category">FIRE Strategy</div>
+                  <h1 class="title">Expert Financial Insights</h1>
+                  <p class="description">Strategies and tips for achieving financial independence and early retirement</p>
+              </div>
+          </div>
+          
+          <div class="footer">
+              <div class="date">March 2023</div>
+              <div class="author">By FIRECalculator Team</div>
+          </div>
+      </div>
+  </body>
+  </html>
+  
