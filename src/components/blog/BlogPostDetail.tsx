@@ -222,6 +222,9 @@ const BlogPostDetail: React.FC = () => {
         </Helmet>
       )}
       
+      {/* Add the blog styles */}
+      <style dangerouslySetInnerHTML={{ __html: blogStyles }} />
+      
       <div className="max-w-6xl mx-auto px-4 py-8 bg-gray-50">
         {/* Back Link */}
         <div className="mb-8">
