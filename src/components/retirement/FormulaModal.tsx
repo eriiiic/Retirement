@@ -242,6 +242,204 @@ const FormulaModal: React.FC<FormulaModalProps> = ({ isOpen, onClose }) => {
                 </div>
               </div>
             </div>
+            
+            {/* Present Value Formula */}
+            <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg p-4 sm:p-6 border border-pink-200 shadow-md">
+              <h3 className={cx(typography.style.sectionTitle, "text-base sm:text-lg md:text-xl mb-2 sm:mb-3 text-pink-800")}>Present Value</h3>
+              <p className="text-sm sm:text-base mb-3 sm:mb-4 text-gray-700">Determines what a future sum of money is worth in today's dollars (the discounted value).</p>
+              
+              <div className="bg-white rounded-lg p-3 sm:p-6 border border-pink-200 mb-4 sm:mb-5 shadow-inner overflow-x-auto formula-container">
+                <div className="tex-formula text-center whitespace-nowrap min-w-max">
+                  <span className="tex-variable">PV</span> <span className="tex-operator">=</span> <span className="tex-frac"><span className="tex-frac-num"><span className="tex-variable">FV</span></span><span className="tex-frac-denom"><span className="tex-operator">(</span>1 <span className="tex-operator">+</span> <span className="tex-variable">r</span><span className="tex-operator">)</span><sup className="tex-sup"><span className="tex-variable">t</span></sup></span></span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-gray-700 mb-4 sm:mb-5">
+                <div className="flex">
+                  <strong className="w-12 sm:w-14 inline-block text-pink-800"><span className="tex-variable">PV</span></strong>
+                  <span>= Present Value</span>
+                </div>
+                <div className="flex">
+                  <strong className="w-12 sm:w-14 inline-block text-pink-800"><span className="tex-variable">FV</span></strong>
+                  <span>= Future Value</span>
+                </div>
+                <div className="flex">
+                  <strong className="w-12 sm:w-14 inline-block text-pink-800"><span className="tex-variable">r</span></strong>
+                  <span>= Discount rate (annual)</span>
+                </div>
+                <div className="flex">
+                  <strong className="w-12 sm:w-14 inline-block text-pink-800"><span className="tex-variable">t</span></strong>
+                  <span>= Number of years</span>
+                </div>
+              </div>
+              
+              <div className="bg-pink-50 rounded-lg p-3 sm:p-4 border border-pink-200">
+                <h4 className="font-medium text-pink-800 mb-1 sm:mb-2 text-sm sm:text-base">Example</h4>
+                <div className="text-xs sm:text-sm text-gray-700">
+                  <p>If you need €100,000 in 15 years, with an expected annual return of 6%:</p>
+                  <div className="mt-2 grid grid-cols-2 gap-x-2 sm:gap-x-4 gap-y-1">
+                    <div className="font-medium">Future Value (FV):</div>
+                    <div>€100,000</div>
+                    <div className="font-medium">Discount Rate (r):</div>
+                    <div>6% (0.06)</div>
+                    <div className="font-medium">Time Period (t):</div>
+                    <div>15 years</div>
+                    <div className="font-medium mt-2 text-pink-800">Present Value (PV):</div>
+                    <div className="mt-2 font-bold text-pink-800">€41,727</div>
+                  </div>
+                  <p className="mt-2 text-xs text-pink-700">This means you need to invest €41,727 today to have €100,000 in 15 years at a 6% return.</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Rule of 72 */}
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 sm:p-6 border border-amber-200 shadow-md">
+              <h3 className={cx(typography.style.sectionTitle, "text-base sm:text-lg md:text-xl mb-2 sm:mb-3 text-amber-800")}>Rule of 72</h3>
+              <p className="text-sm sm:text-base mb-3 sm:mb-4 text-gray-700">A simple way to estimate how long it will take to double your money at a given rate of return.</p>
+              
+              <div className="bg-white rounded-lg p-3 sm:p-6 border border-amber-200 mb-4 sm:mb-5 shadow-inner overflow-x-auto formula-container">
+                <div className="tex-formula text-center whitespace-nowrap min-w-max">
+                  <span className="tex-variable">Years to Double</span> <span className="tex-operator">=</span> <span className="tex-frac"><span className="tex-frac-num">72</span><span className="tex-frac-denom"><span className="tex-variable">r</span></span></span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-gray-700 mb-4 sm:mb-5">
+                <div className="flex">
+                  <strong className="w-12 sm:w-14 inline-block text-amber-800"><span className="tex-variable">Years</span></strong>
+                  <span>= Years until investment doubles</span>
+                </div>
+                <div className="flex">
+                  <strong className="w-12 sm:w-14 inline-block text-amber-800"><span className="tex-variable">r</span></strong>
+                  <span>= Annual rate of return (%)</span>
+                </div>
+                <div className="flex col-span-2">
+                  <strong className="w-12 sm:w-14 inline-block text-amber-800">Note</strong>
+                  <span>The rule becomes less accurate for very high or very low rates</span>
+                </div>
+              </div>
+              
+              <div className="bg-amber-50 rounded-lg p-3 sm:p-4 border border-amber-200">
+                <h4 className="font-medium text-amber-800 mb-1 sm:mb-2 text-sm sm:text-base">Examples</h4>
+                <div className="flex flex-col gap-2">
+                  <div className="grid grid-cols-3 text-xs sm:text-sm text-gray-700">
+                    <div className="font-medium">Return Rate</div>
+                    <div className="font-medium">Calculation</div>
+                    <div className="font-medium">Years to Double</div>
+                    <div>4%</div>
+                    <div>72 ÷ 4</div>
+                    <div className="font-medium">18 years</div>
+                    <div>6%</div>
+                    <div>72 ÷ 6</div>
+                    <div className="font-medium">12 years</div>
+                    <div>8%</div>
+                    <div>72 ÷ 8</div>
+                    <div className="font-medium">9 years</div>
+                    <div>10%</div>
+                    <div>72 ÷ 10</div>
+                    <div className="font-medium">7.2 years</div>
+                  </div>
+                  <p className="text-xs text-amber-700 mt-1">This rule illustrates how important even small increases in return rate can be to long-term wealth building.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Internal Rate of Return (IRR) */}
+            <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-lg p-4 sm:p-6 border border-teal-200 shadow-md">
+              <h3 className={cx(typography.style.sectionTitle, "text-base sm:text-lg md:text-xl mb-2 sm:mb-3 text-teal-800")}>Internal Rate of Return (IRR)</h3>
+              <p className="text-sm sm:text-base mb-3 sm:mb-4 text-gray-700">Calculates the effective interest rate earned on an investment with multiple cash flows.</p>
+              
+              <div className="bg-white rounded-lg p-3 sm:p-6 border border-teal-200 mb-4 sm:mb-5 shadow-inner overflow-x-auto formula-container">
+                <div className="tex-formula text-center whitespace-nowrap min-w-max">
+                  <span className="tex-variable">0</span> <span className="tex-operator">=</span> <span className="tex-variable">CF</span><sub className="tex-sub">0</sub> <span className="tex-operator">+</span> <span className="tex-frac"><span className="tex-frac-num"><span className="tex-variable">CF</span><sub className="tex-sub">1</sub></span><span className="tex-frac-denom"><span className="tex-operator">(</span>1 <span className="tex-operator">+</span> <span className="tex-variable">IRR</span><span className="tex-operator">)</span><sup className="tex-sup">1</sup></span></span> <span className="tex-operator">+</span> <span className="tex-frac"><span className="tex-frac-num"><span className="tex-variable">CF</span><sub className="tex-sub">2</sub></span><span className="tex-frac-denom"><span className="tex-operator">(</span>1 <span className="tex-operator">+</span> <span className="tex-variable">IRR</span><span className="tex-operator">)</span><sup className="tex-sup">2</sup></span></span> <span className="tex-operator">+</span> <span className="tex-operator">...</span> <span className="tex-operator">+</span> <span className="tex-frac"><span className="tex-frac-num"><span className="tex-variable">CF</span><sub className="tex-sub">n</sub></span><span className="tex-frac-denom"><span className="tex-operator">(</span>1 <span className="tex-operator">+</span> <span className="tex-variable">IRR</span><span className="tex-operator">)</span><sup className="tex-sup">n</sup></span></span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-gray-700 mb-4 sm:mb-5">
+                <div className="flex">
+                  <strong className="w-12 sm:w-14 inline-block text-teal-800"><span className="tex-variable">IRR</span></strong>
+                  <span>= Internal Rate of Return</span>
+                </div>
+                <div className="flex">
+                  <strong className="w-12 sm:w-14 inline-block text-teal-800"><span className="tex-variable">CF</span><sub>0</sub></strong>
+                  <span>= Initial investment (negative)</span>
+                </div>
+                <div className="flex">
+                  <strong className="w-12 sm:w-14 inline-block text-teal-800"><span className="tex-variable">CF</span><sub>n</sub></strong>
+                  <span>= Cash flow at period n</span>
+                </div>
+                <div className="flex">
+                  <strong className="w-12 sm:w-14 inline-block text-teal-800"><span className="tex-variable">n</span></strong>
+                  <span>= Total number of periods</span>
+                </div>
+              </div>
+              
+              <div className="bg-teal-50 rounded-lg p-3 sm:p-4 border border-teal-200">
+                <h4 className="font-medium text-teal-800 mb-1 sm:mb-2 text-sm sm:text-base">Example</h4>
+                <div className="text-xs sm:text-sm text-gray-700">
+                  <p>For a real estate investment with these cash flows over 3 years:</p>
+                  <div className="mt-2 grid grid-cols-2 gap-x-2 sm:gap-x-4 gap-y-1">
+                    <div className="font-medium">Initial Investment (CF<sub>0</sub>):</div>
+                    <div>-€100,000</div>
+                    <div className="font-medium">Year 1 Rental Income (CF<sub>1</sub>):</div>
+                    <div>€8,000</div>
+                    <div className="font-medium">Year 2 Rental Income (CF<sub>2</sub>):</div>
+                    <div>€8,500</div>
+                    <div className="font-medium">Year 3 Income + Sale (CF<sub>3</sub>):</div>
+                    <div>€110,000</div>
+                    <div className="font-medium mt-2 text-teal-800">IRR:</div>
+                    <div className="mt-2 font-bold text-teal-800">8.56%</div>
+                  </div>
+                  <p className="mt-2 text-xs text-teal-700">The IRR of 8.56% represents the annualized rate of return for this investment, accounting for the timing of all cash flows.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Time to Retirement Formula */}
+            <div className="bg-gradient-to-br from-violet-50 to-violet-100 rounded-lg p-4 sm:p-6 border border-violet-200 shadow-md">
+              <h3 className={cx(typography.style.sectionTitle, "text-base sm:text-lg md:text-xl mb-2 sm:mb-3 text-violet-800")}>Financial Independence Timeline</h3>
+              <p className="text-sm sm:text-base mb-3 sm:mb-4 text-gray-700">Estimates years to retirement based on savings rate and investment returns.</p>
+              
+              <div className="bg-white rounded-lg p-3 sm:p-6 border border-violet-200 mb-4 sm:mb-5 shadow-inner overflow-x-auto formula-container">
+                <div className="tex-formula text-center whitespace-nowrap min-w-max">
+                  <span className="tex-variable">T</span> <span className="tex-operator">=</span> <span className="tex-frac"><span className="tex-frac-num">log<span className="tex-operator">(</span>1 <span className="tex-operator">+</span> <span className="tex-variable">SR</span> <span className="tex-operator">×</span> <span className="tex-frac"><span className="tex-frac-num">25</span><span className="tex-frac-denom">1</span></span><span className="tex-operator">)</span></span><span className="tex-frac-denom">log<span className="tex-operator">(</span>1 <span className="tex-operator">+</span> <span className="tex-variable">r</span><span className="tex-operator">)</span></span></span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-gray-700 mb-4 sm:mb-5">
+                <div className="flex">
+                  <strong className="w-12 sm:w-14 inline-block text-violet-800"><span className="tex-variable">T</span></strong>
+                  <span>= Years to financial independence</span>
+                </div>
+                <div className="flex">
+                  <strong className="w-12 sm:w-14 inline-block text-violet-800"><span className="tex-variable">SR</span></strong>
+                  <span>= Savings rate (0-1)</span>
+                </div>
+                <div className="flex">
+                  <strong className="w-12 sm:w-14 inline-block text-violet-800"><span className="tex-variable">r</span></strong>
+                  <span>= Real return rate (after inflation)</span>
+                </div>
+                <div className="flex">
+                  <strong className="w-12 sm:w-14 inline-block text-violet-800">25</strong>
+                  <span>= Inverse of 4% safe withdrawal rate</span>
+                </div>
+              </div>
+              
+              <div className="bg-violet-50 rounded-lg p-3 sm:p-4 border border-violet-200">
+                <h4 className="font-medium text-violet-800 mb-1 sm:mb-2 text-sm sm:text-base">Example</h4>
+                <div className="text-xs sm:text-sm text-gray-700">
+                  <p>With a 50% savings rate and 5% real returns:</p>
+                  <div className="mt-2 grid grid-cols-2 gap-x-2 sm:gap-x-4 gap-y-1">
+                    <div className="font-medium">Savings Rate (SR):</div>
+                    <div>50% (0.5)</div>
+                    <div className="font-medium">Real Return Rate (r):</div>
+                    <div>5% (0.05)</div>
+                    <div className="font-medium mt-2 text-violet-800">Years to FI (T):</div>
+                    <div className="mt-2 font-bold text-violet-800">16.6 years</div>
+                  </div>
+                  <p className="mt-2 text-xs text-violet-700">This formula is based on the 4% safe withdrawal rule and shows that savings rate is the most powerful factor in determining your time to financial independence.</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
