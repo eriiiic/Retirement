@@ -5,6 +5,7 @@ import Footer from '../common/Footer'; // Import Footer component
 import { Helmet } from 'react-helmet';
 import { isSafari } from '../../utils/browserDetection';
 import { useTheme } from '../../context/ThemeContext';
+import { cx } from '../../styles/styleGuide';
 
 const BlogPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -109,57 +110,98 @@ const BlogPage: React.FC = () => {
         </div>
       </div>
       
-      {/* Search and filter section */}
-      <div className={`mb-10 p-6 rounded-lg shadow-sm border ${
+      {/* Search and filter section - Compact version */}
+      <div className={cx(
+        "mb-8 rounded-xl shadow-sm",
         darkMode 
-          ? 'bg-gray-800 border-gray-700' 
-          : 'bg-gray-50 border-gray-200'
-      }`}>
-        <div className="flex flex-col lg:flex-row gap-4 mb-6">
-          <div className="relative flex-grow">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+          ? "bg-gray-900/70" 
+          : "bg-white"
+      )}>
+        {/* Card content */}
+        <div className="p-5">
+          {/* Search input with compact styling */}
+          <div className="mb-4">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                  "h-4 w-4",
+                  darkMode ? "text-gray-500" : "text-gray-400"
+                )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                id="search-input"
+                type="text"
+                placeholder="Search for articles..."
+                className={cx(
+                  "w-full pl-10 pr-4 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus:ring-2",
+                  darkMode 
+                    ? "bg-gray-800 border-transparent text-gray-200 placeholder-gray-400 focus:ring-indigo-600" 
+                    : "bg-gray-50 border-transparent text-gray-900 placeholder-gray-500 focus:ring-indigo-500"
+                )}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            <input
-              type="text"
-              placeholder="Search for articles..."
-              className={`pl-10 pr-4 py-2 border rounded-lg w-full focus:ring-indigo-500 focus:border-indigo-500 ${
-                darkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-              }`}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
           </div>
           
-          <div className="flex-shrink-0">
-            <div className={`text-xs font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Filter by topics:</div>
-            <div className="flex flex-wrap gap-2">
-              {allTopics.map((topic) => (
-                <button
-                  key={topic}
-                  onClick={() => toggleTopic(topic)}
-                  className={`text-xs px-3 py-1 rounded-full transition-colors ${
-                    selectedTopics.includes(topic)
-                      ? 'bg-indigo-600 text-white'
-                      : darkMode 
-                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  {topic}
-                </button>
-              ))}
-            </div>
+          {/* Topic filters with compact styling */}
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className={cx(
+              "text-xs font-medium",
+              darkMode ? "text-gray-400" : "text-gray-600"
+            )}>
+              Topics:
+            </span>
+            
+            {allTopics.map((topic) => (
+              <button
+                key={topic}
+                onClick={() => toggleTopic(topic)}
+                className={cx(
+                  "px-2.5 py-1 rounded-md text-xs transition-all",
+                  selectedTopics.includes(topic)
+                    ? darkMode 
+                        ? "bg-indigo-700 text-white" 
+                        : "bg-indigo-600 text-white"
+                    : darkMode 
+                        ? "bg-gray-800 text-gray-300 hover:bg-gray-700" 
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                )}
+              >
+                {topic}
+              </button>
+            ))}
+            
+            {/* Clear button when filters are applied */}
+            {(searchQuery || selectedTopics.length > 0) && (
+              <button 
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedTopics([]);
+                }}
+                className={cx(
+                  "flex items-center text-xs px-2.5 py-1 rounded-md transition-colors ml-1",
+                  darkMode
+                    ? "bg-gray-800 text-gray-400 hover:text-gray-300"
+                    : "bg-gray-100 text-gray-500 hover:text-gray-700"
+                )}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Clear
+              </button>
+            )}
           </div>
-        </div>
-        
-        <div className="text-center">
-          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            Showing {filteredPosts.length} out of {blogPosts.length} articles
+          
+          {/* Results count */}
+          <p className={cx(
+            "text-xs",
+            darkMode ? "text-gray-500" : "text-gray-500"
+          )}>
+            
           </p>
         </div>
       </div>
@@ -171,23 +213,34 @@ const BlogPage: React.FC = () => {
             <Link 
               to={`/blog/${post.id}`} 
               key={post.id}
-              className={`rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 ${
+              className={cx(
+                "rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border",
                 darkMode 
-                  ? 'bg-gray-800 border border-gray-700' 
-                  : 'bg-white border border-gray-200'
-              }`}
+                  ? "bg-gray-800 border-gray-700" 
+                  : "bg-white border-gray-200"
+              )}
             >
               <img src={post.image} alt={post.title} className="w-full h-48 object-cover" />
               <div className="p-4">
-                <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{post.title}</h3>
-                <p className={`text-sm mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{post.excerpt}</p>
+                <h3 className={cx(
+                  "text-xl font-semibold mb-2",
+                  darkMode ? "text-white" : "text-gray-900"
+                )}>{post.title}</h3>
+                <p className={cx(
+                  "text-sm mb-3",
+                  darkMode ? "text-gray-300" : "text-gray-600"
+                )}>{post.excerpt}</p>
                 <div className="flex justify-between items-center">
-                  <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatDate(post.date)}</span>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
+                  <span className={cx(
+                    "text-xs",
+                    darkMode ? "text-gray-400" : "text-gray-500"
+                  )}>{formatDate(post.date)}</span>
+                  <span className={cx(
+                    "text-xs px-2 py-1 rounded-full",
                     darkMode 
-                      ? 'bg-indigo-900 text-indigo-200' 
-                      : 'bg-indigo-100 text-indigo-800'
-                  }`}>
+                      ? "bg-indigo-900/50 text-indigo-200" 
+                      : "bg-indigo-100 text-indigo-800"
+                  )}>
                     {post.readTime} min read
                   </span>
                 </div>
@@ -195,11 +248,12 @@ const BlogPage: React.FC = () => {
                   {post.topics.slice(0, 3).map((topic, index) => (
                     <span 
                       key={`${post.id}-topic-${index}`} 
-                      className={`text-xs px-2 py-0.5 rounded-full ${
+                      className={cx(
+                        "text-xs px-2 py-0.5 rounded-full",
                         darkMode 
-                          ? 'bg-gray-700 text-gray-300' 
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
+                          ? "bg-gray-700 text-gray-300" 
+                          : "bg-gray-100 text-gray-600"
+                      )}
                     >
                       {topic}
                     </span>
@@ -209,40 +263,88 @@ const BlogPage: React.FC = () => {
             </Link>
           ))
         ) : (
-          <div className={`col-span-full text-center py-10 rounded-lg ${
-            darkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-50 text-gray-600'
-          }`}>
-            <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>No articles found</h3>
-            <p className={`mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Try adjusting your search or filter criteria
+          <div className={cx(
+            "col-span-full p-10 rounded-xl shadow-md text-center",
+            darkMode ? "bg-gray-800/70 border border-gray-700" : "bg-gray-50 border border-gray-200"
+          )}>
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className={cx(
+                "h-16 w-16 mx-auto mb-4",
+                darkMode ? "text-gray-600" : "text-gray-400"
+              )}
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={1.5} 
+                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+              />
+            </svg>
+            <h3 className={cx(
+              "text-xl font-semibold mb-3",
+              darkMode ? "text-white" : "text-gray-900"
+            )}>No articles found</h3>
+            <p className={cx(
+              "text-sm mb-6 max-w-md mx-auto",
+              darkMode ? "text-gray-400" : "text-gray-600"
+            )}>
+              We couldn't find any articles matching your search criteria. Try adjusting your search terms or removing some filters.
             </p>
-            <button
+            <button 
               onClick={() => {
                 setSearchQuery('');
                 setSelectedTopics([]);
               }}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              className={cx(
+                "px-5 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                darkMode
+                  ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                  : "bg-indigo-600 text-white hover:bg-indigo-700"
+              )}
             >
-              Reset filters
+              Reset All Filters
             </button>
           </div>
         )}
       </div>
       
       {/* Call to Action */}
-      <div className="mb-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl overflow-hidden shadow-lg">
-        <div className="px-6 py-12 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+      <div className={cx(
+        "mb-10 rounded-xl overflow-hidden shadow-lg",
+        darkMode
+          ? "bg-gradient-to-r from-indigo-900 to-purple-900 border border-indigo-800/50"
+          : "bg-gradient-to-r from-indigo-600 to-purple-600"
+      )}>
+        <div className={cx(
+          "px-6 py-12 text-center",
+          darkMode ? "backdrop-blur-sm" : ""
+        )}>
+          <h2 className={cx(
+            "text-2xl sm:text-3xl font-bold mb-4",
+            darkMode ? "text-indigo-100" : "text-white"
+          )}>
             Ready to Put Compound Interest to Work?
           </h2>
-          <p className="text-indigo-100 max-w-2xl mx-auto mb-8">
+          <p className={cx(
+            "max-w-2xl mx-auto mb-8",
+            darkMode ? "text-indigo-200/90" : "text-indigo-100"
+          )}>
             Use our retirement calculator to see how your savings can grow over time and build a personalized 
             plan for your financial future.
           </p>
           <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 justify-center items-center">
             <a 
               href="/" 
-              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+              className={cx(
+                "w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border text-base font-medium rounded-md shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
+                darkMode 
+                  ? "bg-indigo-100 text-indigo-900 border-transparent hover:bg-white" 
+                  : "bg-white text-indigo-700 border-transparent hover:bg-indigo-50"
+              )}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -251,7 +353,12 @@ const BlogPage: React.FC = () => {
             </a>
             <a 
               href="/fire" 
-              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-indigo-200 text-base font-medium rounded-md text-white hover:bg-white/10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+              className={cx(
+                "w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border text-base font-medium rounded-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
+                darkMode 
+                  ? "border-indigo-400/50 text-indigo-100 hover:bg-indigo-800/50" 
+                  : "border-indigo-200 text-white hover:bg-white/10"
+              )}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />

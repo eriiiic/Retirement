@@ -557,9 +557,9 @@ const RetirementSimulator = () => {
   ]);
 
   return (
-    <div className={cx(components.container.card, spacing.responsive.sm, "max-w-6xl mx-auto mt-0", darkMode ? 'bg-gray-900' : 'bg-gray-50')}>
+    <div className={`max-w-6xl mx-auto ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
       {/* Page Header with Gradient Background */}
-      <div className="mb-6 rounded-xl overflow-hidden shadow-lg">
+      <div className="mt-6 mb-6 rounded-xl overflow-hidden shadow-lg">
         <div className={`py-8 px-6 ${
           isSafariBrowser 
             ? darkMode ? 'bg-indigo-800' : 'bg-indigo-600' 
@@ -586,7 +586,7 @@ const RetirementSimulator = () => {
         </div>
       </div>
       
-      <SectionContainer>
+      <div className="mb-6">
         <ParametersSection 
           params={params}
           statistics={statistics}
@@ -594,19 +594,20 @@ const RetirementSimulator = () => {
           onParamChange={handleParamChange}
           graphData={graphData}
         />
-      </SectionContainer>
+      </div>
 
-      <SectionContainer>
+      <div className="mb-6">
         <ResultsSummary
           statistics={statistics}
           params={params}
           formatAmount={formatAmount}
           currency={params.currency}
         />
-      </SectionContainer>
+      </div>
       
-      <SectionContainer title="Capital Evolution">
-        {graphData.length > 0 && statistics && (
+      {/* Capital Evolution Chart */}
+      {graphData.length > 0 && statistics && (
+        <div className="mb-6">
           <CapitalEvolutionChart
             graphData={graphData}
             formatAmount={formatAmount}
@@ -616,27 +617,31 @@ const RetirementSimulator = () => {
             annualReturnRate={params.annualReturnRate}
             params={params}
           />
-        )}
-      </SectionContainer>
+        </div>
+      )}
     
-      <SectionContainer title="Retirement Analyses" subtitle="Advanced metrics and insights for your retirement plan">
-        {// Temporarily disabled Analyses section
-        <Analyses
-          statistics={statistics}
-          params={params}
-          formatAmount={formatAmount}
-          currency={params.currency}
-        />
-        }
-      </SectionContainer>
+      {/* Retirement Analyses */}
+      {statistics && (
+        <div className="mb-6">
+          <Analyses
+            statistics={statistics}
+            params={params}
+            formatAmount={formatAmount}
+            currency={params.currency}
+          />
+        </div>
+      )}
       
-      <SectionContainer title="Year-by-Year Schedule" subtitle="Detailed breakdown of your retirement journey">
-        <ScheduleDetails
-          graphData={graphData}
-          formatAmount={formatAmount}
-          currency={params.currency}
-        />
-      </SectionContainer>
+      {/* Year-by-Year Schedule */}
+      {graphData.length > 0 && (
+        <div className="mb-6">
+          <ScheduleDetails
+            graphData={graphData}
+            formatAmount={formatAmount}
+            currency={params.currency}
+          />
+        </div>
+      )}
       
       <Footer />
     </div>

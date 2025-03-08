@@ -5,6 +5,7 @@ import { SectionTitle, Card } from '../../common/StyledComponents';
 import { Metric } from '../../common/Metric';
 import { validateNumber, validatePercentage, formatPercentage as baseFormatPercentage } from '../../../utils/formatters';
 import { calculateYearsUntilExhaustion } from '../../../utils/financialCalculations';
+import { useTheme } from '../../../context/ThemeContext';
 
 interface RiskAssessmentCardProps {
   risk: 'High' | 'Medium' | 'Low';
@@ -44,10 +45,10 @@ export const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({
   params,
   formatDisplayValue
 }) => {
-  // State to track which metric is being hovered
+  const { darkMode } = useTheme();
   const [hoveredMetric, setHoveredMetric] = useState<string | null>(null);
-  // State to track tooltip position
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [showDetails, setShowDetails] = useState(false);
 
   // Handle mouse enter with position
   const handleMouseEnter = (metricType: string, e: React.MouseEvent) => {
@@ -147,43 +148,124 @@ export const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({
   );
   const newExhaustionAge = retirementStartAge + yearsWithOptimalWithdrawal;
 
+  // Calculate capital gap
+  const capitalGap = statistics.totalNeededCapital - statistics.capitalAtRetirement;
+  const gapPercentage = (capitalGap / statistics.totalNeededCapital) * 100;
+  
+  // Calculate years until exhaustion
+  const yearsUntilExhaustion = calculateYearsUntilExhaustion(
+    statistics.capitalAtRetirement,
+    params.monthlyRetirementWithdrawal * 12,
+    7 * 0.7, // Conservative return estimate
+    1,
+    100
+  );
+
   // Tooltip content for each metric
   const getTooltipContent = (metricType: string) => {
-    switch(metricType) {
+    switch (metricType) {
       case 'capitalRatio':
         return (
-          <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200 w-64 z-50">
-            <h3 className="font-semibold text-gray-800 mb-1">Capital Ratio</h3>
-            <p className="text-xs text-gray-600">The percentage of your required retirement capital that you've already saved.</p>
-            <p className="text-xs text-gray-600 mt-1">A value of 100% or higher means you have sufficient capital for your planned retirement.</p>
-            <p className="text-xs text-gray-600 mt-1">Current value: <span className="font-semibold">{formatPercentage(validCapitalRatio)}</span></p>
+          <div className={cx(
+            "p-3 rounded-lg shadow-lg border w-64",
+            darkMode 
+              ? "bg-gray-800 border-indigo-700 text-gray-200" 
+              : "bg-white border-indigo-200"
+          )}>
+            <h3 className={cx(
+              "font-semibold mb-1",
+              darkMode ? "text-gray-100" : "text-gray-800"
+            )}>Capital Adequacy Ratio</h3>
+            <p className={cx(
+              "text-xs",
+              darkMode ? "text-gray-300" : "text-gray-700"
+            )}>Represents how your current retirement capital compares to the estimated required amount. Target is 100% or higher.</p>
+            <p className={cx(
+              "text-xs mt-1",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>Formula: <span className="font-semibold">Capital / Required Capital × 100%</span></p>
+            <p className={cx(
+              "text-xs mt-1",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>Value: <span className="font-semibold">{formatPercentage(validCapitalRatio)}</span></p>
           </div>
         );
       case 'safetyMargin':
         return (
-          <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200 w-64 z-50">
-            <h3 className="font-semibold text-gray-800 mb-1">Safety Margin</h3>
-            <p className="text-xs text-gray-600">The number of years your capital will last beyond or fall short of your life expectancy.</p>
-            <p className="text-xs text-gray-600 mt-1">A positive value provides a buffer against market volatility and longevity risk.</p>
-            <p className="text-xs text-gray-600 mt-1">Current value: <span className="font-semibold">{validSafetyMargin < 0 ? '-' : '+'}{Math.abs(validSafetyMargin)} years</span></p>
+          <div className={cx(
+            "p-3 rounded-lg shadow-lg border w-64",
+            darkMode 
+              ? "bg-gray-800 border-indigo-700 text-gray-200" 
+              : "bg-white border-indigo-200"
+          )}>
+            <h3 className={cx(
+              "font-semibold mb-1",
+              darkMode ? "text-gray-100" : "text-gray-800"
+            )}>Safety Margin</h3>
+            <p className={cx(
+              "text-xs",
+              darkMode ? "text-gray-300" : "text-gray-700"
+            )}>The difference between your projected capital exhaustion age and your target age. A positive value indicates a safety buffer.</p>
+            <p className={cx(
+              "text-xs mt-1",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>Formula: <span className="font-semibold">Exhaustion Age - Target Age</span></p>
+            <p className={cx(
+              "text-xs mt-1",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>Value: <span className="font-semibold">{validSafetyMargin} years</span></p>
           </div>
         );
       case 'currentRate':
         return (
-          <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200 w-64 z-50">
-            <h3 className="font-semibold text-gray-800 mb-1">Current Rate</h3>
-            <p className="text-xs text-gray-600">Your annual withdrawal as a percentage of your total retirement capital.</p>
-            <p className="text-xs text-gray-600 mt-1">The traditional "safe" withdrawal rate is 4%. Higher rates increase the risk of depleting your capital.</p>
-            <p className="text-xs text-gray-600 mt-1">Current rate: <span className="font-semibold">{formatPercentage(withdrawalRate.current)}</span></p>
+          <div className={cx(
+            "p-3 rounded-lg shadow-lg border w-64",
+            darkMode 
+              ? "bg-gray-800 border-indigo-700 text-gray-200" 
+              : "bg-white border-indigo-200"
+          )}>
+            <h3 className={cx(
+              "font-semibold mb-1",
+              darkMode ? "text-gray-100" : "text-gray-800"
+            )}>Current Withdrawal Rate</h3>
+            <p className={cx(
+              "text-xs",
+              darkMode ? "text-gray-300" : "text-gray-700"
+            )}>The percentage of your retirement capital withdrawn annually. The 4% rule suggests this should ideally be 4% or less for sustainability.</p>
+            <p className={cx(
+              "text-xs mt-1",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>Formula: <span className="font-semibold">Annual Withdrawal / Total Capital × 100%</span></p>
+            <p className={cx(
+              "text-xs mt-1",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>Value: <span className="font-semibold">{formatPercentage(withdrawalRate.current)}</span></p>
           </div>
         );
       case 'exhaustionAge':
         return (
-          <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200 w-64 z-50">
-            <h3 className="font-semibold text-gray-800 mb-1">Exhaustion Age</h3>
-            <p className="text-xs text-gray-600">The projected age when your retirement capital will be completely depleted.</p>
-            <p className="text-xs text-gray-600 mt-1">"N/A" means your capital is projected to last your entire lifetime.</p>
-            <p className="text-xs text-gray-600 mt-1">Value: <span className="font-semibold">{statistics.isCapitalExhausted ? `Age ${statistics.exhaustionAge}` : "Capital not exhausted"}</span></p>
+          <div className={cx(
+            "p-3 rounded-lg shadow-lg border w-64",
+            darkMode 
+              ? "bg-gray-800 border-indigo-700 text-gray-200" 
+              : "bg-white border-indigo-200"
+          )}>
+            <h3 className={cx(
+              "font-semibold mb-1",
+              darkMode ? "text-gray-100" : "text-gray-800"
+            )}>Capital Exhaustion Age</h3>
+            <p className={cx(
+              "text-xs",
+              darkMode ? "text-gray-300" : "text-gray-700"
+            )}>The estimated age at which your retirement capital will be depleted based on your current withdrawal rate and investment returns.</p>
+            <p className={cx(
+              "text-xs mt-1",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>"N/A" means your capital is projected to last your entire lifetime.</p>
+            <p className={cx(
+              "text-xs mt-1",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>Value: <span className="font-semibold">{statistics.isCapitalExhausted ? `Age ${statistics.exhaustionAge}` : "Capital not exhausted"}</span></p>
           </div>
         );
       default:
@@ -196,41 +278,54 @@ export const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({
       <Card className="overflow-hidden lg:col-span-2">
         <div className={cx(
           "px-3 sm:px-4 py-2 sm:py-3 border-b flex items-center justify-between",
-          risk === 'High' ? "bg-gradient-to-r from-red-50 to-red-100 border-red-200" : 
-          risk === 'Medium' ? "bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200" : 
-          "bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200"
+          darkMode 
+            ? risk === 'Low' ? "bg-green-900/50 border-green-700" : "bg-red-900/50 border-red-700" 
+            : risk === 'Low' ? "bg-gradient-to-r from-green-50 to-green-100 border-green-200" : "bg-gradient-to-r from-red-50 to-red-100 border-red-200"
         )}>
           <div className="flex items-center">
-            <div className={cx(
-              "w-4 h-4 rounded-full mr-2",
-              risk === 'High' ? "bg-red-500" : 
-              risk === 'Medium' ? "bg-yellow-500" : 
-              "bg-emerald-500"
-            )}></div>
-            <SectionTitle className={cx(
-              risk === 'High' ? "text-red-800" : 
-              risk === 'Medium' ? "text-yellow-800" : 
-              "text-emerald-800",
-              "mb-0 text-sm sm:text-base"
-            )}>
-              Risk Assessment
-            </SectionTitle>
+            {risk === 'Low' ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                "h-4 w-4 mr-2",
+                darkMode ? "text-green-400" : "text-green-600"
+              )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                "h-4 w-4 mr-2",
+                darkMode ? "text-red-400" : "text-red-600"
+              )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            )}
+            <h3 className={cx(
+              "mb-0 text-sm sm:text-base font-semibold",
+              darkMode 
+                ? risk === 'Low' ? "text-green-300" : "text-red-300" 
+                : risk === 'Low' ? "text-green-800" : "text-red-800"
+            )}>Risk Assessment</h3>
           </div>
           <div className={cx(
             "text-xs font-medium px-1.5 py-0.5 rounded-full",
-            risk === 'High' ? "bg-red-100 text-red-700" : 
-            risk === 'Medium' ? "bg-yellow-100 text-yellow-700" : 
-            "bg-green-100 text-green-700"
+            darkMode ? (
+              risk === 'High' ? "bg-red-900/70 text-red-300" : 
+              risk === 'Medium' ? "bg-yellow-900/70 text-yellow-300" : 
+              "bg-green-900/70 text-green-300"
+            ) : (
+              risk === 'High' ? "bg-red-100 text-red-700" : 
+              risk === 'Medium' ? "bg-yellow-100 text-yellow-700" : 
+              "bg-green-100 text-green-700"
+            )
           )}>
-            {risk} Risk
+            {risk === 'High' ? 'High Risk' : risk === 'Medium' ? 'Medium Risk' : 'Low Risk'}
           </div>
         </div>
         <div className="p-2 sm:p-3">
           <div className={cx(
             "p-2.5 rounded-lg border mb-2.5 text-sm",
-            risk === 'High' ? "bg-red-50 text-red-800 border-red-100" : 
-            risk === 'Medium' ? "bg-yellow-50 text-yellow-800 border-yellow-100" : 
-            "bg-emerald-50 text-emerald-800 border-emerald-100"
+            darkMode 
+              ? risk === 'Low' ? "bg-green-900/40 border-green-700" : "bg-red-900/40 border-red-700" 
+              : risk === 'Low' ? "bg-green-100/70 border-green-200" : "bg-red-100/70 border-red-200"
           )}>
             {risk === 'High' ? (
               <>
@@ -242,7 +337,10 @@ export const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({
               </>
             ) : (
               <>
-                <span className="font-semibold">Low Risk:</span> Your plan is well-balanced with a sustainable withdrawal rate of {formatPercentage(validWithdrawalRate)}. Capital projected to last until age {newExhaustionAge}, providing a significant buffer for longevity and market fluctuations.
+                <span className={cx(
+                  "font-semibold",
+                  darkMode ? "text-green-400" : "text-green-700"
+                )}>Low Risk:</span> Your plan is well-balanced with a sustainable withdrawal rate of {formatPercentage(validWithdrawalRate)}. Capital projected to last until age {newExhaustionAge}, providing a significant buffer for longevity and market fluctuations.
               </>
             )}
           </div>
@@ -259,7 +357,11 @@ export const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({
                 trend={validCapitalRatio >= 100 ? 'up' : 'down'}
                 className={cx(
                   "p-2 rounded-lg border cursor-help",
-                  validCapitalRatio >= 100 ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100"
+                  darkMode ? (
+                    validCapitalRatio >= 100 ? "bg-green-900/30 border-green-700" : "bg-red-900/30 border-red-700"
+                  ) : (
+                    validCapitalRatio >= 100 ? "bg-green-100/70 border-green-200" : "bg-red-100/70 border-red-200"
+                  )
                 )}
               />
             </div>
@@ -275,9 +377,15 @@ export const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({
                 trend={validSafetyMargin >= 5 ? 'up' : validSafetyMargin >= 0 ? 'neutral' : 'down'}
                 className={cx(
                   "p-2 rounded-lg border cursor-help",
-                  validSafetyMargin >= 5 ? "bg-green-50 border-green-100" : 
-                  validSafetyMargin >= 0 ? "bg-blue-50 border-blue-100" : 
-                  "bg-red-50 border-red-100"
+                  darkMode ? (
+                    validSafetyMargin >= 5 ? "bg-green-900/30 border-green-700" : 
+                    validSafetyMargin >= 0 ? "bg-blue-900/30 border-blue-700" : 
+                    "bg-red-900/30 border-red-700"
+                  ) : (
+                    validSafetyMargin >= 5 ? "bg-green-100/70 border-green-200" : 
+                    validSafetyMargin >= 0 ? "bg-blue-100/70 border-blue-200" : 
+                    "bg-red-100/70 border-red-200"
+                  )
                 )}
               />
             </div>
@@ -293,7 +401,11 @@ export const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({
                 trend={withdrawalRate.current <= 4 ? 'up' : 'down'}
                 className={cx(
                   "p-2 rounded-lg border cursor-help",
-                  withdrawalRate.current <= 4 ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100"
+                  darkMode ? (
+                    withdrawalRate.current <= 4 ? "bg-green-900/30 border-green-700" : "bg-red-900/30 border-red-700"
+                  ) : (
+                    withdrawalRate.current <= 4 ? "bg-green-100/70 border-green-200" : "bg-red-100/70 border-red-200"
+                  )
                 )}
               />
             </div>
@@ -306,98 +418,199 @@ export const RiskAssessmentCard: React.FC<RiskAssessmentCardProps> = ({
               <Metric
                 label="Exhaustion Age"
                 value={statistics.isCapitalExhausted ? `${statistics.exhaustionAge}` : "N/A"}
-                trend={!statistics.isCapitalExhausted ? 'up' : statistics.exhaustionAge >= 90 ? 'neutral' : 'down'}
+                trend={statistics.isCapitalExhausted ? 'down' : 'up'}
                 className={cx(
                   "p-2 rounded-lg border cursor-help",
-                  !statistics.isCapitalExhausted ? "bg-green-50 border-green-100" : 
-                  statistics.exhaustionAge >= 90 ? "bg-blue-50 border-blue-100" : 
-                  "bg-red-50 border-red-100"
+                  darkMode ? (
+                    statistics.isCapitalExhausted ? "bg-red-900/30 border-red-700" : "bg-green-900/30 border-green-700"
+                  ) : (
+                    statistics.isCapitalExhausted ? "bg-red-100/70 border-red-200" : "bg-green-100/70 border-green-200"
+                  )
                 )}
               />
             </div>
           </div>
           
-          <div className="bg-gradient-to-r from-red-500/10 to-emerald-500/10 rounded-lg p-2.5 border border-gray-200 mt-3">
+          <div className={cx(
+            "mt-4 p-3 rounded-lg border",
+            darkMode 
+              ? risk === 'Low' ? "bg-green-900/40 border-green-700" : "bg-red-900/40 border-red-700" 
+              : risk === 'Low' ? "bg-green-100/70 border-green-200" : "bg-red-100/70 border-red-200"
+          )}>
             <div className="text-xs space-y-2">
               <div>
-                <div className="text-xs font-medium text-red-800 mb-1 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                <div className={cx(
+                  "text-xs font-medium mb-1 flex items-center",
+                  darkMode ? (
+                    risk === 'Low' ? "text-green-300" : risk === 'Medium' ? "text-yellow-300" : "text-red-300" 
+                  ) : (
+                    risk === 'Low' ? "text-green-700" : risk === 'Medium' ? "text-yellow-700" : "text-red-700"
+                  )
+                )}>
+                  {risk === 'Low' ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  )}
                   Risk Factors Analysis
                 </div>
-                <div className="text-gray-600">
+                
+                <div className={cx(
+                  "text-xs",
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                )}>
                   {risk === 'High' ? (
                     <>
-                      Your retirement plan faces several critical risk factors:
-                      <ul className="mt-1 list-disc pl-4 text-xs space-y-1">
-                        <li><span className="font-medium">Withdrawal rate:</span> {formatPercentage(validWithdrawalRate)} exceeds the 4% safe threshold, significantly increasing depletion risk</li>
-                        <li><span className="font-medium">Capital adequacy:</span> Current savings at {formatPercentage(validCapitalRatio)} of required amount</li>
-                        <li><span className="font-medium">Longevity risk:</span> Funds projected to deplete by age {statistics.exhaustionAge}</li>
+                      <span className={cx(
+                        "font-semibold flex items-center",
+                        darkMode ? "text-red-400" : "text-red-600"
+                      )}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Critical Risk Factors Detected
+                      </span>
+                      <ul className={cx(
+                        "mt-2 list-disc pl-4 text-xs space-y-1.5",
+                        darkMode ? "text-gray-300" : "text-gray-700"
+                      )}>
+                        {withdrawalRate.current > 5 && (
+                          <li>Withdrawal rate of <span className={cx(
+                            "font-medium",
+                            darkMode ? "text-red-400" : "text-red-600"
+                          )}>{formatPercentage(withdrawalRate.current)}</span> exceeds safe thresholds</li>
+                        )}
+                        {validCapitalRatio < 0.8 && (
+                          <li>Capital adequacy ratio: <span className={cx(
+                            "font-medium",
+                            darkMode ? "text-red-400" : "text-red-600"
+                          )}>{Math.round(validCapitalRatio * 100)}%</span> (below minimum target of 100%)</li>
+                        )}
+                        {targetAge - retirementStartAge > 80 - retirementStartAge + 5 && (
+                          <li>Longevity risk: Your target age exceeds average life expectancy by <span className={cx(
+                            "font-medium",
+                            darkMode ? "text-red-400" : "text-red-600"
+                          )}>{targetAge - 80}</span> years</li>
+                        )}
                       </ul>
+                      <div className={cx(
+                        "pl-3 py-1.5 mt-2 rounded-sm border-l-4",
+                        darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
+                      )}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                          "h-3.5 w-3.5 inline mr-1", 
+                          darkMode ? "text-blue-400" : "text-blue-700"
+                        )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className={cx(
+                          "font-medium",
+                          darkMode ? "text-blue-300" : "text-blue-800"
+                        )}>Critical Action:</span> 
+                        <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
+                          Implement recommended strategy adjustments immediately
+                        </span>
+                      </div>
                     </>
                   ) : risk === 'Medium' ? (
                     <>
-                      Your plan requires strategic adjustments:
-                      <ul className="mt-1 list-disc pl-4 text-xs space-y-1">
-                        <li><span className="font-medium">Current status:</span> {validWithdrawalRate <= 4 ? 
-                          `Withdrawal rate of ${formatPercentage(validWithdrawalRate)} is near threshold` : 
-                          `Withdrawal rate of ${formatPercentage(validWithdrawalRate)} exceeds safe threshold`}</li>
-                        <li><span className="font-medium">Opportunity:</span> {validCapitalRatio < 90 ? 
-                          `Increasing savings by ${formatPercentage(100 - validCapitalRatio)} would reach optimal target` :
-                          'Building additional safety margin would strengthen plan'}</li>
-                        <li><span className="font-medium">Key action:</span> {statistics.isCapitalExhausted ? 
-                          `Consider part-time work to extend beyond age ${statistics.exhaustionAge}` : 
-                          'Review investment mix to protect against market volatility'}</li>
+                      <span className={cx(
+                        "font-semibold flex items-center",
+                        darkMode ? "text-yellow-400" : "text-yellow-600"
+                      )}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        Moderate Risk Factors Present
+                      </span>
+                      <ul className={cx(
+                        "mt-2 list-disc pl-4 text-xs space-y-1.5",
+                        darkMode ? "text-gray-300" : "text-gray-700"
+                      )}>
+                        {withdrawalRate.current > 4 && (
+                          <li>Withdrawal rate of <span className={cx(
+                            "font-medium",
+                            darkMode ? "text-yellow-400" : "text-yellow-600"
+                          )}>{formatPercentage(withdrawalRate.current)}</span> is above ideal thresholds</li>
+                        )}
+                        {validCapitalRatio < 1 && validCapitalRatio >= 0.8 && (
+                          <li>Capital adequacy ratio: <span className={cx(
+                            "font-medium",
+                            darkMode ? "text-yellow-400" : "text-yellow-600"
+                          )}>{Math.round(validCapitalRatio * 100)}%</span> (approaching minimum target)</li>
+                        )}
+                        {targetAge - retirementStartAge > 80 - retirementStartAge && (
+                          <li>Moderate longevity risk: Planning beyond average life expectancy</li>
+                        )}
                       </ul>
-                      <div className="mt-2 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-                        <span className="text-amber-700 font-medium text-[11px]">
-                          💡 Recommended: {validWithdrawalRate > 4 ? 
-                            `Reduce withdrawals by ${formatPercentage(validWithdrawalRate - 4)} or supplement with part-time income` : 
-                            `Build a ${formatPercentage(Math.min(15, (100 - validCapitalRatio)))} safety buffer through additional savings`}
+                      <div className={cx(
+                        "pl-3 py-1.5 mt-2 rounded-sm border-l-4",
+                        darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
+                      )}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                          "h-3.5 w-3.5 inline mr-1", 
+                          darkMode ? "text-blue-400" : "text-blue-700"
+                        )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className={cx(
+                          "font-medium",
+                          darkMode ? "text-blue-300" : "text-blue-800"
+                        )}>Recommended Action:</span> 
+                        <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
+                          Address key risk factors within the next 3-6 months
                         </span>
                       </div>
                     </>
                   ) : (
                     <>
-                      Your retirement plan is well-positioned with low risk:
-                      <ul className="mt-1 list-disc pl-4 text-xs space-y-1">
-                        <li><span className="font-medium">Withdrawal rate:</span> {formatPercentage(validWithdrawalRate)} is within safe parameters</li>
-                        <li><span className="font-medium">Capital adequacy:</span> Current savings at {formatPercentage(validCapitalRatio)} of required amount</li>
-                        <li><span className="font-medium">Longevity risk:</span> Funds projected to last your entire lifetime</li>
+                      <span className={cx(
+                        "font-semibold flex items-center",
+                        darkMode ? "text-green-400" : "text-green-600"
+                      )}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Your Risk Profile is Well-Managed
+                      </span>
+                      <ul className={cx(
+                        "mt-2 list-disc pl-4 text-xs space-y-1.5",
+                        darkMode ? "text-gray-300" : "text-gray-700"
+                      )}>
+                        <li>Withdrawal rate of <span className={cx(
+                          "font-medium",
+                          darkMode ? "text-green-400" : "text-green-600"
+                        )}>{formatPercentage(withdrawalRate.current)}</span> is within safe parameters</li>
+                        <li>Capital adequacy ratio: <span className={cx(
+                          "font-medium",
+                          darkMode ? "text-green-400" : "text-green-600"
+                        )}>{Math.round(validCapitalRatio * 100)}%</span> (exceeds target)</li>
+                        <li>Your retirement plan includes appropriate safety margins</li>
                       </ul>
+                      <div className={cx(
+                        "pl-3 py-1.5 mt-2 rounded-sm border-l-4",
+                        darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
+                      )}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                          "h-3.5 w-3.5 inline mr-1", 
+                          darkMode ? "text-blue-400" : "text-blue-700"
+                        )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className={cx(
+                          "font-medium",
+                          darkMode ? "text-blue-300" : "text-blue-800"
+                        )}>Action:</span> 
+                        <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
+                          Continue current strategy with regular quarterly reviews
+                        </span>
+                      </div>
                     </>
                   )}
-                </div>
-              </div>
-              
-              <div className="border-t border-gray-200 pt-2">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="text-xs text-gray-600">Overall risk assessment</div>
-                  <div className={cx(
-                    "text-xs font-semibold",
-                    risk === 'High' ? "text-red-700" : 
-                    risk === 'Medium' ? "text-yellow-700" : 
-                    "text-green-700"
-                  )}>
-                    {risk === 'High' ? 'Critical attention needed' : risk === 'Medium' ? 'Moderate adjustments recommended' : 'Well-balanced plan'}
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-gray-600">Primary concern</div>
-                  <div className={cx(
-                    "text-xs font-semibold",
-                    risk === 'High' ? "text-red-700" : 
-                    risk === 'Medium' ? "text-yellow-700" : 
-                    "text-green-700"
-                  )}>
-                    {risk === 'High' ? 
-                      (validWithdrawalRate > 4 ? 'Excessive withdrawal rate' : 'Insufficient capital') : 
-                      risk === 'Medium' ? 
-                        (statistics.isCapitalExhausted ? 'Potential fund depletion' : 'Market volatility exposure') : 
-                        'Maintaining current balance'}
-                  </div>
                 </div>
               </div>
             </div>

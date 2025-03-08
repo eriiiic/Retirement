@@ -21,6 +21,8 @@ import RangeInput from '../common/RangeInput';
 import NumberInput from '../common/NumberInput';
 import { isSafari } from '../../utils/browserDetection'; // Import isSafari utility
 import Footer from '../common/Footer'; // Import Footer component
+import { cx } from '../../styles/styleGuide';
+import { useTheme } from '../../context/ThemeContext';
 
 // FAQ Item Component
 interface FAQItemProps {
@@ -30,25 +32,43 @@ interface FAQItemProps {
 
 const FAQItem: React.FC<FAQItemProps> = ({ question, answer }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { darkMode } = useTheme();
 
   return (
-    <div className="border-b border-gray-200 py-5">
+    <div className={cx(
+      "border-b py-5",
+      darkMode ? "border-gray-700" : "border-gray-200"
+    )}>
       <button
         className="flex justify-between items-center w-full text-left focus:outline-none group transition-all"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <h3 className="text-lg font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
+        <h3 className={cx(
+          "text-lg font-medium group-hover:text-indigo-600 transition-colors",
+          darkMode ? "text-gray-100" : "text-gray-900"
+        )}>
           {question}
         </h3>
-        <span className={`ml-6 flex-shrink-0 p-1.5 rounded-full bg-gray-100 group-hover:bg-indigo-100 transition-all ${isOpen ? 'transform rotate-180' : ''}`}>
+        <span className={cx(
+          "ml-6 flex-shrink-0 p-1.5 rounded-full transition-all",
+          isOpen ? "transform rotate-180" : "",
+          darkMode 
+            ? "bg-gray-700 group-hover:bg-indigo-900/50" 
+            : "bg-gray-100 group-hover:bg-indigo-100"
+        )}>
           <svg className="h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
         </span>
       </button>
       {isOpen && (
-        <div className="mt-4 prose prose-indigo">
-          <div className="text-base text-gray-700 bg-gray-50 p-5 rounded-lg border border-indigo-100">
+        <div className="mt-4">
+          <div className={cx(
+            "text-base p-5 rounded-lg border",
+            darkMode 
+              ? "bg-gray-800 border-gray-700 text-gray-300" 
+              : "bg-gray-50 border-indigo-100 text-gray-700"
+          )}>
             {answer}
           </div>
         </div>
@@ -65,22 +85,29 @@ interface SectionHeaderProps {
   className?: string;
 }
 
-const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, className = '' }) => (
-  <h2 id={id} className={`text-2xl font-bold text-gray-900 mb-4 flex items-center ${className}`}>
-    <span className="bg-indigo-600 text-white p-2 rounded-full mr-3">
-      {icon}
-    </span>
-    {title}
-  </h2>
-);
+const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, className = '' }) => {
+  const { darkMode } = useTheme();
+  
+  return (
+    <h2 id={id} className={cx(
+      "text-2xl font-bold mb-4 flex items-center",
+      darkMode ? "text-white" : "text-gray-900",
+      className
+    )}>
+      <span className="bg-indigo-600 text-white p-2 rounded-full mr-3 flex items-center justify-center">
+        {icon}
+      </span>
+      {title}
+    </h2>
+  );
+};
 
-// Safari detection utility - REMOVED - now in browserDetection.ts
-// const isSafari = () => {
-//   const ua = navigator.userAgent.toLowerCase();
-//   return ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1;
-// };
+
 
 const FIREPage: React.FC = () => {
+  const { darkMode } = useTheme();
+  const [showCalculatorModal, setShowCalculatorModal] = useState(false);
+  const [selectedTab, setSelectedTab] = useState(0);
   // State for Safari detection
   const [isSafariBrowser, setIsSafariBrowser] = useState(false);
   
@@ -218,40 +245,53 @@ const FIREPage: React.FC = () => {
   ], []);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 bg-gray-50">
+    <div className={cx(
+      "max-w-6xl mx-auto px-4 py-8",
+      darkMode ? "bg-gray-900" : "bg-gray-50"
+    )}>
       <Helmet>
-        <title>FIRE: Financial Independence, Retire Early | Ultimate Guide</title>
+        <title>FIRE: Financial Independence, Retire Early | Retirement Planning Guide</title>
         <meta name="description" content="Learn about the FIRE movement (Financial Independence, Retire Early) and how to achieve financial freedom through smart investing and intentional spending." />
         
-        {/* Open Graph meta tags */}
+        {/* Open Graph / Facebook */}
         <meta property="og:type" content="article" />
         <meta property="og:title" content="FIRE: Financial Independence, Retire Early | Ultimate Guide" />
         <meta property="og:description" content="Learn how to achieve financial independence and retire decades earlier with FIRE strategies, calculators, and step-by-step guidance." />
-        <meta property="og:image" content="https://FIRECalculator.ai/blog-images/fire-og-image.png" />
-        <meta property="og:url" content="https://FIRECalculator.ai/fire" />
-        <meta property="og:site_name" content="FIRECalculator.ai" />
+        <meta property="og:image" content="https://yourdomain.com/images/fire-social-card.jpg" />
+        <meta property="og:url" content="https://yourdomain.com/fire" />
+        <meta property="og:site_name" content="Retirement Planner" />
         
-        {/* Twitter Card meta tags */}
+        {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="FIRE: Financial Independence, Retire Early | Ultimate Guide" />
         <meta name="twitter:description" content="Learn how to achieve financial independence and retire decades earlier with FIRE strategies, calculators, and step-by-step guidance." />
-        <meta name="twitter:image" content="https://FIRECalculator.ai/blog-images/fire-twitter-card.png" />
+        <meta name="twitter:image" content="https://yourdomain.com/images/fire-social-card.jpg" />
         
-        {/* LinkedIn meta tags */}
+        {/* LinkedIn */}
         <meta property="linkedin:title" content="FIRE: Financial Independence, Retire Early | Ultimate Guide" />
         <meta property="linkedin:description" content="Learn how to achieve financial independence and retire decades earlier with FIRE strategies, calculators, and step-by-step guidance." />
-        <meta property="linkedin:image" content="https://FIRECalculator.ai/blog-images/fire-og-image.png" />
+        <meta property="linkedin:image" content="https://yourdomain.com/images/fire-social-card.jpg" />
         
         {/* Canonical URL */}
-        <link rel="canonical" href="https://FIRECalculator.ai/fire" />
+        <link rel="canonical" href="https://yourdomain.com/fire" />
       </Helmet>
 
       {/* Page Header with Gradient Background */}
       <div className="mb-6 rounded-xl overflow-hidden shadow-lg">
-        <div className={`py-8 px-6 ${isSafariBrowser ? 'bg-indigo-600' : 'bg-gradient-to-r from-indigo-600 to-purple-600'} relative`}>
+        <div className={cx(
+          "py-8 px-6 relative",
+          isSafariBrowser 
+            ? darkMode ? "bg-indigo-800" : "bg-indigo-600" 
+            : "bg-gradient-to-r from-indigo-600 to-purple-600"
+        )}>
           {/* Safari-specific overlay gradient using background-image */}
           {isSafariBrowser && (
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f46e5,#9333ea)] opacity-90"></div>
+            <div className={cx(
+              "absolute inset-0 opacity-90",
+              darkMode 
+                ? "bg-[linear-gradient(to_right,#3730a3,#6b21a8)]" 
+                : "bg-[linear-gradient(to_right,#4f46e5,#9333ea)]"
+            )}></div>
           )}
           <div className="mb-4 sm:mb-5 text-center relative z-10">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
@@ -261,7 +301,10 @@ const FIREPage: React.FC = () => {
               Learn how the FIRE movement can help you achieve financial freedom, escape the 9-5 grind,
               and design a life centered around your passions and priorities.
             </p>
-            <div className="mt-4 bg-white/10 backdrop-blur-sm rounded-lg py-2 px-4 inline-block">
+            <div className={cx(
+              "mt-4 backdrop-blur-sm rounded-lg py-2 px-4 inline-block",
+              darkMode ? "bg-black/20" : "bg-white/10"
+            )}>
               <nav className="flex flex-wrap justify-center gap-3 sm:gap-5 text-sm">
                 <a href="#what-is-fire" className="text-white hover:text-indigo-200 font-medium transition-colors">What is FIRE?</a>
                 <a href="#fire-formula" className="text-white hover:text-indigo-200 font-medium transition-colors">FIRE Formula</a>
@@ -273,9 +316,19 @@ const FIREPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Introduction Section */}
-      <Section className="mb-10 bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="prose prose-lg max-w-none px-6 py-8">
+      {/* What is FIRE Section */}
+      <Section className={cx(
+        "mb-10", 
+        darkMode 
+          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+          : "bg-gradient-to-br from-white to-indigo-50"
+      )}>
+        <div className={cx(
+          "prose prose-lg max-w-none",
+          darkMode
+            ? "prose-invert prose-headings:text-gray-100 prose-p:text-gray-300 prose-strong:text-white prose-a:text-indigo-400"
+            : ""
+        )}>
           <SectionHeader 
             id="what-is-fire" 
             title="What is FIRE?" 
@@ -288,39 +341,86 @@ const FIREPage: React.FC = () => {
           />
           
           <div className="space-y-6">
-            <p className="text-gray-700 text-lg leading-relaxed">
-              <span className="font-semibold text-indigo-600">FIRE</span> stands for <span className="font-semibold">Financial Independence, Retire Early</span>. It's a movement focused on extreme savings and investments that allow people to retire much earlier than traditional budgets and retirement plans would allow.
+            <p className={cx(
+              "text-lg leading-relaxed",
+              darkMode ? "text-gray-300" : "text-gray-700"
+            )}>
+              <span className={cx(
+                "font-semibold",
+                darkMode ? "text-indigo-400" : "text-indigo-600"
+              )}>FIRE</span> stands for <span className="font-semibold">Financial Independence, Retire Early</span>. It's a movement focused on extreme savings and investments that allow people to retire much earlier than traditional budgets and retirement plans would allow.
             </p>
             
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border border-indigo-100">
-              <p className="text-gray-800 italic">
+            <div className={cx(
+              "p-6 rounded-lg border",
+              darkMode 
+                ? "bg-gradient-to-r from-indigo-900/30 to-purple-900/30 border-indigo-800/50" 
+                : "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-100"
+            )}>
+              <p className={cx(
+                "italic",
+                darkMode ? "text-gray-300" : "text-gray-800"
+              )}>
                 "Financial independence means having enough income to pay your living expenses for the rest of your life without having to work full-time. Retire early means having the freedom to pursue your dreams and ambitions whenever you want."
               </p>
             </div>
 
-            <p className="text-gray-700 text-lg leading-relaxed">
+            <p className={cx(
+              "text-lg leading-relaxed",
+              darkMode ? "text-gray-300" : "text-gray-700"
+            )}>
               The FIRE movement gained popularity in the 2010s, inspired by the 1992 book <span className="italic">"Your Money or Your Life"</span> by Vicki Robin and Joe Dominguez, as well as the 2010 book <span className="italic">"Early Retirement Extreme"</span> by Jacob Lund Fisker.
             </p>
 
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <h3 className="text-lg font-semibold text-blue-900 mb-2">The Two Core Pillars of FIRE</h3>
+            <div className={cx(
+              "p-4 rounded-lg border",
+              darkMode 
+                ? "bg-blue-900/30 border-blue-800 text-blue-100" 
+                : "bg-blue-50 border-blue-100 text-blue-800"
+            )}>
+              <h3 className={cx(
+                "text-lg font-semibold mb-2",
+                darkMode ? "text-blue-300" : "text-blue-900"
+              )}>The Two Core Pillars of FIRE</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white p-4 rounded-lg shadow-sm">
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
-                    <span className="text-indigo-600 mr-2">FI</span>
+                <div className={cx(
+                  "p-4 rounded-lg shadow-sm",
+                  darkMode ? "bg-gray-750 border border-gray-700" : "bg-white"
+                )}>
+                  <h4 className={cx(
+                    "font-semibold mb-2 flex items-center",
+                    darkMode ? "text-gray-100" : "text-gray-900"
+                  )}>
+                    <span className={cx(
+                      "mr-2",
+                      darkMode ? "text-indigo-400" : "text-indigo-600"
+                    )}>FI</span>
                     Financial Independence
                   </h4>
-                  <p className="text-gray-700">
+                  <p className={cx(
+                    darkMode ? "text-gray-300" : "text-gray-700"
+                  )}>
                     Having sufficient personal wealth to live without needing to work actively 
                     for basic necessities. Your assets generate enough passive income to cover your living expenses.
                   </p>
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow-sm">
-                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
-                    <span className="text-green-600 mr-2">RE</span>
+                <div className={cx(
+                  "p-4 rounded-lg shadow-sm",
+                  darkMode ? "bg-gray-750 border border-gray-700" : "bg-white"
+                )}>
+                  <h4 className={cx(
+                    "font-semibold mb-2 flex items-center",
+                    darkMode ? "text-gray-100" : "text-gray-900"
+                  )}>
+                    <span className={cx(
+                      "mr-2",
+                      darkMode ? "text-green-400" : "text-green-600"
+                    )}>RE</span>
                     Retire Early
                   </h4>
-                  <p className="text-gray-700">
+                  <p className={cx(
+                    darkMode ? "text-gray-300" : "text-gray-700"
+                  )}>
                     Leveraging financial independence to leave traditional work decades before the conventional 
                     retirement age of 65+, creating freedom to pursue your true interests.
                   </p>
@@ -328,7 +428,12 @@ const FIREPage: React.FC = () => {
               </div>
             </div>
             
-            <div className="bg-gradient-to-br from-indigo-100 to-purple-100 p-6 rounded-xl border border-indigo-200 mb-8 transform hover:scale-[1.02] transition-transform duration-300">
+            <div className={cx(
+              "p-6 rounded-xl border mb-8 transform hover:scale-[1.02] transition-transform duration-300",
+              darkMode 
+                ? "bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border-indigo-800/50" 
+                : "bg-gradient-to-br from-indigo-100 to-purple-100 border-indigo-200"
+            )}>
               <div className="flex flex-col md:flex-row items-center">
                 <div className="mb-4 md:mb-0 md:mr-6 flex-shrink-0">
                   <div className="w-24 h-24 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
@@ -336,15 +441,28 @@ const FIREPage: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 mb-2">
+                  <h3 className={cx(
+                    "text-xl font-bold mb-2",
+                    darkMode
+                      ? "text-indigo-400"
+                      : "bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600"
+                  )}>
                     The FIRE Origin Story
                   </h3>
-                  <p className="text-indigo-900 italic border-l-4 border-indigo-300 pl-4 text-lg">
+                  <p className={cx(
+                    "italic border-l-4 pl-4 text-lg",
+                    darkMode 
+                      ? "text-indigo-300 border-indigo-700" 
+                      : "text-indigo-900 border-indigo-300"
+                  )}>
                     "Financial Independence is having enough income (from investments, passive businesses, or 
                     other sources) to pay for your living expenses for the rest of your life without having to 
                     work for money."
                   </p>
-                  <p className="text-gray-700 mt-2">
+                  <p className={cx(
+                    "mt-2",
+                    darkMode ? "text-gray-300" : "text-gray-700"
+                  )}>
                     The FIRE movement grew from the 1992 bestseller "Your Money or Your Life" by Vicki Robin 
                     and Joe Dominguez, later popularized by bloggers like Mr. Money Mustache who retired at 30.
                   </p>
@@ -353,27 +471,54 @@ const FIREPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                <h4 className="font-semibold text-gray-900 mb-2">Why FIRE is Growing</h4>
-                <ul className="text-gray-700 space-y-2">
+              <div className={cx(
+                "p-4 rounded-lg shadow-sm border",
+                darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+              )}>
+                <h4 className={cx(
+                  "font-semibold mb-2",
+                  darkMode ? "text-gray-100" : "text-gray-900"
+                )}>Why FIRE is Growing</h4>
+                <ul className={cx(
+                  "space-y-2", 
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                )}>
                   <li>• Dissatisfaction with 9-5 work</li>
                   <li>• Seeking meaning beyond consumption</li>
                   <li>• Greater awareness of work-life balance</li>
                   <li>• Access to low-cost index funds</li>
                 </ul>
               </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                <h4 className="font-semibold text-gray-900 mb-2">Essential Components</h4>
-                <ul className="text-gray-700 space-y-2">
+              <div className={cx(
+                "p-4 rounded-lg shadow-sm border",
+                darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+              )}>
+                <h4 className={cx(
+                  "font-semibold mb-2",
+                  darkMode ? "text-gray-100" : "text-gray-900"
+                )}>Essential Components</h4>
+                <ul className={cx(
+                  "space-y-2",
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                )}>
                   <li>• High savings rate (50%+ of income)</li>
                   <li>• Low-cost index fund investing</li>
                   <li>• Lifestyle optimization</li>
                   <li>• Financial literacy and planning</li>
                 </ul>
               </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                <h4 className="font-semibold text-gray-900 mb-2">Who Is It For?</h4>
-                <ul className="text-gray-700 space-y-2">
+              <div className={cx(
+                "p-4 rounded-lg shadow-sm border",
+                darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+              )}>
+                <h4 className={cx(
+                  "font-semibold mb-2",
+                  darkMode ? "text-gray-100" : "text-gray-900"
+                )}>Who Is It For?</h4>
+                <ul className={cx(
+                  "space-y-2",
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                )}>
                   <li>• Those seeking work/life freedom</li>
                   <li>• Value-focused individuals</li>
                   <li>• People wanting career flexibility</li>
@@ -385,8 +530,13 @@ const FIREPage: React.FC = () => {
         </div>
       </Section>
 
-      {/* FIRE Basics Section */}
-      <Card className={`mb-10 p-8 ${isSafariBrowser ? 'bg-blue-50' : 'bg-gradient-to-br from-white to-blue-50'}`}>
+      {/* FIRE Formula Section */}
+      <Card className={cx(
+        "mb-10 p-8",
+        darkMode 
+          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+          : "bg-gradient-to-br from-white to-blue-50"
+      )}>
         <SectionHeader 
           title="The FIRE Formula: How It Works" 
           icon={
@@ -399,73 +549,91 @@ const FIREPage: React.FC = () => {
         
         <div className="space-y-8">
           {/* FIRE Formula */}
-          <div className="bg-white p-6 rounded-xl shadow-md border border-blue-100">
+          <div className={cx(
+            "p-6 rounded-xl shadow-md border",
+            darkMode ? "bg-gray-800 border-blue-900/50" : "bg-white border-blue-100"
+          )}>
             <div className="text-center mb-6">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg inline-block">
-                <p className="text-2xl font-mono font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+              <div className={cx(
+                "p-4 rounded-lg inline-block",
+                darkMode 
+                  ? "bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-800/50" 
+                  : "bg-gradient-to-r from-blue-50 to-indigo-50"
+              )}>
+                <p className={cx(
+                  "text-2xl font-mono font-bold",
+                  darkMode
+                    ? "text-indigo-300"
+                    : "bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600"
+                )}>
                   Target Nest Egg = Annual Expenses × 25
                 </p>
               </div>
-              <p className="text-gray-600 mt-2">Based on the 4% Safe Withdrawal Rate</p>
+              <p className={cx(
+                "mt-2",
+                darkMode ? "text-gray-400" : "text-gray-600"
+              )}>Based on the 4% Safe Withdrawal Rate</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column: Formula Components */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Key Components:</h4>
-                <ul className="space-y-3 text-gray-700">
-                  <li className="flex items-center">
-                    <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-mono font-bold text-blue-600 mr-3">E</span>
-                    <div>
-                      <span className="font-medium">Annual Expenses</span>
-                      <p className="text-sm text-gray-600">Your total yearly spending in retirement</p>
-                    </div>
-                  </li>
-                  <li className="flex items-center">
-                    <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-mono font-bold text-blue-600 mr-3">25</span>
-                    <div>
-                      <span className="font-medium">Multiplier</span>
-                      <p className="text-sm text-gray-600">Based on the 4% rule (100 ÷ 4 = 25)</p>
-                    </div>
-                  </li>
-                  <li className="flex items-center">
-                    <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-mono font-bold text-blue-600 mr-3">4%</span>
-                    <div>
-                      <span className="font-medium">Safe Withdrawal Rate</span>
-                      <p className="text-sm text-gray-600">Historically sustainable withdrawal rate</p>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Right Column: Example Calculation */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Example Calculation:</h4>
-                <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-lg">
-                  <p className="text-gray-700 mb-2">
-                    If your annual expenses are <span className="font-semibold">$40,000</span>:
-                  </p>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span>Target Nest Egg:</span>
-                      <span className="font-mono font-bold text-indigo-600">$40,000 × 25</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Required Savings:</span>
-                      <span className="font-mono font-bold text-indigo-600">$1,000,000</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Sustainable Withdrawal:</span>
-                      <span className="font-mono font-bold text-indigo-600">$40,000/year (4%)</span>
-                    </div>
+            {/* Formula Explained */}
+            <div className={cx(
+              "prose prose-lg max-w-none",
+              darkMode
+                ? "prose-invert prose-headings:text-gray-100 prose-p:text-gray-300 prose-strong:text-white prose-a:text-indigo-400"
+                : ""
+            )}>
+              <h3 className={cx(
+                darkMode ? "text-gray-100" : "text-gray-900"
+              )}>The 4% Rule Explained</h3>
+              <p>
+                The foundation of FIRE planning is the <strong>4% rule</strong> (or Safe Withdrawal Rate), 
+                originated from the 1998 Trinity Study. It suggests that if you withdraw 4% of your portfolio 
+                in your first year of retirement, then adjust that amount for inflation each subsequent year, 
+                your money has a high probability of lasting 30+ years.
+              </p>
+              <p>
+                This means that to achieve financial independence, you need to save approximately <strong>25 times your annual expenses</strong> (since 4% is 1/25th of your portfolio).
+              </p>
+              
+              <div className={cx(
+                "not-prose grid grid-cols-1 md:grid-cols-2 gap-6 mt-6",
+                darkMode ? "text-gray-300" : "text-gray-700"
+              )}>
+                <div className={cx(
+                  "p-4 rounded-lg",
+                  darkMode ? "bg-gray-750 border border-gray-700" : "bg-gray-50"
+                )}>
+                  <h4 className={cx(
+                    "font-semibold mb-3",
+                    darkMode ? "text-gray-100" : "text-gray-900"
+                  )}>Example Calculation:</h4>
+                  <p>If your annual expenses are <strong className={darkMode ? "text-white" : ""}>$40,000</strong>:</p>
+                  <div className={cx(
+                    "mt-3 p-3 text-center rounded font-mono font-semibold",
+                    darkMode ? "bg-blue-900/30" : "bg-blue-50"
+                  )}>
+                    $40,000 × 25 = <span className={cx(darkMode ? "text-indigo-300" : "text-indigo-600")}>$1,000,000</span>
                   </div>
+                  <p className="mt-3 text-sm">
+                    This is your target FIRE number - the amount you need invested to generate enough passive income to cover your expenses indefinitely.
+                  </p>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-                  <h5 className="font-medium text-gray-900 mb-1">The 4% Rule Explained:</h5>
-                  <p className="text-sm text-gray-700">
-                    Based on the Trinity Study, withdrawing 4% of your portfolio in year one and adjusting 
-                    for inflation in subsequent years has historically provided a high probability of your 
-                    money lasting 30+ years across various market conditions.
+                
+                <div className={cx(
+                  "p-4 rounded-lg",
+                  darkMode ? "bg-gray-750 border border-gray-700" : "bg-gray-50"
+                )}>
+                  <h4 className={cx(
+                    "font-semibold mb-3",
+                    darkMode ? "text-gray-100" : "text-gray-900"
+                  )}>Safe Withdrawal in Action:</h4>
+                  <ul className="space-y-2 text-sm list-disc ml-5">
+                    <li>Year 1: Withdraw 4% of $1,000,000 = <strong className={darkMode ? "text-white" : ""}>$40,000</strong></li>
+                    <li>Year 2: Adjust for 2% inflation = <strong className={darkMode ? "text-white" : ""}>$40,800</strong></li>
+                    <li>Year 3: Adjust for 2% inflation = <strong className={darkMode ? "text-white" : ""}>$41,616</strong></li>
+                  </ul>
+                  <p className="mt-3 text-sm">
+                    Meanwhile, your portfolio continues to grow through investment returns, balancing out your withdrawals over time.
                   </p>
                 </div>
               </div>
@@ -473,60 +641,154 @@ const FIREPage: React.FC = () => {
           </div>
 
           {/* Savings Rate and Time to FIRE */}
-          <div className="bg-white p-6 rounded-xl shadow-md border border-blue-100">
-            <h4 className="text-xl font-semibold text-gray-900 mb-4">The Magic Number: Your Savings Rate</h4>
-            <p className="text-gray-700 mb-4">
+          <div className={cx(
+            "p-6 rounded-xl border",
+            darkMode 
+              ? "bg-gray-800 border-gray-700" 
+              : "bg-white shadow-md border-blue-100"
+          )}>
+            <h4 className={cx(
+              "text-xl font-semibold mb-4 flex items-center",
+              darkMode ? "text-gray-100" : "text-gray-900"
+            )}>
+              <span className={cx(
+                "p-1.5 rounded-full mr-2 flex items-center justify-center",
+                "bg-indigo-600 text-white"
+              )}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </span>
+              The Magic Number: Your Savings Rate
+            </h4>
+            <p className={cx(
+              "mb-4",
+              darkMode ? "text-gray-300" : "text-gray-700"
+            )}>
               Your savings rate is the single most important factor determining how quickly you can achieve FIRE.
             </p>
             
             <div className="overflow-x-auto">
-              <table className="min-w-full bg-white rounded-lg overflow-hidden">
-                <thead className="bg-blue-50">
+              <table className={cx(
+                "min-w-full rounded-lg overflow-hidden",
+                darkMode ? "bg-gray-800" : "bg-white"
+              )}>
+                <thead className={cx(
+                  darkMode ? "bg-gray-700" : "bg-blue-50"
+                )}>
                   <tr>
-                    <th className="py-3 px-4 text-left font-medium text-gray-800">Savings Rate</th>
-                    <th className="py-3 px-4 text-left font-medium text-gray-800">Years to FIRE</th>
-                    <th className="py-3 px-4 text-left font-medium text-gray-800">Assuming 7% Returns</th>
+                    <th className={cx(
+                      "py-3 px-4 text-left font-medium",
+                      darkMode ? "text-gray-200" : "text-gray-800"
+                    )}>Savings Rate</th>
+                    <th className={cx(
+                      "py-3 px-4 text-left font-medium",
+                      darkMode ? "text-gray-200" : "text-gray-800"
+                    )}>Years to FIRE</th>
+                    <th className={cx(
+                      "py-3 px-4 text-left font-medium",
+                      darkMode ? "text-gray-200" : "text-gray-800"
+                    )}>Assuming 7% Returns</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
-                  <tr>
-                    <td className="py-2 px-4">10%</td>
-                    <td className="py-2 px-4">51 years</td>
-                    <td className="py-2 px-4">Standard retirement timeline</td>
+                <tbody className={cx(
+                  "divide-y",
+                  darkMode ? "divide-gray-700" : "divide-gray-200"
+                )}>
+                  <tr className={darkMode ? "hover:bg-gray-750" : "hover:bg-gray-50"}>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>10%</td>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>51 years</td>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>Standard retirement timeline</td>
                   </tr>
-                  <tr>
-                    <td className="py-2 px-4">25%</td>
-                    <td className="py-2 px-4">32 years</td>
-                    <td className="py-2 px-4">Slightly early retirement</td>
+                  <tr className={darkMode ? "hover:bg-gray-750" : "hover:bg-gray-50"}>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>25%</td>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>32 years</td>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>Slightly early retirement</td>
                   </tr>
-                  <tr>
-                    <td className="py-2 px-4">50%</td>
-                    <td className="py-2 px-4">17 years</td>
-                    <td className="py-2 px-4">Classic FIRE timeline</td>
+                  <tr className={darkMode ? "hover:bg-gray-750" : "hover:bg-gray-50"}>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>50%</td>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>17 years</td>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>Classic FIRE timeline</td>
                   </tr>
-                  <tr>
-                    <td className="py-2 px-4">65%</td>
-                    <td className="py-2 px-4">10.5 years</td>
-                    <td className="py-2 px-4">Aggressive FIRE path</td>
+                  <tr className={darkMode ? "hover:bg-gray-750" : "hover:bg-gray-50"}>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>65%</td>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>10.5 years</td>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>Aggressive FIRE path</td>
                   </tr>
-                  <tr>
-                    <td className="py-2 px-4">75%</td>
-                    <td className="py-2 px-4">7 years</td>
-                    <td className="py-2 px-4">Extreme FIRE approach</td>
+                  <tr className={darkMode ? "hover:bg-gray-750" : "hover:bg-gray-50"}>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>75%</td>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>7 years</td>
+                    <td className={cx(
+                      "py-2 px-4",
+                      darkMode ? "text-gray-300" : "text-gray-900"
+                    )}>Extreme FIRE approach</td>
                   </tr>
                 </tbody>
               </table>
             </div>
             
-            <p className="text-sm text-gray-600 mt-4">
+            <p className={cx(
+              "text-sm mt-4",
+              darkMode ? "text-gray-400" : "text-gray-600"
+            )}>
               This table assumes consistent savings rate and investment returns. Individual results may vary based on market conditions, income growth, and lifestyle changes.
             </p>
           </div>
 
           {/* Key Investment Principles */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-b from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
-              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+            <div className={cx(
+              "p-6 rounded-xl border",
+              darkMode 
+                ? "bg-gradient-to-b from-green-900/40 to-green-800/40 border-green-800" 
+                : "bg-gradient-to-b from-green-50 to-green-100 border-green-200"
+            )}>
+              <h4 className={cx(
+                "font-semibold mb-3 flex items-center",
+                darkMode ? "text-gray-100" : "text-gray-900"
+              )}>
                 <span className="bg-green-600 text-white p-1.5 rounded-full mr-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -534,14 +796,25 @@ const FIREPage: React.FC = () => {
                 </span>
                 Income Growth
               </h4>
-              <p className="text-gray-700 text-sm">
+              <p className={cx(
+                "text-sm",
+                darkMode ? "text-gray-300" : "text-gray-700"
+              )}>
                 Increase your earning potential through skills development, side hustles, and career advancement 
                 to accelerate your journey to FIRE.
               </p>
             </div>
             
-            <div className="bg-gradient-to-b from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
-              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+            <div className={cx(
+              "p-6 rounded-xl border",
+              darkMode 
+                ? "bg-gradient-to-b from-blue-900/40 to-blue-800/40 border-blue-800" 
+                : "bg-gradient-to-b from-blue-50 to-blue-100 border-blue-200"
+            )}>
+              <h4 className={cx(
+                "font-semibold mb-3 flex items-center",
+                darkMode ? "text-gray-100" : "text-gray-900"
+              )}>
                 <span className="bg-blue-600 text-white p-1.5 rounded-full mr-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -550,14 +823,25 @@ const FIREPage: React.FC = () => {
                 </span>
                 Expense Optimization
               </h4>
-              <p className="text-gray-700 text-sm">
+              <p className={cx(
+                "text-sm",
+                darkMode ? "text-gray-300" : "text-gray-700"
+              )}>
                 Cut costs on the things that bring little value while spending intentionally on what truly 
                 matters to you. Focus on the "big three": housing, transportation, and food.
               </p>
             </div>
             
-            <div className="bg-gradient-to-b from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
-              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+            <div className={cx(
+              "p-6 rounded-xl border",
+              darkMode 
+                ? "bg-gradient-to-b from-purple-900/40 to-purple-800/40 border-purple-800" 
+                : "bg-gradient-to-b from-purple-50 to-purple-100 border-purple-200"
+            )}>
+              <h4 className={cx(
+                "font-semibold mb-3 flex items-center",
+                darkMode ? "text-gray-100" : "text-gray-900"
+              )}>
                 <span className="bg-purple-600 text-white p-1.5 rounded-full mr-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -565,7 +849,10 @@ const FIREPage: React.FC = () => {
                 </span>
                 Strategic Investing
               </h4>
-              <p className="text-gray-700 text-sm">
+              <p className={cx(
+                "text-sm",
+                darkMode ? "text-gray-300" : "text-gray-700"
+              )}>
                 Harness the power of low-cost index funds, tax-advantaged accounts, and compound interest to grow 
                 your wealth efficiently and passively.
               </p>
@@ -575,8 +862,18 @@ const FIREPage: React.FC = () => {
       </Card>
 
       {/* Types of FIRE Section */}
-      <Section className="mb-10">
-        <div className="prose prose-lg max-w-none">
+      <Section className={cx(
+        "mb-10",
+        darkMode 
+          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+          : "bg-gradient-to-br from-white to-indigo-50"
+      )}>
+        <div className={cx(
+          "prose prose-lg max-w-none",
+          darkMode
+            ? "prose-invert prose-headings:text-gray-100 prose-p:text-gray-300 prose-strong:text-white prose-a:text-indigo-400"
+            : ""
+        )}>
           <SectionHeader 
             id="fire-types" 
             title="Find Your FIRE: Different Approaches to Financial Independence" 
@@ -587,71 +884,127 @@ const FIREPage: React.FC = () => {
             }
           />
 
-          <p className="text-gray-700 mb-6">
+          <p className={cx(
+            "mb-6",
+            darkMode ? "text-gray-300" : "text-gray-700"
+          )}>
             There isn't just one way to achieve FIRE. The movement has evolved to include several variations 
             that accommodate different financial goals, risk tolerances, and lifestyle preferences.
           </p>
 
           <div className="grid grid-cols-1 gap-6 mb-8">
             {fireTypes.map((type, index) => (
-              <div key={index} className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
+              <div key={index} className={cx(
+                "p-6 rounded-xl shadow-md border hover:shadow-lg transition-shadow",
+                darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+              )}>
                 <div className="flex flex-col md:flex-row">
                   <div className="md:w-1/4 mb-4 md:mb-0">
                     <div className={`inline-flex items-center justify-center p-3 rounded-lg ${
-                      index === 0 ? 'bg-yellow-100 text-yellow-700' : 
-                      index === 1 ? 'bg-green-100 text-green-700' : 
-                      index === 2 ? 'bg-indigo-100 text-indigo-700' : 
-                      index === 3 ? 'bg-blue-100 text-blue-700' :
-                      'bg-purple-100 text-purple-700'
+                      index === 0 ? (darkMode ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-100 text-yellow-700') : 
+                      index === 1 ? (darkMode ? 'bg-green-900/50 text-green-300' : 'bg-green-100 text-green-700') : 
+                      index === 2 ? (darkMode ? 'bg-indigo-900/50 text-indigo-300' : 'bg-indigo-100 text-indigo-700') : 
+                      index === 3 ? (darkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-700') :
+                      (darkMode ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-100 text-purple-700')
                     }`}>
                       <h3 className="text-xl font-bold">{type.type}</h3>
                     </div>
                   </div>
                   <div className="md:w-3/4 md:pl-6">
-                    <p className="text-gray-700 mb-4">{type.description}</p>
+                    <p className={cx(
+                      "mb-4",
+                      darkMode ? "text-gray-300" : "text-gray-700"
+                    )}>{type.description}</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-gray-600"><span className="font-medium">Typical Savings Rate:</span> {type.savingsRate}</p>
-                        <p className="text-sm text-gray-600"><span className="font-medium">Lifestyle:</span> {type.lifestyle}</p>
-                        <p className="text-sm text-gray-600"><span className="font-medium">Target Amount:</span> {type.retirementAmount}</p>
+                        <p className={cx(
+                          "text-sm",
+                          darkMode ? "text-gray-400" : "text-gray-600"
+                        )}><span className="font-medium">Typical Savings Rate:</span> {type.savingsRate}</p>
+                        <p className={cx(
+                          "text-sm",
+                          darkMode ? "text-gray-400" : "text-gray-600"
+                        )}><span className="font-medium">Lifestyle:</span> {type.lifestyle}</p>
+                        <p className={cx(
+                          "text-sm",
+                          darkMode ? "text-gray-400" : "text-gray-600"
+                        )}><span className="font-medium">Target Amount:</span> {type.retirementAmount}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600"><span className="font-medium">Benefits:</span> {type.benefits}</p>
-                        <p className="text-sm text-gray-600"><span className="font-medium">Challenges:</span> {type.challenges}</p>
+                        <p className={cx(
+                          "text-sm",
+                          darkMode ? "text-gray-400" : "text-gray-600"
+                        )}><span className="font-medium">Benefits:</span> {type.benefits}</p>
+                        <p className={cx(
+                          "text-sm",
+                          darkMode ? "text-gray-400" : "text-gray-600"
+                        )}><span className="font-medium">Challenges:</span> {type.challenges}</p>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 mt-4">Learn more about <a href={`/fire-types/${type.type.toLowerCase()}`}>{type.type}</a></p>
+                    <p className={cx(
+                      "text-sm mt-4",
+                      darkMode ? "text-gray-400" : "text-gray-600"
+                    )}>Learn more about <a className={darkMode ? "text-indigo-400 hover:text-indigo-300" : ""} href={`/fire-types/${type.type.toLowerCase()}`}>{type.type}</a></p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-100">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Finding Your FIRE Path</h3>
-            <p className="text-gray-700 mb-4">
+          <div className={cx(
+            "p-6 rounded-xl border",
+            darkMode 
+              ? "bg-gradient-to-r from-indigo-900/30 to-purple-900/30 border-indigo-800/50" 
+              : "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-100"
+          )}>
+            <h3 className={cx(
+              "text-xl font-semibold mb-4",
+              darkMode ? "text-gray-100" : "text-gray-900"
+            )}>Finding Your FIRE Path</h3>
+            <p className={cx(
+              "mb-4",
+              darkMode ? "text-gray-300" : "text-gray-700"
+            )}>
               The right FIRE approach for you depends on your personal values, financial situation, and vision for your ideal life.
               Ask yourself these key questions:
             </p>
-            <ul className="space-y-2 text-gray-700">
+            <ul className={cx(
+              "space-y-2",
+              darkMode ? "text-gray-300" : "text-gray-700"
+            )}>
               <li className="flex items-start">
-                <span className="text-indigo-600 mr-2">•</span>
+                <span className={cx(
+                  "mr-2",
+                  darkMode ? "text-indigo-400" : "text-indigo-600"
+                )}>•</span>
                 <span>What standard of living do you want in retirement?</span>
               </li>
               <li className="flex items-start">
-                <span className="text-indigo-600 mr-2">•</span>
+                <span className={cx(
+                  "mr-2",
+                  darkMode ? "text-indigo-400" : "text-indigo-600"
+                )}>•</span>
                 <span>How quickly do you want to reach financial independence?</span>
               </li>
               <li className="flex items-start">
-                <span className="text-indigo-600 mr-2">•</span>
+                <span className={cx(
+                  "mr-2",
+                  darkMode ? "text-indigo-400" : "text-indigo-600"
+                )}>•</span>
                 <span>Do you want to quit working entirely, or transition to more meaningful work?</span>
               </li>
               <li className="flex items-start">
-                <span className="text-indigo-600 mr-2">•</span>
+                <span className={cx(
+                  "mr-2",
+                  darkMode ? "text-indigo-400" : "text-indigo-600"
+                )}>•</span>
                 <span>How much are you willing to sacrifice now for freedom later?</span>
               </li>
               <li className="flex items-start">
-                <span className="text-indigo-600 mr-2">•</span>
+                <span className={cx(
+                  "mr-2",
+                  darkMode ? "text-indigo-400" : "text-indigo-600"
+                )}>•</span>
                 <span>What activities and experiences truly bring you joy and fulfillment?</span>
               </li>
             </ul>
@@ -659,41 +1012,20 @@ const FIREPage: React.FC = () => {
         </div>
       </Section>
 
-      {/* Call to Action Section */}
-      <div className="mb-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl overflow-hidden shadow-lg">
-        <div className="px-6 py-12 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-            Ready to Start Your FIRE Journey?
-          </h2>
-          <p className="text-indigo-100 max-w-2xl mx-auto mb-8">
-            Take the first step toward financial independence with our free retirement calculator and personalized recommendations.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 justify-center items-center">
-            <a 
-              href="/calculator" 
-              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-              Try Our FIRE Calculator
-            </a>
-            <a 
-              href="/compound-interest" 
-              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-indigo-200 text-base font-medium rounded-md text-white hover:bg-white/10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Explore Compound Interest
-            </a>
-          </div>
-        </div>
-      </div>
 
       {/* Conclusion Section */}
-      <Section className={`mb-10 ${isSafariBrowser ? 'bg-indigo-50' : 'bg-gradient-to-br from-white to-indigo-50'}`}>
-        <div className="prose prose-lg max-w-none">
+      <Section className={cx(
+        "mb-10", 
+        darkMode 
+          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+          : "bg-gradient-to-br from-white to-indigo-50"
+      )}>
+        <div className={cx(
+          "prose prose-lg max-w-none",
+          darkMode
+            ? "prose-invert prose-headings:text-gray-100 prose-p:text-gray-300 prose-strong:text-white prose-a:text-indigo-400"
+            : ""
+        )}>
           <SectionHeader 
             title="Your Journey to Financial Independence Starts Today" 
             icon={
@@ -704,30 +1036,50 @@ const FIREPage: React.FC = () => {
           />
           
           <div className="space-y-6">
-            <p className="text-gray-700 text-lg leading-relaxed">
+            <p className={cx(
+              "text-lg leading-relaxed",
+              darkMode ? "text-gray-300" : "text-gray-700"
+            )}>
               The FIRE movement isn't just about retiring early—it's about gaining the freedom to live life on your own terms.
               By combining intentional spending, strategic investing, and thoughtful planning, you can break free from financial 
               constraints decades earlier than conventional wisdom suggests.
             </p>
             
-            <p className="text-gray-700 text-lg leading-relaxed">
+            <p className={cx(
+              "text-lg leading-relaxed",
+              darkMode ? "text-gray-300" : "text-gray-700"
+            )}>
               Remember that FIRE is a highly personal journey. Your version might look different from someone else's,
               and that's perfectly fine. The key is to find the balance between enjoying today and building for tomorrow
               that works for your unique situation and values.
             </p>
 
-            <div className="bg-white p-6 rounded-xl shadow-md border border-indigo-100">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Ready to Take Your First Steps?</h3>
+            <div className={cx(
+              "p-6 rounded-xl border",
+              darkMode ? "bg-gray-800 border-gray-700" : "bg-white shadow-md border-indigo-100"
+            )}>
+              <h3 className={cx(
+                "text-xl font-semibold mb-4",
+                darkMode ? "text-gray-100" : "text-gray-900"
+              )}>Ready to Take Your First Steps?</h3>
               <div className="space-y-3">
-                <p className="text-gray-700">Here's your actionable FIRE starter plan:</p>
-                <ol className="list-decimal pl-5 space-y-2 text-gray-700">
+                <p className={cx(
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                )}>Here's your actionable FIRE starter plan:</p>
+                <ol className={cx(
+                  "list-decimal pl-5 space-y-2", 
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                )}>
                   <li><strong>Calculate your savings rate</strong> as a percentage of your take-home pay</li>
                   <li><strong>Track your expenses</strong> for at least one month to establish a baseline</li>
                   <li><strong>Open or max out tax-advantaged accounts</strong> like 401(k)s and IRAs</li>
                   <li><strong>Identify one major expense</strong> you can reduce without affecting your happiness</li>
                   <li><strong>Build an emergency fund</strong> of 3-6 months of expenses</li>
                 </ol>
-                <p className="text-gray-700 mt-4">
+                <p className={cx(
+                  "mt-4",
+                  darkMode ? "text-gray-300" : "text-gray-700"
+                )}>
                   The key to FIRE success is consistency and patience. Small improvements compound dramatically over time,
                   just like your investments. Start today, adjust as needed, and keep the long view in mind.
                 </p>
@@ -739,8 +1091,18 @@ const FIREPage: React.FC = () => {
 
       {/* FAQ Section */}
       <div id="faq"></div>
-      <Section className="mb-10 bg-white rounded-xl shadow-md">
-        <div className="prose prose-lg max-w-none p-6">
+      <Section className={cx(
+        "mb-10",
+        darkMode 
+          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+          : "bg-gradient-to-br from-white to-indigo-50"
+      )}>
+        <div className={cx(
+          "prose prose-lg max-w-none p-6",
+          darkMode
+            ? "prose-invert prose-headings:text-gray-100 prose-p:text-gray-300 prose-strong:text-white prose-a:text-indigo-400 prose-li:text-gray-300"
+            : ""
+        )}>
           <SectionHeader 
             title="Frequently Asked Questions" 
             className="mb-8"
@@ -751,23 +1113,30 @@ const FIREPage: React.FC = () => {
             }
           />
           
-          <p className="text-gray-600 mb-8">
+          <p className={cx(
+            "mb-8",
+            darkMode ? "text-gray-400" : "text-gray-600"
+          )}>
             Get answers to common questions about the FIRE journey, strategies, and challenges you might face along the way.
           </p>
           
-          <div className="bg-white rounded-lg divide-y divide-gray-200 border border-gray-100">
+          <div className={cx(
+            "rounded-lg divide-y",
+            darkMode ? "divide-gray-700" : "divide-gray-200"
+          )}>
             <FAQItem 
-              question="What is the 4% rule and is it still reliable?" 
+              question="What is the 4% rule and is it still valid?" 
               answer={
                 <>
-                  <p>The 4% rule is a guideline for retirement withdrawals developed from the Trinity Study, suggesting you can withdraw 4% of your portfolio in the first year of retirement, then adjust that amount for inflation each subsequent year.</p>
-                  <p>While it has historically been reliable for 30-year retirement periods, some considerations for today's FIRE seekers include:</p>
+                  <p>The 4% rule suggests that you can safely withdraw 4% of your portfolio value in the first year of retirement, then adjust that amount for inflation each subsequent year, without running out of money for at least 30 years.</p>
+                  <p>This rule originated from the 1998 Trinity Study, which analyzed historical market data to determine safe withdrawal rates for different portfolio allocations and time horizons.</p>
+                  <p>While still widely used as a starting point, some considerations for today's investors include:</p>
                   <ul>
-                    <li>Longer retirement periods (potentially 40-60 years) may require a more conservative withdrawal rate (3-3.5%)</li>
-                    <li>Current market valuations and interest rates differ from historical averages</li>
+                    <li>Lower expected market returns in the future may warrant using a more conservative 3-3.5% withdrawal rate</li>
+                    <li>Early retirees with 40+ year horizons should be more conservative than traditional 30-year retirees</li>
                     <li>Flexibility in spending during market downturns can significantly improve success rates</li>
                   </ul>
-                  <p>For added safety, consider using a variable withdrawal strategy or building a buffer beyond your target number.</p>
+                  <p>Most financial planners now recommend a dynamic withdrawal approach that adjusts based on market conditions rather than rigidly following the 4% rule.</p>
                 </>
               } 
             />
@@ -1094,19 +1463,38 @@ const FIREPage: React.FC = () => {
       }} />
 
       {/* Call to Action */}
-      <div className="mb-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl overflow-hidden shadow-lg">
-        <div className="px-6 py-12 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+      <div className={cx(
+        "mb-10 rounded-xl overflow-hidden shadow-lg",
+        darkMode
+          ? "bg-gradient-to-r from-indigo-900 to-purple-900 border border-indigo-800/50"
+          : "bg-gradient-to-r from-indigo-600 to-purple-600"
+      )}>
+        <div className={cx(
+          "px-6 py-12 text-center",
+          darkMode ? "backdrop-blur-sm" : ""
+        )}>
+          <h2 className={cx(
+            "text-2xl sm:text-3xl font-bold mb-4",
+            darkMode ? "text-indigo-100" : "text-white"
+          )}>
             Ready to Put Compound Interest to Work?
           </h2>
-          <p className="text-indigo-100 max-w-2xl mx-auto mb-8">
+          <p className={cx(
+            "max-w-2xl mx-auto mb-8",
+            darkMode ? "text-indigo-200/90" : "text-indigo-100"
+          )}>
             Use our retirement calculator to see how your savings can grow over time and build a personalized 
             plan for your financial future.
           </p>
           <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 justify-center items-center">
             <a 
               href="/" 
-              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+              className={cx(
+                "w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border text-base font-medium rounded-md shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
+                darkMode 
+                  ? "bg-indigo-100 text-indigo-900 border-transparent hover:bg-white" 
+                  : "bg-white text-indigo-700 border-transparent hover:bg-indigo-50"
+              )}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -1115,7 +1503,12 @@ const FIREPage: React.FC = () => {
             </a>
             <a 
               href="/fire" 
-              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-indigo-200 text-base font-medium rounded-md text-white hover:bg-white/10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+              className={cx(
+                "w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border text-base font-medium rounded-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
+                darkMode 
+                  ? "border-indigo-400/50 text-indigo-100 hover:bg-indigo-800/50" 
+                  : "border-indigo-200 text-white hover:bg-white/10"
+              )}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />

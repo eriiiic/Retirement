@@ -16,6 +16,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBriefcase, faTriangleExclamation, faBullseye } from '@fortawesome/free-solid-svg-icons';
 import { GraphDataPoint, FormatAmountFunction, Statistics, Currency, SimulatorParams } from './types';
 import { colors, components, typography, cx } from '../../styles/styleGuide';
+import { useTheme } from '../../context/ThemeContext';
 import { 
   calculateFutureValue, 
   calculateDelayedScenario, 
@@ -78,32 +79,76 @@ interface CustomTooltipProps {
 const DEFAULT_SELECTED_DELAYS = [1, 5];
 
 // CSS Classes
-const TOOLTIP_STYLES = {
+const getTooltipStyles = (darkMode: boolean) => ({
   container: cx(
-    'p-3 sm:p-4 bg-white border border-gray-200 rounded-lg',
-    'shadow-[0_4px_12px_-2px_rgba(0,0,0,0.12)]',
-    'min-w-[260px] sm:min-w-[300px] max-w-[95vw] sm:max-w-[350px]'
+    'p-3 sm:p-4 rounded-lg shadow-[0_4px_12px_-2px_rgba(0,0,0,0.12)]',
+    'min-w-[260px] sm:min-w-[300px] max-w-[95vw] sm:max-w-[350px]',
+    darkMode
+      ? 'bg-gray-800 border border-gray-700 text-gray-200'
+      : 'bg-white border border-gray-200'
   ),
-  header: 'flex items-center justify-between mb-2 sm:mb-3 pb-2 border-b border-gray-200',
-  yearAge: 'text-xs sm:text-sm font-medium text-gray-600',
-  age: 'font-bold',
+  header: cx(
+    'flex items-center justify-between mb-2 sm:mb-3 pb-2 border-b', 
+    darkMode ? 'border-gray-700' : 'border-gray-200'
+  ),
+  yearAge: cx(
+    'text-xs sm:text-sm font-medium',
+    darkMode ? 'text-gray-300' : 'text-gray-600'
+  ),
+  age: cx(
+    'font-bold',
+    darkMode ? 'text-gray-100' : 'text-gray-900'
+  ),
   phase: 'px-2 sm:px-2.5 py-0.5 sm:py-1 rounded text-xs font-semibold border-[1.5px]',
-  mainCapital: 'text-xs sm:text-sm font-bold mb-1 sm:mb-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent',
-  capitalValue: 'text-base sm:text-lg font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent',
-  investmentInfo: 'text-xs sm:text-sm font-medium text-gray-600 mb-1',
-  investmentValue: 'text-sm sm:text-base font-semibold text-gray-800',
-  delayedSection: 'mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-200',
-  delayedTitle: 'text-[10px] sm:text-[11px] uppercase font-semibold text-gray-500 tracking-wider mb-1 sm:mb-2',
-  delayedItem: 'px-2 py-1.5 rounded-md transition-colors hover:bg-gray-50',
-  delayedLabel: 'text-[11px] sm:text-[12px] font-medium text-gray-700',
-  delayedValue: 'text-[11px] sm:text-xs font-semibold text-gray-700',
+  mainCapital: cx(
+    'text-xs sm:text-sm font-bold mb-1 sm:mb-1.5',
+    darkMode ? 'text-blue-300' : 'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'
+  ),
+  capitalValue: cx(
+    'text-base sm:text-lg font-bold tracking-tight',
+    darkMode ? 'text-blue-300' : 'bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'
+  ),
+  investmentInfo: cx(
+    'text-xs sm:text-sm font-medium',
+    darkMode ? 'text-gray-300' : 'text-gray-600'
+  ),
+  investmentValue: cx(
+    'text-sm sm:text-base font-semibold',
+    darkMode ? 'text-gray-200' : 'text-gray-800'
+  ),
+  delayedSection: cx(
+    'mt-2 sm:mt-3 pt-2 sm:pt-3 border-t',
+    darkMode ? 'border-gray-700' : 'border-gray-200'
+  ),
+  delayedTitle: cx(
+    'text-[10px] sm:text-[11px] uppercase font-semibold tracking-wider mb-1 sm:mb-2',
+    darkMode ? 'text-gray-400' : 'text-gray-500'
+  ),
+  delayedItem: cx(
+    'px-2 py-1.5 rounded-md transition-colors',
+    darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+  ),
+  delayedLabel: cx(
+    'text-[11px] sm:text-[12px] font-medium',
+    darkMode ? 'text-gray-300' : 'text-gray-700'
+  ),
+  delayedValue: cx(
+    'text-[11px] sm:text-xs font-semibold',
+    darkMode ? 'text-gray-300' : 'text-gray-700'
+  ),
   badge: 'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium',
-  separator: 'border-t border-gray-100 my-1.5',
+  separator: cx(
+    'border-t my-1.5',
+    darkMode ? 'border-gray-700' : 'border-gray-100'
+  ),
   growthBadge: 'flex items-center gap-1 text-[10px] sm:text-[11px] font-medium rounded-full px-1.5 py-0.5',
   comparisonTable: 'w-full mt-2 text-[11px] border-separate border-spacing-x-1',
-  tableHeader: 'font-medium text-left text-gray-500 pb-1',
+  tableHeader: cx(
+    'font-medium text-left pb-1',
+    darkMode ? 'text-gray-400' : 'text-gray-500'
+  ),
   tableCell: 'py-0.5'
-};
+});
 
 // Chart Configuration
 const CHART_CONFIG = {
@@ -116,6 +161,7 @@ const CHART_CONFIG = {
 };
 
 const CustomLabel: React.FC<LabelProps> = ({ viewBox, text, color }) => {
+  const { darkMode } = useTheme();
   const icon = getIconForLabel(text);
   const isSmallScreen = typeof window !== 'undefined' && window.innerWidth < 640;
   const labelWidth = isSmallScreen ? 70 : 100; // Smaller width on mobile
@@ -123,7 +169,10 @@ const CustomLabel: React.FC<LabelProps> = ({ viewBox, text, color }) => {
   return (
     <g>
       <foreignObject x={viewBox.x - labelWidth + 4} y={viewBox.y + 4} width={labelWidth} height={40}>
-        <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 shadow-sm sm:shadow-md" 
+        <div className={cx(
+          "flex items-center gap-1 sm:gap-2 rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 shadow-sm sm:shadow-md",
+          darkMode ? "bg-gray-800" : "bg-white"
+        )} 
             style={{ 
               borderWidth: isSmallScreen ? 1 : 2, 
               borderStyle: 'solid', 
@@ -180,6 +229,9 @@ const formatWithCurrency = (amount: number | undefined, tooltipCurrency: Currenc
 
 // Move CustomTooltip outside the main component
 const CustomTooltip: React.FC<CustomTooltipProps & { currency: Currency }> = React.memo(({ active, payload, label, currency }) => {
+  const { darkMode } = useTheme();
+  const tooltipStyles = getTooltipStyles(darkMode);
+  
   if (active && payload && payload.length) {
     const mainCapital = payload.find((p) => p.dataKey === 'capital')?.value || 0;
     const capitalInvested = payload.find((p) => p.dataKey === 'capitalWithoutInterest')?.value;
@@ -207,15 +259,27 @@ const CustomTooltip: React.FC<CustomTooltipProps & { currency: Currency }> = Rea
     const isPositiveVariation = variation > 0;
     
     return (
-      <div className={TOOLTIP_STYLES.container}>
+      <div className={tooltipStyles.container}>
         {/* Header */}
-        <div className={TOOLTIP_STYLES.header}>
+        <div className={tooltipStyles.header}>
           <div>
-            <p className={TOOLTIP_STYLES.yearAge}>
-              Year {label} · <span className={cx(TOOLTIP_STYLES.age, isCapitalZero ? 'text-red-600' : 'text-gray-900')}>Age {age}</span>
+            <p className={tooltipStyles.yearAge}>
+              Year {label} · <span className={cx(
+                tooltipStyles.age, 
+                isCapitalZero ? (darkMode ? 'text-red-400' : 'text-red-600') : ''
+              )}>Age {age}</span>
             </p>
           </div>
-          <div className={cx(TOOLTIP_STYLES.phase, isRetirementPhase ? 'bg-purple-50 text-purple-800 border-purple-200' : 'bg-blue-50 text-blue-800 border-blue-200')}>
+          <div className={cx(
+            tooltipStyles.phase, 
+            isRetirementPhase 
+              ? darkMode 
+                ? 'bg-purple-900/40 text-purple-300 border-purple-700' 
+                : 'bg-purple-50 text-purple-800 border-purple-200' 
+              : darkMode 
+                ? 'bg-blue-900/40 text-blue-300 border-blue-700' 
+                : 'bg-blue-50 text-blue-800 border-blue-200'
+          )}>
             {isRetirementPhase ? 'Retirement' : 'Investment'}
           </div>
         </div>
@@ -224,20 +288,26 @@ const CustomTooltip: React.FC<CustomTooltipProps & { currency: Currency }> = Rea
         <div className="space-y-2 sm:space-y-3">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <p className={TOOLTIP_STYLES.mainCapital}>
+              <p className={tooltipStyles.mainCapital}>
                 Total Capital
               </p>
               {growthPercentage !== 0 && (
                 <span className={cx(
-                  TOOLTIP_STYLES.growthBadge, 
-                  growthPercentage > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                  tooltipStyles.growthBadge, 
+                  growthPercentage > 0 
+                    ? darkMode 
+                      ? 'bg-green-900/40 text-green-400' 
+                      : 'bg-green-50 text-green-700' 
+                    : darkMode 
+                      ? 'bg-red-900/40 text-red-400' 
+                      : 'bg-red-50 text-red-700'
                 )}>
                   <span>{growthPercentage > 0 ? '↑' : '↓'}</span>
                   <span>{Math.abs(growthPercentage).toFixed(1)}%</span>
                 </span>
               )}
             </div>
-            <p className={TOOLTIP_STYLES.capitalValue}>
+            <p className={tooltipStyles.capitalValue}>
               {formatWithCurrency(mainCapital, tooltipCurrency)}
             </p>
           </div>
@@ -246,61 +316,88 @@ const CustomTooltip: React.FC<CustomTooltipProps & { currency: Currency }> = Rea
           {!isCapitalZero && (
             <div className="mt-1.5">
               <div className="flex justify-between items-center mb-1">
-                <p className="text-xs font-medium text-gray-600">
+                <p className={tooltipStyles.investmentInfo}>
                   Annual Change
                 </p>
                 <span className={cx(
-                  TOOLTIP_STYLES.badge,
-                  isPositiveVariation ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                  tooltipStyles.badge,
+                  isPositiveVariation 
+                    ? darkMode 
+                      ? 'bg-green-900/40 text-green-400' 
+                      : 'bg-green-50 text-green-700' 
+                    : darkMode 
+                      ? 'bg-red-900/40 text-red-400' 
+                      : 'bg-red-50 text-red-700'
                 )}>
-                  {isPositiveVariation ? '+' : ''}{formatWithCurrency(variation, tooltipCurrency)}
+                  <span>{isPositiveVariation ? '+' : ''}{formatWithCurrency(variation, tooltipCurrency)}</span>
                 </span>
               </div>
               
-              {annualInterest > 0 && (
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-500">Interest Earned</span>
-                  <span className="font-medium text-gray-700">
-                    {formatWithCurrency(annualInterest, tooltipCurrency)}
-                  </span>
-                </div>
-              )}
-              
-              {isRetirementPhase && annualWithdrawal > 0 && (
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-500">Withdrawal</span>
-                  <span className="font-medium text-gray-700">
-                    {formatWithCurrency(annualWithdrawal, tooltipCurrency)}
-                  </span>
-                </div>
+              {/* Show interest and withdrawal if in retirement phase */}
+              {isRetirementPhase && !isCapitalZero && (
+                <>
+                  <hr className={tooltipStyles.separator} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className={tooltipStyles.investmentInfo}>
+                        Annual Interest
+                      </p>
+                      <p className={tooltipStyles.investmentValue}>
+                        {formatWithCurrency(annualInterest, tooltipCurrency)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className={tooltipStyles.investmentInfo}>
+                        Annual Withdrawal
+                      </p>
+                      <p className={tooltipStyles.investmentValue}>
+                        {formatWithCurrency(annualWithdrawal, tooltipCurrency)}
+                      </p>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           )}
 
-          {/* Investment Phase Info */}
+          {/* Show capital invested if not mobile or not in retirement phase */}
           {(!isMobile || !isRetirementPhase) && capitalInvested !== null && capitalInvested !== undefined && (
             <div className="mt-1.5">
-              <p className={TOOLTIP_STYLES.investmentInfo}>
+              <p className={tooltipStyles.investmentInfo}>
                 Capital Invested
               </p>
-              <p className={TOOLTIP_STYLES.investmentValue}>
+              <p className={tooltipStyles.investmentValue}>
                 {formatWithCurrency(capitalInvested, tooltipCurrency)}
               </p>
             </div>
           )}
 
-          {/* Reduced Delayed Retirement Section - Just key info */}
-          {capitalMin !== undefined && capitalMax !== undefined && (
-            <div className="mt-2 border-t border-gray-100 pt-2">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-gray-500 font-medium">Delay +5yr impact</span>
-                <span className={cx(
-                  "font-medium",
-                  capitalMax > mainCapital ? "text-green-600" : "text-red-600"
-                )}>
-                  {formatWithCurrency(capitalMax - mainCapital, tooltipCurrency)}
-                </span>
-              </div>
+          {/* Show delayed retirement scenarios */}
+          {(capitalMin !== undefined || capitalMax !== undefined) && (
+            <div className={tooltipStyles.delayedSection}>
+              <h3 className={tooltipStyles.delayedTitle}>
+                Delayed Retirement Scenarios
+              </h3>
+              
+              {/* Min delay */}
+              {capitalMin !== undefined && (
+                <div className={tooltipStyles.delayedItem}>
+                  <div className="flex justify-between">
+                    <span className={tooltipStyles.delayedLabel}>+1 Year Delay</span>
+                    <span className={tooltipStyles.delayedValue}>{formatWithCurrency(capitalMin, tooltipCurrency)}</span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Max delay */}
+              {capitalMax !== undefined && (
+                <div className={tooltipStyles.delayedItem}>
+                  <div className="flex justify-between">
+                    <span className={tooltipStyles.delayedLabel}>+5 Years Delay</span>
+                    <span className={tooltipStyles.delayedValue}>{formatWithCurrency(capitalMax, tooltipCurrency)}</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -331,6 +428,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
   params
 }) => {
   const [selectedDelays, setSelectedDelays] = useState<number[]>(DEFAULT_SELECTED_DELAYS);
+  const { darkMode } = useTheme();
 
   const targetYear = useMemo(() => 
     new Date().getFullYear() + (statistics.lifeExpectancy - currentAge),
@@ -582,7 +680,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
         {/* Reference line for last year before retirement */}
         <ReferenceLine
           x={statistics.calculatedRetirementStartYear - 1}
-          stroke="#3B82F6"
+          stroke={darkMode ? "#60A5FA" : "#3B82F6"}
           strokeDasharray={isSmallScreen ? "2 2" : "3 3"}
           strokeWidth={strokeWidth}
         >
@@ -598,7 +696,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                     height: vb.height
                   }}
                   text="Retired"
-                  color="#3B82F6"
+                  color={darkMode ? "#60A5FA" : "#3B82F6"}
                 />
               );
             }}
@@ -664,40 +762,48 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
 
   // Helper function to render gradient definitions 
   const renderGradientDefs = () => {
+    const retirementStartIndex = graphData.findIndex(
+      (data) => data.year === statistics.calculatedRetirementStartYear
+    );
+
     return (
       <defs>
         <linearGradient id="capitalGradient" x1="0" y1="0" x2="1" y2="0">
           <stop
-            offset={`${(retirementStartIndex / graphData.length) * 100}%`}
-            stopColor={colors.primary[600]}
+            offset="0%"
+            stopColor={darkMode ? colors.primary[700] : colors.primary[600]}
           />
           <stop
             offset={`${(retirementStartIndex / graphData.length) * 100}%`}
-            stopColor={colors.secondary[600]}
+            stopColor={darkMode ? colors.primary[700] : colors.primary[600]}
+          />
+          <stop
+            offset={`${(retirementStartIndex / graphData.length) * 100}%`}
+            stopColor={darkMode ? colors.secondary[700] : colors.secondary[600]}
           />
         </linearGradient>
         <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
           <stop
             offset="0%"
-            stopColor={colors.primary[500]}
-            stopOpacity={0.25}
+            stopColor={darkMode ? colors.primary[700] : colors.primary[500]}
+            stopOpacity={darkMode ? 0.3 : 0.25}
           />
           <stop
             offset="100%"
-            stopColor={colors.primary[500]}
-            stopOpacity={0.05}
+            stopColor={darkMode ? colors.primary[900] : colors.primary[500]}
+            stopOpacity={darkMode ? 0.1 : 0.05}
           />
         </linearGradient>
         <linearGradient id="bandedAreaGradient" x1="0" y1="0" x2="0" y2="1">
           <stop
             offset="0%"
-            stopColor={colors.secondary[500]}
-            stopOpacity={0.08}
+            stopColor={darkMode ? colors.secondary[700] : colors.secondary[500]}
+            stopOpacity={darkMode ? 0.15 : 0.08}
           />
           <stop
             offset="100%"
-            stopColor={colors.secondary[500]}
-            stopOpacity={0.01}
+            stopColor={darkMode ? colors.secondary[900] : colors.secondary[500]}
+            stopOpacity={darkMode ? 0.05 : 0.01}
           />
         </linearGradient>
       </defs>
@@ -705,23 +811,45 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
   };
 
   return (
-    <div className="bg-gray-50 p-4 rounded-2xl shadow-md border border-gray-200 w-full max-w-full">
+    <div className={cx(
+      "p-4 rounded-2xl shadow-md border w-full max-w-full",
+      darkMode 
+        ? "bg-gray-800 border-gray-700" 
+        : "bg-gray-50 border-gray-200"
+    )}>
       {/* Header with title and scenario selector */}
       <div className="flex flex-col sm:flex-row justify-between items-start mb-3 gap-3">
         <div className="flex-1 w-full">
-          <h2 className="text-xl font-semibold text-gradient mb-1 sm:mb-0">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-600 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <h2 className={cx(
+            "text-xl font-semibold mb-1 sm:mb-0 flex items-center",
+            darkMode ? "text-gray-100" : "text-gradient"
+          )}>
+            <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+              "h-5 w-5 mr-2", 
+              darkMode ? "text-indigo-400" : "text-indigo-600"
+            )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             Capital Evolution
           </h2>
-          <p className={cx(typography.style.subtitle, "sm:pl-7")}>Visualize your wealth growth over time, including compound interest gains.</p>
+          <p className={cx(
+            typography.style.subtitle, 
+            "sm:pl-7",
+            darkMode ? "text-gray-400" : "text-gray-600"
+          )}>Visualize your wealth growth over time, including compound interest gains.</p>
         </div>
         
         <div className="w-full sm:w-auto">
-          <p className="text-xs text-gray-600 font-medium mb-1 sm:hidden">Delayed retirement scenarios:</p>
+          <p className={cx(
+            "text-xs font-medium mb-1 sm:hidden",
+            darkMode ? "text-gray-400" : "text-gray-600"
+          )}>Delayed retirement scenarios:</p>
           <div className="flex items-center justify-between sm:justify-start gap-2">
-            <span className={cx(typography.size.sm, "text-gray-600 hidden sm:inline")}>Delayed retirement:</span>
+            <span className={cx(
+              typography.size.sm, 
+              "hidden sm:inline",
+              darkMode ? "text-gray-400" : "text-gray-600"
+            )}>Delayed retirement:</span>
             <div className="flex flex-wrap sm:flex-nowrap w-full sm:w-auto rounded-lg shadow-sm">
               {[1, 2, 3, 4, 5].map((delay, index) => {
                 const isPositive = getPositiveDelays.has(delay);
@@ -740,9 +868,15 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                       'border-y border-r first:border-l first:rounded-l-lg last:rounded-r-lg',
                       selectedDelays.includes(delay)
                         ? isPositive
-                          ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white border-transparent'
-                          : 'bg-gradient-to-r from-red-600 to-rose-600 text-white border-transparent'
-                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50',
+                          ? darkMode 
+                            ? 'bg-gradient-to-r from-emerald-700 to-green-700 text-white border-transparent' 
+                            : 'bg-gradient-to-r from-emerald-600 to-green-600 text-white border-transparent'
+                          : darkMode 
+                            ? 'bg-gradient-to-r from-red-700 to-rose-700 text-white border-transparent' 
+                            : 'bg-gradient-to-r from-red-600 to-rose-600 text-white border-transparent'
+                        : darkMode 
+                          ? 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600' 
+                          : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50',
                       index > 0 && selectedDelays.includes(delay) && selectedDelays.includes(delay - 1) && '-ml-[1px]'
                     )}
                   >
@@ -761,25 +895,28 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
             margin={{ top: 10, right: 10, left: 5, bottom: 5, ...{ sm: { top: 20, right: 30, left: 20, bottom: 5 } } }}
           >
             {renderGradientDefs()}
-            <CartesianGrid strokeDasharray="3 3" stroke={colors.neutral[200]} />
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke={darkMode ? colors.neutral[700] : colors.neutral[200]} 
+            />
             <XAxis
               dataKey="year"
-              stroke={colors.neutral[600]}
-              tick={{ fill: colors.neutral[600], fontSize: 10 }}
+              stroke={darkMode ? colors.neutral[400] : colors.neutral[600]}
+              tick={{ fill: darkMode ? colors.neutral[400] : colors.neutral[600], fontSize: 10 }}
               tickMargin={5}
               interval="preserveStartEnd"
             />
             <YAxis
               tickFormatter={formatYAxis}
-              stroke={colors.neutral[600]}
-              tick={{ fill: colors.neutral[600], fontSize: 10 }}
+              stroke={darkMode ? colors.neutral[400] : colors.neutral[600]}
+              tick={{ fill: darkMode ? colors.neutral[400] : colors.neutral[600], fontSize: 10 }}
               domain={[0, maxYValue]}
               allowDataOverflow={true}
               ticks={yAxisTicks}
               width={30}
             />
             <Tooltip content={<CustomTooltip currency={currency} />} />
-            <Legend iconSize={10} wrapperStyle={{ fontSize: '10px' }} />
+            <Legend iconSize={10} wrapperStyle={{ fontSize: '10px', color: darkMode ? colors.neutral[400] : colors.neutral[600] }} />
             
             {renderReferenceLines()}
             {renderDelayedScenarioAreas()}
@@ -792,19 +929,19 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
               strokeWidth={3}
               fill="url(#areaGradient)"
               dot={false}
-              activeDot={{ r: 6, fill: colors.primary[600] }}
+              activeDot={{ r: 6, fill: darkMode ? colors.primary[400] : colors.primary[600] }}
               animationDuration={0}
             />
             <Area
               type="monotone"
               dataKey="capitalWithoutInterest"
               name="Capital invested"
-              stroke={colors.neutral[400]}
+              stroke={darkMode ? colors.neutral[400] : colors.neutral[400]}
               strokeWidth={2}
               strokeDasharray="5 5"
               dot={false}
               fill="none"
-              activeDot={{ r: 6, fill: colors.neutral[600] }}
+              activeDot={{ r: 6, fill: darkMode ? colors.neutral[400] : colors.neutral[600] }}
               connectNulls={false}
               animationDuration={0}
             />
