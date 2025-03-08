@@ -204,7 +204,7 @@ const BlogPostDetail: React.FC = () => {
           <meta property="og:url" content={`https://FIRECalculator.ai/blog/${post.id}`} />
           <meta property="og:title" content={post.title} />
           <meta property="og:description" content={post.excerpt} />
-          <meta property="og:image" content={post.image || `/blog-images/${post.id}-og-image.png`} />
+          <meta property="og:image" content={post.image || "/blog-images/blog-post-og-image.png"} />
           <meta property="article:published_time" content={post.date} />
           <meta property="article:author" content={post.author || "FIRECalculator Team"} />
           {post.topics.map((topic, index) => (
@@ -216,11 +216,14 @@ const BlogPostDetail: React.FC = () => {
           <meta name="twitter:url" content={`https://FIRECalculator.ai/blog/${post.id}`} />
           <meta name="twitter:title" content={post.title} />
           <meta name="twitter:description" content={post.excerpt} />
-          <meta name="twitter:image" content={post.image || `/blog-images/${post.id}-twitter-card.png`} />
+          <meta name="twitter:image" content={post.image || "/blog-images/blog-post-twitter-card.png"} />
           <meta name="twitter:label1" content="Reading time" />
           <meta name="twitter:data1" content={`${post.readTime} min read`} />
         </Helmet>
       )}
+      
+      {/* Add the blog styles */}
+      <style dangerouslySetInnerHTML={{ __html: blogStyles }} />
       
       <div className="max-w-6xl mx-auto px-4 py-8 bg-gray-50">
         {/* Back Link */}
