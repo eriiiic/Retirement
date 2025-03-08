@@ -17,6 +17,7 @@ import {
 } from '../utils/financialCalculations';
 import { colors, components, typography, spacing, cx } from '../styles/styleGuide';
 import { isSafari } from '../utils/browserDetection';
+import { useTheme } from '../context/ThemeContext';
 
 const RetirementSimulator = () => {
   // Initialize simulator parameters
@@ -44,6 +45,7 @@ const RetirementSimulator = () => {
 
   // State for Safari detection
   const [isSafariBrowser, setIsSafariBrowser] = useState(false);
+  const { darkMode } = useTheme();
   
   // Detect Safari browser on component mount
   useEffect(() => {
@@ -555,13 +557,23 @@ const RetirementSimulator = () => {
   ]);
 
   return (
-    <div className={cx(components.container.card, spacing.responsive.sm, "max-w-6xl mx-auto mt-0")}>
+    <div className={cx(components.container.card, spacing.responsive.sm, "max-w-6xl mx-auto mt-0", darkMode ? 'bg-gray-900' : 'bg-gray-50')}>
       {/* Page Header with Gradient Background */}
       <div className="mb-6 rounded-xl overflow-hidden shadow-lg">
-        <div className={`py-8 px-6 ${isSafariBrowser ? 'bg-indigo-600' : 'bg-gradient-to-r from-indigo-600 to-purple-600'} relative`}>
+        <div className={`py-8 px-6 ${
+          isSafariBrowser 
+            ? darkMode ? 'bg-indigo-800' : 'bg-indigo-600' 
+            : darkMode 
+              ? 'bg-gradient-to-r from-indigo-800 to-purple-800' 
+              : 'bg-gradient-to-r from-indigo-600 to-purple-600'
+        } relative`}>
           {/* Safari-specific overlay gradient using background-image */}
           {isSafariBrowser && (
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f46e5,#9333ea)] opacity-90"></div>
+            <div className={`absolute inset-0 ${
+              darkMode 
+                ? 'bg-[linear-gradient(to_right,#3730a3,#6b21a8)]' 
+                : 'bg-[linear-gradient(to_right,#4f46e5,#9333ea)]'
+            } opacity-90`}></div>
           )}
           <div className="mb-4 sm:mb-5 text-center relative z-10">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">

@@ -4,11 +4,13 @@ import { blogPosts, BlogPost, BlogTopic } from './blogData';
 import Footer from '../common/Footer'; // Import Footer component
 import { Helmet } from 'react-helmet';
 import { isSafari } from '../../utils/browserDetection';
+import { useTheme } from '../../context/ThemeContext';
 
 const BlogPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedTopics, setSelectedTopics] = useState<BlogTopic[]>([]);
   const [isSafariBrowser, setIsSafariBrowser] = useState(false);
+  const { darkMode } = useTheme();
   
   // Detect Safari browser on component mount
   useEffect(() => {
@@ -55,7 +57,7 @@ const BlogPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 bg-gray-50">
+    <div className={`max-w-6xl mx-auto px-4 py-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <Helmet>
         <title>Blog & Resources | FIRE Retirement Planning</title>
         <meta name="description" content="Explore practical advice, real-world case studies, and data-driven strategies from people who achieved financial independence." />
@@ -80,10 +82,20 @@ const BlogPage: React.FC = () => {
 
       {/* Page Header with Gradient Background */}
       <div className="mb-6 rounded-xl overflow-hidden shadow-lg">
-        <div className={`py-8 px-6 ${isSafariBrowser ? 'bg-indigo-600' : 'bg-gradient-to-r from-indigo-600 to-purple-600'} relative`}>
+        <div className={`py-8 px-6 ${
+          isSafariBrowser 
+            ? darkMode ? 'bg-indigo-800' : 'bg-indigo-600' 
+            : darkMode 
+              ? 'bg-gradient-to-r from-indigo-800 to-purple-800' 
+              : 'bg-gradient-to-r from-indigo-600 to-purple-600'
+        } relative`}>
           {/* Safari-specific overlay gradient using background-image */}
           {isSafariBrowser && (
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f46e5,#9333ea)] opacity-90"></div>
+            <div className={`absolute inset-0 ${
+              darkMode 
+                ? 'bg-[linear-gradient(to_right,#3730a3,#6b21a8)]' 
+                : 'bg-[linear-gradient(to_right,#4f46e5,#9333ea)]'
+            } opacity-90`}></div>
           )}
           <div className="mb-4 sm:mb-5 text-center relative z-10">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
@@ -98,106 +110,127 @@ const BlogPage: React.FC = () => {
       </div>
       
       {/* Search and filter section */}
-      <div className="mb-10 bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
+      <div className={`mb-10 p-6 rounded-lg shadow-sm border ${
+        darkMode 
+          ? 'bg-gray-800 border-gray-700' 
+          : 'bg-gray-50 border-gray-200'
+      }`}>
         <div className="flex flex-col lg:flex-row gap-4 mb-6">
           <div className="relative flex-grow">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-gray-400">🔍</span>
+              <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Search articles..."
+              placeholder="Search for articles..."
+              className={`pl-10 pr-4 py-2 border rounded-lg w-full focus:ring-indigo-500 focus:border-indigo-500 ${
+                darkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+              }`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          
+          <div className="flex-shrink-0">
+            <div className={`text-xs font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Filter by topics:</div>
+            <div className="flex flex-wrap gap-2">
+              {allTopics.map((topic) => (
+                <button
+                  key={topic}
+                  onClick={() => toggleTopic(topic)}
+                  className={`text-xs px-3 py-1 rounded-full transition-colors ${
+                    selectedTopics.includes(topic)
+                      ? 'bg-indigo-600 text-white'
+                      : darkMode 
+                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  {topic}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Filter by Topic:</h3>
-          <div className="flex flex-wrap gap-2">
-            {allTopics.map(topic => (
-              <button
-                key={topic}
-                onClick={() => toggleTopic(topic)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  selectedTopics.includes(topic)
-                    ? 'bg-indigo-100 text-indigo-800 border-indigo-300'
-                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-                } border`}
-              >
-                {topic}
-              </button>
-            ))}
-          </div>
+        <div className="text-center">
+          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            Showing {filteredPosts.length} out of {blogPosts.length} articles
+          </p>
         </div>
       </div>
       
       {/* Blog posts grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         {filteredPosts.length > 0 ? (
           filteredPosts.map((post: BlogPost) => (
             <Link 
+              to={`/blog/${post.id}`} 
               key={post.id}
-              to={`/blog/${post.id}`}
-              className="flex flex-col h-full"
+              className={`rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 ${
+                darkMode 
+                  ? 'bg-gray-800 border border-gray-700' 
+                  : 'bg-white border border-gray-200'
+              }`}
             >
-              <article className="flex flex-col bg-white rounded-lg shadow-md overflow-hidden h-full border border-gray-200 transition-transform hover:-translate-y-1 hover:shadow-lg">
-                {post.image && (
-                  <div className="relative h-48 overflow-hidden">
-                    <img 
-                      src={post.image} 
-                      alt={post.title} 
-                      className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                )}
-                <div className="p-6 flex-grow flex flex-col">
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {post.topics.map((topic: BlogTopic) => (
-                      <span 
-                        key={topic} 
-                        className="inline-flex items-center text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-1 rounded"
-                      >
-                        <span className="mr-1">🏷️</span> {topic}
-                      </span>
-                    ))}
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-2 hover:text-indigo-600">
-                    {post.title}
-                  </h2>
-                  <p className="text-gray-600 mb-4 flex-grow">
-                    {post.excerpt}
-                  </p>
-                  <div className="mt-auto pt-4 border-t border-gray-100">
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <span className="mr-1">📅</span>
-                        <span>{formatDate(post.date)}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="mr-1">⏱️</span>
-                        <span>{post.readTime} min read</span>
-                      </div>
-                    </div>
-                  </div>
+              <img src={post.image} alt={post.title} className="w-full h-48 object-cover" />
+              <div className="p-4">
+                <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{post.title}</h3>
+                <p className={`text-sm mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{post.excerpt}</p>
+                <div className="flex justify-between items-center">
+                  <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatDate(post.date)}</span>
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    darkMode 
+                      ? 'bg-indigo-900 text-indigo-200' 
+                      : 'bg-indigo-100 text-indigo-800'
+                  }`}>
+                    {post.readTime} min read
+                  </span>
                 </div>
-              </article>
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {post.topics.slice(0, 3).map((topic, index) => (
+                    <span 
+                      key={`${post.id}-topic-${index}`} 
+                      className={`text-xs px-2 py-0.5 rounded-full ${
+                        darkMode 
+                          ? 'bg-gray-700 text-gray-300' 
+                          : 'bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      {topic}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </Link>
           ))
         ) : (
-          <div className="col-span-full text-center py-12">
-            <h3 className="text-xl font-medium text-gray-700 mb-2">No articles found</h3>
-            <p className="text-gray-500">
-              Try adjusting your search or filter criteria to find what you're looking for.
+          <div className={`col-span-full text-center py-10 rounded-lg ${
+            darkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-50 text-gray-600'
+          }`}>
+            <h3 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>No articles found</h3>
+            <p className={`mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Try adjusting your search or filter criteria
             </p>
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedTopics([]);
+              }}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              Reset filters
+            </button>
           </div>
         )}
       </div>
       
-            {/* Call to Action */}
-            <div className="mb-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl overflow-hidden shadow-lg">
+      {/* Call to Action */}
+      <div className="mb-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl overflow-hidden shadow-lg">
         <div className="px-6 py-12 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
             Ready to Put Compound Interest to Work?
@@ -229,8 +262,8 @@ const BlogPage: React.FC = () => {
         </div>
       </div>
       
-            {/* Add Footer Component */}
-            <Footer />
+      {/* Add Footer Component */}
+      <Footer />
 
       {/* Newsletter subscription - temporarily disabled */}
       {/*
@@ -257,7 +290,6 @@ const BlogPage: React.FC = () => {
         </form>
       </div>
       */}
-      
       
     </div>
   );
