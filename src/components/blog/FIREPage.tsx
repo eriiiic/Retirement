@@ -220,30 +220,30 @@ const FIREPage: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 bg-gray-50">
       <Helmet>
-        <title>FIRE: Financial Independence, Retire Early | Retirement Planning Guide</title>
+        <title>FIRE: Financial Independence, Retire Early | Ultimate Guide</title>
         <meta name="description" content="Learn about the FIRE movement (Financial Independence, Retire Early) and how to achieve financial freedom through smart investing and intentional spending." />
         
-        {/* Open Graph / Facebook */}
+        {/* Open Graph meta tags */}
         <meta property="og:type" content="article" />
         <meta property="og:title" content="FIRE: Financial Independence, Retire Early | Ultimate Guide" />
         <meta property="og:description" content="Learn how to achieve financial independence and retire decades earlier with FIRE strategies, calculators, and step-by-step guidance." />
-        <meta property="og:image" content="https://yourdomain.com/images/fire-social-card.jpg" />
-        <meta property="og:url" content="https://yourdomain.com/fire" />
-        <meta property="og:site_name" content="Retirement Planner" />
+        <meta property="og:image" content="https://FIRECalculator.ai/blog-images/fire-og-image.png" />
+        <meta property="og:url" content="https://FIRECalculator.ai/fire" />
+        <meta property="og:site_name" content="FIRECalculator.ai" />
         
-        {/* Twitter */}
+        {/* Twitter Card meta tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="FIRE: Financial Independence, Retire Early | Ultimate Guide" />
         <meta name="twitter:description" content="Learn how to achieve financial independence and retire decades earlier with FIRE strategies, calculators, and step-by-step guidance." />
-        <meta name="twitter:image" content="https://yourdomain.com/images/fire-social-card.jpg" />
+        <meta name="twitter:image" content="https://FIRECalculator.ai/blog-images/fire-twitter-card.png" />
         
-        {/* LinkedIn */}
+        {/* LinkedIn meta tags */}
         <meta property="linkedin:title" content="FIRE: Financial Independence, Retire Early | Ultimate Guide" />
         <meta property="linkedin:description" content="Learn how to achieve financial independence and retire decades earlier with FIRE strategies, calculators, and step-by-step guidance." />
-        <meta property="linkedin:image" content="https://yourdomain.com/images/fire-social-card.jpg" />
+        <meta property="linkedin:image" content="https://FIRECalculator.ai/blog-images/fire-og-image.png" />
         
         {/* Canonical URL */}
-        <link rel="canonical" href="https://yourdomain.com/fire" />
+        <link rel="canonical" href="https://FIRECalculator.ai/fire" />
       </Helmet>
 
       {/* Page Header with Gradient Background */}

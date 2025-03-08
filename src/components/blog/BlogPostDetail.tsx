@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 import { blogPosts, BlogPost } from './blogData';
 import { getBlogPostContent, hasBlogPostContent } from './blogContentLoader';
 
@@ -269,8 +270,42 @@ const BlogPostDetail: React.FC = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
   
+  // Create the website URL from the blog post ID
+  const siteUrl = "https://FIRECalculator.ai";
+  const postUrl = `${siteUrl}/blog/${post.id}`;
+  
+  // Get the paths for the OG and Twitter card images
+  const ogImagePath = `/blog-images/${post.id}-og-image.png`;
+  const twitterImagePath = `/blog-images/${post.id}-twitter-card.png`;
+  
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      <Helmet>
+        <title>{post.title} | FIRECalculator.ai</title>
+        <meta name="description" content={post.excerpt} />
+        
+        {/* Open Graph meta tags */}
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={post.title} />
+        <meta property="og:description" content={post.excerpt} />
+        <meta property="og:image" content={`${siteUrl}${ogImagePath}`} />
+        <meta property="og:url" content={postUrl} />
+        <meta property="og:site_name" content="FIRECalculator.ai" />
+        <meta property="article:published_time" content={post.date} />
+        
+        {/* Twitter Card meta tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={post.title} />
+        <meta name="twitter:description" content={post.excerpt} />
+        <meta name="twitter:image" content={`${siteUrl}${twitterImagePath}`} />
+        <meta name="twitter:url" content={postUrl} />
+        
+        {/* LinkedIn meta tags */}
+        <meta property="linkedin:title" content={post.title} />
+        <meta property="linkedin:description" content={post.excerpt} />
+        <meta property="linkedin:image" content={`${siteUrl}${ogImagePath}`} />
+      </Helmet>
+      
       {/* Add custom styles for blog content */}
       <style dangerouslySetInnerHTML={{ __html: blogStyles }} />
 

@@ -64,18 +64,18 @@ const BlogPage: React.FC = () => {
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Blog & Resources | FIRE Retirement Planning" />
         <meta property="og:description" content="Explore financial independence strategies, investment approaches, and retirement planning insights from those who've achieved FIRE." />
-        <meta property="og:image" content="https://yourdomain.com/images/blog-social-card.jpg" />
-        <meta property="og:url" content="https://yourdomain.com/blog" />
-        <meta property="og:site_name" content="Retirement Planner" />
+        <meta property="og:image" content="https://FIRECalculator.ai/blog-images/blog-og-image.png" />
+        <meta property="og:url" content="https://FIRECalculator.ai/blog" />
+        <meta property="og:site_name" content="FIRECalculator.ai" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Blog & Resources | FIRE Retirement Planning" />
         <meta name="twitter:description" content="Explore financial independence strategies, investment approaches, and retirement planning insights from those who've achieved FIRE." />
-        <meta name="twitter:image" content="https://yourdomain.com/images/blog-social-card.jpg" />
+        <meta name="twitter:image" content="https://FIRECalculator.ai/blog-images/blog-twitter-card.png" />
         
         {/* Canonical URL */}
-        <link rel="canonical" href="https://yourdomain.com/blog" />
+        <link rel="canonical" href="https://FIRECalculator.ai/blog" />
       </Helmet>
 
       {/* Page Header with Gradient Background */}

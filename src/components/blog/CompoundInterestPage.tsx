@@ -175,30 +175,30 @@ const CompoundInterestPage: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 bg-gray-50">
       <Helmet>
-        <title>Understanding Compound Interest | Retirement Planning Guide</title>
+        <title>Understanding Compound Interest | Financial Growth Guide</title>
         <meta name="description" content="Learn how compound interest works, calculate your potential returns, and discover strategies to maximize your long-term wealth growth." />
         
-        {/* Open Graph / Facebook */}
+        {/* Open Graph meta tags */}
         <meta property="og:type" content="article" />
         <meta property="og:title" content="Understanding Compound Interest | Financial Growth Guide" />
         <meta property="og:description" content="Learn how compound interest can transform your savings into substantial wealth and accelerate your path to financial independence." />
-        <meta property="og:image" content="https://yourdomain.com/images/compound-interest-social-card.jpg" />
-        <meta property="og:url" content="https://yourdomain.com/compound-interest" />
-        <meta property="og:site_name" content="Retirement Planner" />
+        <meta property="og:image" content="https://FIRECalculator.ai/blog-images/compound-interest-og-image.png" />
+        <meta property="og:url" content="https://FIRECalculator.ai/compound-interest" />
+        <meta property="og:site_name" content="FIRECalculator.ai" />
         
-        {/* Twitter */}
+        {/* Twitter Card meta tags */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Understanding Compound Interest | Financial Growth Guide" />
         <meta name="twitter:description" content="Learn how compound interest can transform your savings into substantial wealth and accelerate your path to financial independence." />
-        <meta name="twitter:image" content="https://yourdomain.com/images/compound-interest-social-card.jpg" />
+        <meta name="twitter:image" content="https://FIRECalculator.ai/blog-images/compound-interest-twitter-card.png" />
         
-        {/* LinkedIn */}
+        {/* LinkedIn meta tags */}
         <meta property="linkedin:title" content="Understanding Compound Interest | Financial Growth Guide" />
         <meta property="linkedin:description" content="Learn how compound interest can transform your savings into substantial wealth and accelerate your path to financial independence." />
-        <meta property="linkedin:image" content="https://yourdomain.com/images/compound-interest-social-card.jpg" />
+        <meta property="linkedin:image" content="https://FIRECalculator.ai/blog-images/compound-interest-og-image.png" />
         
         {/* Canonical URL */}
-        <link rel="canonical" href="https://yourdomain.com/compound-interest" />
+        <link rel="canonical" href="https://FIRECalculator.ai/compound-interest" />
       </Helmet>
 
       {/* Page Header with Gradient Background */}
