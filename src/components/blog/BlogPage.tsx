@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { blogPosts, BlogPost, BlogTopic } from './blogData';
+import Footer from '../common/Footer'; // Import Footer component
 
 const BlogPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -158,6 +159,9 @@ const BlogPage: React.FC = () => {
         )}
       </div>
       
+            {/* Add Footer Component */}
+            <Footer />
+
       {/* Newsletter subscription - temporarily disabled */}
       {/*
       <div className="bg-indigo-50 rounded-lg p-8 border border-indigo-100">

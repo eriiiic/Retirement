@@ -445,6 +445,120 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     return scenario.capital;
   }, [capitalAtRetirement, effectiveMonthlyWithdrawal, annualReturnRate, params.inflation, params.maxAge, statistics.calculatedRetirementStartYear, currentAge]);
 
+  // Set target age
+  const targetAge = 95;
+
+  // Calculate ideal delay without 5-year limit
+  const calculateIdealDelay = useMemo(() => {
+    // Start with current retirement age and increment until we find a solution
+    let idealDelay = 0;
+    let maxIterations = 20; // Reasonable maximum to prevent infinite loops
+    let found = false;
+    
+    const simulateRetirementWithDelay = (delayYears: number) => {
+      const delayedRetirementAge = retirementStartAge + delayYears;
+      const result = calculateDelayedRetirementImpact(
+        params.initialCapital,
+        params.monthlyInvestment,
+        effectiveMonthlyWithdrawal,
+        statistics.calculatedRetirementStartYear,
+        delayYears,
+        annualReturnRate,
+        params.inflation
+      );
+      
+      // Calculate if this capital would last until target age
+      const yearsUntilExhaustion = calculateYearsUntilExhaustion(
+        result.delayedCapitalAtRetirement,
+        effectiveMonthlyWithdrawal * 12,
+        annualReturnRate * 0.7, // Conservative return estimate
+        1,
+        100
+      );
+      
+      const exhaustionAge = delayedRetirementAge + yearsUntilExhaustion;
+      return exhaustionAge >= targetAge;
+    };
+
+    // Find minimum delay needed to reach target age
+    while (!found && idealDelay < maxIterations) {
+      if (simulateRetirementWithDelay(idealDelay)) {
+        found = true;
+      } else {
+        idealDelay++;
+      }
+    }
+
+    // Calculate the capital impact of this delay
+    const idealImpact = calculateDelayedRetirementImpact(
+      params.initialCapital,
+      params.monthlyInvestment,
+      effectiveMonthlyWithdrawal,
+      statistics.calculatedRetirementStartYear,
+      idealDelay,
+      annualReturnRate,
+      params.inflation
+    );
+
+    return {
+      years: idealDelay,
+      newCapital: idealImpact.delayedCapitalAtRetirement,
+      capitalIncrease: idealImpact.capitalIncrease,
+      exhaustionAge: targetAge
+    };
+  }, [retirementStartAge, params, effectiveMonthlyWithdrawal, statistics, annualReturnRate, targetAge]);
+
+  // Calculate current exhaustion age
+  const currentExhaustionAge = useMemo(() => {
+    const yearsUntilExhaustion = calculateYearsUntilExhaustion(
+      capitalAtRetirement,
+      effectiveMonthlyWithdrawal * 12,
+      annualReturnRate * 0.7,
+      1,
+      100
+    );
+    return retirementStartAge + yearsUntilExhaustion;
+  }, [capitalAtRetirement, effectiveMonthlyWithdrawal, annualReturnRate, retirementStartAge]);
+
+  // Calculate exhaustion age for the recommended delay (optimalDelayYears)
+  const recommendedExhaustionAge = useMemo(() => {
+    if (optimalDelayYears === 0) {
+      // If no delay is recommended, return the current exhaustion age
+      return currentExhaustionAge;
+    }
+
+    // Get the delayed capital at retirement with optimal delay years
+    const delayImpact = calculateDelayedRetirementImpact(
+      params.initialCapital,
+      params.monthlyInvestment,
+      effectiveMonthlyWithdrawal,
+      statistics.calculatedRetirementStartYear,
+      optimalDelayYears,
+      annualReturnRate,
+      params.inflation
+    );
+
+    // Calculate years until exhaustion with the new capital
+    const yearsUntilExhaustion = calculateYearsUntilExhaustion(
+      delayImpact.delayedCapitalAtRetirement,
+      effectiveMonthlyWithdrawal * 12,
+      annualReturnRate * 0.7, // Conservative return estimate
+      1,
+      100
+    );
+
+    // The new exhaustion age is retirement age + delay + years until exhaustion
+    return retirementStartAge + optimalDelayYears + yearsUntilExhaustion;
+  }, [optimalDelayYears, currentExhaustionAge, params, effectiveMonthlyWithdrawal, statistics, annualReturnRate, retirementStartAge]);
+
+  // Calculate years gained with the recommended delay
+  const yearsGained = useMemo(() => {
+    if (optimalDelayYears === 0) {
+      return 0;
+    }
+    return recommendedExhaustionAge - currentExhaustionAge;
+  }, [recommendedExhaustionAge, currentExhaustionAge, optimalDelayYears]);
+
   return (
     <>
       <Card className="overflow-hidden lg:col-span-2">
@@ -465,78 +579,66 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
           </div>
         </div>
         <div className="p-2 sm:p-3">
-          <div className="flex items-center mb-2.5 p-2 bg-blue-50/70 rounded-lg border border-blue-100">
-            <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center mr-2.5 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="flex items-start mb-2.5 p-2 bg-blue-50/70 rounded-lg border border-blue-100">
+            <div className="w-9 h-9 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center mr-2.5 mt-0.5">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4.5 w-4.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
               <div className="text-sm text-gray-700 flex items-center gap-1.5">
-                <span>
-                  {optimalDelayYears === 0 ? 
-                    'No delay needed - plan is on track' :
-                    `Delay retirement by ${optimalDelayYears} ${optimalDelayYears === 1 ? 'year' : 'years'}`
-                  }
-                </span>
+                <span><span className="font-bold">Recommended</span> retirement delay</span>
               </div>
               <div className="flex items-baseline mt-1">
-                {optimalDelayYears > 0 ? (
-                  <>
-                    <PositiveMetric className="text-base">
-                      +{formatDisplayValue(yearDelayImpact)}/year
-                    </PositiveMetric>
-                    <span className="text-xs text-blue-700 ml-1">additional capital</span>
-                  </>
-                ) : (
-                  <span className="text-xs text-green-700">Your current plan meets sustainability targets</span>
-                )}
+                <PositiveMetric className="text-base">
+                  {optimalDelayYears === 0 ? 'No delay needed' : `${optimalDelayYears} years`}
+                </PositiveMetric>
+                <span className="text-xs text-blue-700 ml-1">
+                  {optimalDelayYears > 0 ? `(+${formatDisplayValue(yearDelayImpact * optimalDelayYears)})` : '(on track)'}
+                </span>
+              </div>
+              <div className="flex items-baseline text-[10px] text-blue-700">
+                <span>+{Math.round(yearsGained)} years of retirement coverage</span>
+                <span className="text-gray-500 ml-1">(until age {recommendedExhaustionAge})</span>
               </div>
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-2 mb-2.5">
-            <div 
-              className="bg-blue-50/60 rounded-lg p-2 border border-blue-100 cursor-help"
-              onMouseEnter={(e) => handleMouseEnter('currentPlan', e)}
-              onMouseLeave={() => setHoveredSection(null)}
-            >
+            <div className="bg-gray-50 p-2 rounded-lg border border-gray-100">
               <div className="text-xs font-medium text-gray-500 flex items-center">
-                <span className="h-2 w-2 rounded-full bg-blue-400 mr-1.5"></span>
-                Current plan
+                <span className="h-2 w-2 rounded-full bg-gray-400 mr-1.5"></span>
+                <span className="font-bold">Current</span>&nbsp;age
               </div>
-              <div className="flex flex-col mt-1">
-                <div className="text-sm font-semibold text-blue-800 leading-tight">
-                  {retirementStartAge} years
-                </div>
-                <div className="text-[10px] text-gray-500">
-                  Capital: {formatDisplayValue(capitalAtRetirement)}
-                </div>
+              <div className="text-sm font-semibold text-gray-700 mt-1">
+                {retirementStartAge} years
+              </div>
+              <div className="text-[10px] text-gray-500">
+                Capital: {formatDisplayValue(capitalAtRetirement)}
+              </div>
+              <div className="text-[10px] text-gray-500 mt-1">
+                Funds last until age <span className={currentExhaustionAge < params.maxAge ? "text-red-500" : "text-green-500"}>{currentExhaustionAge}</span>
               </div>
             </div>
-            
-            <div 
-              className="bg-green-50/60 rounded-lg p-2 border border-green-100 cursor-help"
-              onMouseEnter={(e) => handleMouseEnter('optimizedPlan', e)}
-              onMouseLeave={() => setHoveredSection(null)}
-            >
+
+            <div className="bg-purple-50 p-2 rounded-lg border border-purple-100">
               <div className="text-xs font-medium text-gray-500 flex items-center">
-                <span className="h-2 w-2 rounded-full bg-green-500 mr-1.5"></span>
-                Optimized plan
+                <span className="h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
+                <span className="font-bold">Ideal</span>&nbsp;age
               </div>
-              <div className="flex flex-col mt-1">
-                <div className="text-sm font-semibold text-green-700 leading-tight">
-                  {optimizedRetirementAge} years
-                </div>
-                <div className="text-[10px] text-green-700">
-                  +{formatDisplayValue(additionalCapital)}
-                </div>
+              <div className="text-sm font-semibold text-purple-700 mt-1">
+                {retirementStartAge + calculateIdealDelay.years} years
+              </div>
+              <div className="text-[10px] text-purple-700">
+                +{formatDisplayValue(calculateIdealDelay.capitalIncrease)} capital
+              </div>
+              <div className="text-[10px] text-purple-700 mt-1">
+                Funds last until age <span className="font-semibold">{calculateIdealDelay.exhaustionAge}</span>
               </div>
             </div>
           </div>
           
-          <div 
-            className="bg-blue-50 rounded-lg p-2.5 border border-blue-100 mb-2.5 cursor-help"
+          <div className="bg-blue-50 rounded-lg p-2.5 border border-blue-100 mb-2.5 cursor-help"
             onMouseEnter={(e) => handleMouseEnter('capitalProjections', e)}
             onMouseLeave={() => setHoveredSection(null)}
           >
@@ -760,8 +862,6 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
                   )}
                 </div>
               </div>
-              
-
             </div>
           </div>
         </div>

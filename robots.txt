@@ -1,32 +1,38 @@
-# robots.txt for FIRE Journey Blog
+# robots.txt for FIRE Calculator
 
 User-agent: *
 Allow: /
 Allow: /blog/
-Allow: /articles/
-Allow: /calculators/
+Allow: /calculator/
+Allow: /compound-interest/
 Allow: /resources/
 
-# Disallow admin and development areas
+# Disallow development and administrative areas
 Disallow: /admin/
 Disallow: /wp-admin/
 Disallow: /dev/
 Disallow: /drafts/
 Disallow: /test/
 
-# Disallow duplicate content
-Disallow: */tag/
-Disallow: */print/
-Disallow: */feed/
-
-# Disallow certain file types
+# Disallow API endpoints and data files
+Disallow: /api/
 Disallow: /*.json$
 Disallow: /*.xml$
 Disallow: /*.txt$
 Allow: /sitemap.xml
 
-# Crawl delay for bots (in seconds)
-Crawl-delay: 10
+# Don't crawl source files
+Disallow: /*.js$
+Disallow: /*.ts$
+Disallow: /*.tsx$
+Disallow: /*.map$
+Disallow: /*.css$
+
+# Allow main CSS for rendering
+Allow: /static/css/*.css
 
 # Sitemap location
-Sitemap: https://www.yourfirejourney.com/sitemap.xml 
+Sitemap: https://firecalculator.ai/sitemap.xml
+
+# Crawl delay for better server performance
+Crawl-delay: 10 
