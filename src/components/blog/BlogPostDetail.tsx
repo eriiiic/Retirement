@@ -4,6 +4,7 @@ import { blogPosts, BlogPost } from './blogData';
 import { getBlogPostContent, hasBlogPostContent } from './blogContentLoader';
 import { Helmet } from 'react-helmet';
 import Footer from '../common/Footer';
+import '../../styles/blogStyles.css'; // Import the blog styles CSS
 
 // Loading placeholder component
 const LoadingPlaceholder = () => (
@@ -11,100 +12,6 @@ const LoadingPlaceholder = () => (
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
   </div>
 );
-
-// Define CSS styles for blog content
-const blogStyles = `
-  .blog-content h1 {
-    font-size: 2.25rem;
-    font-weight: 800;
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-    color: #1a202c;
-    line-height: 1.2;
-  }
-  .blog-content h2 {
-    font-size: 1.875rem;
-    font-weight: 700;
-    margin-top: 1.75rem;
-    margin-bottom: 0.75rem;
-    color: #1a202c;
-    line-height: 1.3;
-  }
-  .blog-content h3 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
-    color: #1a202c;
-  }
-  .blog-content p {
-    margin-bottom: 1.25rem;
-    line-height: 1.7;
-  }
-  .blog-content ul, .blog-content ol {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    padding-left: 1.5rem;
-  }
-  .blog-content li {
-    margin-bottom: 0.5rem;
-  }
-  .blog-content blockquote {
-    border-left: 4px solid #a0aec0;
-    padding-left: 1rem;
-    font-style: italic;
-    margin: 1.5rem 0;
-    color: #4a5568;
-  }
-  .blog-content pre {
-    background-color: #f7fafc;
-    border-radius: 0.375rem;
-    padding: 1rem;
-    overflow-x: auto;
-    margin: 1.5rem 0;
-  }
-  .blog-content code {
-    background-color: #edf2f7;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    font-family: monospace;
-  }
-  .blog-content a {
-    color: #4f46e5;
-    text-decoration: underline;
-  }
-  .blog-content a:hover {
-    color: #3730a3;
-  }
-  .blog-content img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 0.375rem;
-    margin: 1.5rem 0;
-  }
-  .blog-content .table-container {
-    overflow-x: auto;
-    margin: 1.5rem 0;
-  }
-  .blog-content table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .blog-content th {
-    background-color: #f7fafc;
-    padding: 0.75rem;
-    border-bottom: 2px solid #e2e8f0;
-    text-align: left;
-    font-weight: 600;
-  }
-  .blog-content td {
-    padding: 0.75rem;
-    border-bottom: 1px solid #e2e8f0;
-  }
-  .blog-content tr:hover {
-    background-color: #f7fafc;
-  }
-`;
 
 // Process markdown headings to add IDs for anchor links
 const processMarkdownHeadings = (content: string): string => {
@@ -221,9 +128,6 @@ const BlogPostDetail: React.FC = () => {
           <meta name="twitter:data1" content={`${post.readTime} min read`} />
         </Helmet>
       )}
-      
-      {/* Add the blog styles */}
-      <style dangerouslySetInnerHTML={{ __html: blogStyles }} />
       
       <div className="max-w-6xl mx-auto px-4 py-8 bg-gray-50">
         {/* Back Link */}
