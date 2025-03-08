@@ -4,6 +4,7 @@ import { useWorker } from '../../hooks/useWorker';
 import { WorkerMessageType, WorkerResponse } from '../../types/worker';
 import { FixedSizeList as List } from 'react-window';
 import { calculatePhaseSummary } from '../../utils/financialCalculations';
+import { useTheme } from '../../context/ThemeContext';
 
 // Add global styles for custom scrollbar
 const scrollbarStyles = `
@@ -119,11 +120,12 @@ interface RowProps {
   data: {
     items: GraphDataPoint[];
     formatAmount: FormatAmountFunction;
+    darkMode: boolean;
   };
 }
 
 const Row: React.FC<RowProps> = ({ index, style, data }) => {
-  const { items, formatAmount } = data;
+  const { items, formatAmount, darkMode } = data;
   const entry = items[index];
   
   return (
@@ -134,28 +136,42 @@ const Row: React.FC<RowProps> = ({ index, style, data }) => {
         alignItems: 'center',
         width: '100%'
       }}
-      className={`divide-x divide-gray-200 ${entry.retirement === "Yes" ? "bg-purple-50" : "bg-white"} ${index % 2 === 0 ? "" : "bg-opacity-60"} transition-colors duration-150 hover:bg-gray-50`}
+      className={`divide-x ${darkMode ? 'divide-gray-700' : 'divide-gray-200'} ${
+        entry.retirement === "Yes" 
+          ? darkMode ? "bg-purple-900 bg-opacity-20" : "bg-purple-50" 
+          : darkMode ? "bg-gray-800" : "bg-white"
+      } ${
+        index % 2 === 0 
+          ? "" 
+          : darkMode ? "bg-opacity-90" : "bg-opacity-60"
+      } transition-colors duration-150 ${
+        darkMode ? "hover:bg-gray-700" : "hover:bg-gray-50"
+      }`}
     >
-      <div style={{ width: `var(--col-year, ${COLUMN_WIDTHS.year.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate">
+      <div style={{ width: `var(--col-year, ${COLUMN_WIDTHS.year.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'} truncate`}>
         {entry.year}
       </div>
-      <div style={{ width: `var(--col-age, ${COLUMN_WIDTHS.age.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate">
+      <div style={{ width: `var(--col-age, ${COLUMN_WIDTHS.age.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'} truncate`}>
         {entry.age}
       </div>
-      <div style={{ width: `var(--col-capital, ${COLUMN_WIDTHS.capital.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 truncate">
+      <div style={{ width: `var(--col-capital, ${COLUMN_WIDTHS.capital.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'} truncate`}>
         {formatAmount(entry.capital)}
       </div>
-      <div style={{ width: `var(--col-variation, ${COLUMN_WIDTHS.variation.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium truncate ${entry.variation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+      <div style={{ width: `var(--col-variation, ${COLUMN_WIDTHS.variation.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium truncate ${entry.variation >= 0 ? (darkMode ? 'text-green-400' : 'text-green-600') : (darkMode ? 'text-red-400' : 'text-red-600')}`}>
         {entry.variation >= 0 ? '+' : ''}{formatAmount(entry.variation)}
       </div>
-      <div style={{ width: `var(--col-interest, ${COLUMN_WIDTHS.interest.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium text-indigo-600 truncate">
+      <div style={{ width: `var(--col-interest, ${COLUMN_WIDTHS.interest.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium ${darkMode ? 'text-indigo-400' : 'text-indigo-600'} truncate`}>
         +{formatAmount(entry.annualInterest)}
       </div>
-      <div style={{ width: `var(--col-netvar, ${COLUMN_WIDTHS.netVariation.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium truncate ${entry.netVariationExcludingInterest >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+      <div style={{ width: `var(--col-netvar, ${COLUMN_WIDTHS.netVariation.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium truncate ${entry.netVariationExcludingInterest >= 0 ? (darkMode ? 'text-blue-400' : 'text-blue-600') : (darkMode ? 'text-red-400' : 'text-red-600')}`}>
         {entry.netVariationExcludingInterest >= 0 ? '+' : ''}{formatAmount(entry.netVariationExcludingInterest)}
       </div>
       <div style={{ width: `var(--col-phase, ${COLUMN_WIDTHS.phase.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm truncate">
-        <span className={`px-1 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${entry.retirement === "Yes" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}`}>
+        <span className={`px-1 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${
+          entry.retirement === "Yes" 
+            ? darkMode ? "bg-purple-900 text-purple-200" : "bg-purple-100 text-purple-800" 
+            : darkMode ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800"
+        }`}>
           {entry.retirement === "Yes" ? "Ret" : "Inv"}
         </span>
       </div>
@@ -183,6 +199,7 @@ interface PhaseSummaryTileProps {
     borderAccent: string;
     hoverBg: string;
   };
+  darkMode: boolean;
 }
 
 const PhaseSummaryTile: React.FC<PhaseSummaryTileProps> = ({
@@ -198,10 +215,11 @@ const PhaseSummaryTile: React.FC<PhaseSummaryTileProps> = ({
   totalInvestment,
   totalWithdrawal,
   formatAmount,
-  colorClasses
+  colorClasses,
+  darkMode
 }) => {
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden ${colorClasses.borderAccent}`}>
+    <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl shadow-sm border overflow-hidden ${colorClasses.borderAccent}`}>
       <div className={`py-4 px-6 ${colorClasses.bgGradient} border-b ${colorClasses.borderAccent}`}>
         <h3 className="font-semibold text-lg text-white flex justify-between items-center">
           {title}
@@ -213,48 +231,48 @@ const PhaseSummaryTile: React.FC<PhaseSummaryTileProps> = ({
       
       <div className="p-4 grid grid-cols-2 gap-4 mb-2">
         <div>
-          <p className="text-xs text-gray-500 uppercase font-medium">Period</p>
-          <p className="text-sm font-medium">
+          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase font-medium`}>Period</p>
+          <p className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
             {startYear && endYear ? `${startYear} to ${endYear}` : 'N/A'}
           </p>
         </div>
         <div>
-          <p className="text-xs text-gray-500 uppercase font-medium">Age</p>
-          <p className="text-sm font-medium">
+          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase font-medium`}>Age</p>
+          <p className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
             {startAge && endAge ? `${startAge} to ${endAge}` : 'N/A'}
           </p>
         </div>
       </div>
       
-      <div className="px-4 py-2 border-t border-gray-100">
+      <div className={`px-4 py-2 border-t ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-xs text-gray-500 uppercase font-medium">Initial Capital</p>
-            <p className={`text-sm font-semibold ${colorClasses.textAccent}`}>{formatAmount(startCapital)}</p>
+            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase font-medium`}>Initial Capital</p>
+            <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>{formatAmount(startCapital)}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 uppercase font-medium">Final Capital</p>
-            <p className={`text-sm font-semibold ${colorClasses.textAccent}`}>{formatAmount(endCapital)}</p>
+            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase font-medium`}>Final Capital</p>
+            <p className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>{formatAmount(endCapital)}</p>
           </div>
         </div>
       </div>
       
-      <div className="px-4 py-3 border-t border-gray-100">
-        <div className="grid grid-cols-3 gap-2">
+      <div className={`px-4 py-2 border-t ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+        <div className="grid grid-cols-1 gap-4">
           <div>
-            <p className="text-xs text-gray-500 uppercase font-medium">Interest</p>
-            <p className="text-sm font-medium text-green-600">+{formatAmount(totalInterest)}</p>
+            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase font-medium`}>Growth from Interest</p>
+            <p className={`text-sm font-medium ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>+{formatAmount(totalInterest)}</p>
           </div>
           {totalInvestment !== undefined && (
             <div>
-              <p className="text-xs text-gray-500 uppercase font-medium">Invested</p>
-              <p className="text-sm font-medium text-blue-600">+{formatAmount(totalInvestment)}</p>
+              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase font-medium`}>Total Contributions</p>
+              <p className={`text-sm font-medium ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>+{formatAmount(totalInvestment)}</p>
             </div>
           )}
           {totalWithdrawal !== undefined && (
             <div>
-              <p className="text-xs text-gray-500 uppercase font-medium">Withdrawn</p>
-              <p className="text-sm font-medium text-red-600">-{formatAmount(totalWithdrawal)}</p>
+              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase font-medium`}>Total Withdrawals</p>
+              <p className={`text-sm font-medium ${darkMode ? 'text-red-400' : 'text-red-600'}`}>-{formatAmount(totalWithdrawal)}</p>
             </div>
           )}
         </div>
@@ -268,6 +286,7 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
   formatAmount,
   currency
 }) => {
+  const { darkMode } = useTheme();
   const [state, dispatch] = useReducer(scheduleReducer, {
     sortConfig: {
       key: null,
@@ -444,121 +463,95 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
     }
     
     return (
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        {/* Table Header - Wrapped in a scrollable container */}
-        <div className="overflow-x-auto custom-scrollbar">
-          <div className="min-w-[800px]"> {/* Minimum width to prevent squishing */}
-            <div className="flex bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 font-medium text-xs text-gray-600 uppercase tracking-wider">
-              <div 
-                style={{ width: `var(--col-year, ${COLUMN_WIDTHS.year.mobile})` }}
-                className="px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
-                onClick={() => handleSort('year')}
-              >
-                Yr
-                {state.sortConfig.key === 'year' && (
-                  <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-                )}
-              </div>
-              <div 
-                style={{ width: `var(--col-age, ${COLUMN_WIDTHS.age.mobile})` }}
-                className="px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
-                onClick={() => handleSort('age')}
-              >
-                Age
-                {state.sortConfig.key === 'age' && (
-                  <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-                )}
-              </div>
-              <div 
-                style={{ width: `var(--col-capital, ${COLUMN_WIDTHS.capital.mobile})` }}
-                className="px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
-                onClick={() => handleSort('capital')}
-              >
-                <span className="hidden sm:inline">Capital</span>
-                <span className="sm:hidden">Cap</span>
-                {state.sortConfig.key === 'capital' && (
-                  <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-                )}
-              </div>
-              <div 
-                style={{ width: `var(--col-variation, ${COLUMN_WIDTHS.variation.mobile})` }}
-                className="px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
-                onClick={() => handleSort('variation')}
-              >
-                Var
-                {state.sortConfig.key === 'variation' && (
-                  <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-                )}
-              </div>
-              <div 
-                style={{ width: `var(--col-interest, ${COLUMN_WIDTHS.interest.mobile})` }}
-                className="px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
-                onClick={() => handleSort('annualInterest')}
-              >
-                Int
-                {state.sortConfig.key === 'annualInterest' && (
-                  <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-                )}
-              </div>
-              <div 
-                style={{ width: `var(--col-netvar, ${COLUMN_WIDTHS.netVariation.mobile})` }}
-                className="px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors"
-                onClick={() => handleSort('netVariationExcludingInterest')}
-              >
-                <span className="hidden sm:inline">Inv/With</span>
-                <span className="sm:hidden">I/W</span>
-                {state.sortConfig.key === 'netVariationExcludingInterest' && (
-                  <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
-                )}
-              </div>
-              <div 
-                style={{ width: `var(--col-phase, ${COLUMN_WIDTHS.phase.mobile})` }}
-                className="px-1 sm:px-2 md:px-3 py-3 text-left"
-              >
-                Ph
-              </div>
-            </div>
-            
-            {/* Show the entire schedule in a grid instead of virtualized list - removed max-height and overflow */}
-            <div>
-              {processedData.map((entry, index) => (
-                <div 
-                  key={`${entry.year}-${entry.age}`}
-                  className={`flex divide-x divide-gray-200 ${entry.retirement === "Yes" ? "bg-purple-50" : "bg-white"} ${index % 2 === 0 ? "" : "bg-opacity-60"} hover:bg-gray-50`}
-                >
-                  <div style={{ width: `var(--col-year, ${COLUMN_WIDTHS.year.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate">
-                    {entry.year}
-                  </div>
-                  <div style={{ width: `var(--col-age, ${COLUMN_WIDTHS.age.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm text-gray-900 truncate">
-                    {entry.age}
-                  </div>
-                  <div style={{ width: `var(--col-capital, ${COLUMN_WIDTHS.capital.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 truncate">
-                    {formatDisplayValue(entry.capital)}
-                  </div>
-                  <div style={{ width: `var(--col-variation, ${COLUMN_WIDTHS.variation.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium truncate ${entry.variation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {entry.variation >= 0 ? '+' : ''}{formatDisplayValue(entry.variation)}
-                  </div>
-                  <div style={{ width: `var(--col-interest, ${COLUMN_WIDTHS.interest.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium text-indigo-600 truncate">
-                    +{formatDisplayValue(entry.annualInterest)}
-                  </div>
-                  <div style={{ width: `var(--col-netvar, ${COLUMN_WIDTHS.netVariation.mobile})` }} className={`px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm font-medium truncate ${entry.netVariationExcludingInterest >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                    {entry.netVariationExcludingInterest >= 0 ? '+' : ''}{formatDisplayValue(entry.netVariationExcludingInterest)}
-                  </div>
-                  <div style={{ width: `var(--col-phase, ${COLUMN_WIDTHS.phase.mobile})` }} className="px-1 sm:px-2 md:px-3 py-2 whitespace-nowrap text-xs sm:text-sm truncate">
-                    <span className={`px-1 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${entry.retirement === "Yes" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}`}>
-                      <span className="hidden sm:inline">{entry.retirement === "Yes" ? "Retire" : "Invest"}</span>
-                      <span className="sm:hidden">{entry.retirement === "Yes" ? "Ret" : "Inv"}</span>
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+      <div ref={containerRef} className="w-full max-w-full overflow-x-auto">
+        {/* Table header */}
+        <div className={`sticky top-0 z-10 flex w-full ${darkMode ? 'bg-gray-800 text-gray-200' : 'bg-gray-50 text-gray-500'} border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <div 
+            style={{ width: `var(--col-year, ${COLUMN_WIDTHS.year.mobile})` }}
+            className={`px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors`}
+            onClick={() => handleSort('year')}
+          >
+            Yr
+            {state.sortConfig.key === 'year' && (
+              <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+            )}
+          </div>
+          <div 
+            style={{ width: `var(--col-age, ${COLUMN_WIDTHS.age.mobile})` }}
+            className={`px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors`}
+            onClick={() => handleSort('age')}
+          >
+            Age
+            {state.sortConfig.key === 'age' && (
+              <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+            )}
+          </div>
+          <div 
+            style={{ width: `var(--col-capital, ${COLUMN_WIDTHS.capital.mobile})` }}
+            className={`px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors`}
+            onClick={() => handleSort('capital')}
+          >
+            <span className="hidden sm:inline">Capital</span>
+            <span className="sm:hidden">Cap</span>
+            {state.sortConfig.key === 'capital' && (
+              <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+            )}
+          </div>
+          <div 
+            style={{ width: `var(--col-variation, ${COLUMN_WIDTHS.variation.mobile})` }}
+            className={`px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors`}
+            onClick={() => handleSort('variation')}
+          >
+            Var
+            {state.sortConfig.key === 'variation' && (
+              <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+            )}
+          </div>
+          <div 
+            style={{ width: `var(--col-interest, ${COLUMN_WIDTHS.interest.mobile})` }}
+            className={`px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors`}
+            onClick={() => handleSort('annualInterest')}
+          >
+            Int
+            {state.sortConfig.key === 'annualInterest' && (
+              <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+            )}
+          </div>
+          <div 
+            style={{ width: `var(--col-netvar, ${COLUMN_WIDTHS.netVariation.mobile})` }}
+            className={`px-1 sm:px-2 md:px-3 py-3 text-left cursor-pointer hover:text-indigo-700 transition-colors`}
+            onClick={() => handleSort('netVariationExcludingInterest')}
+          >
+            <span className="hidden sm:inline">Inv/With</span>
+            <span className="sm:hidden">I/W</span>
+            {state.sortConfig.key === 'netVariationExcludingInterest' && (
+              <span className="ml-1">{state.sortConfig.direction === 'ascending' ? '↑' : '↓'}</span>
+            )}
+          </div>
+          <div 
+            style={{ width: `var(--col-phase, ${COLUMN_WIDTHS.phase.mobile})` }}
+            className={`px-1 sm:px-2 md:px-3 py-3 text-left`}
+          >
+            Ph
           </div>
         </div>
         
-        {/* Summary Footer */}
-        <div className="border-t border-gray-200 bg-gray-50 py-3 px-6 text-xs text-gray-500">
-          Showing {processedData.length} years of financial data
+        {/* Table body - virtualized */}
+        <div className="schedule-custom-scrollbar">
+          <List
+            height={listHeight}
+            itemCount={processedData.length}
+            itemSize={40}
+            width="100%"
+            className={`${darkMode ? 'bg-gray-800' : 'bg-white'}`}
+            itemData={{
+              items: processedData,
+              formatAmount,
+              darkMode
+            }}
+          >
+            {Row}
+          </List>
         </div>
       </div>
     );
@@ -566,8 +559,8 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
 
   const renderSummaryTiles = () => {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {/* Investment Phase Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+        {/* Investment Phase Tile */}
         {phaseSummaries.investmentSummary && (
           <PhaseSummaryTile
             title="Investment Phase"
@@ -582,15 +575,16 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
             totalInvestment={phaseSummaries.investmentSummary.totalInvestment}
             formatAmount={formatDisplayValue}
             colorClasses={{
-              bgGradient: 'bg-gradient-to-r from-blue-500 to-indigo-600',
-              textAccent: 'text-blue-600',
-              borderAccent: 'border-blue-400',
-              hoverBg: 'hover:bg-blue-50'
+              bgGradient: "bg-gradient-to-r from-blue-500 to-indigo-600",
+              textAccent: "text-blue-600",
+              borderAccent: darkMode ? "border-blue-800" : "border-blue-200",
+              hoverBg: "hover:bg-blue-50"
             }}
+            darkMode={darkMode}
           />
         )}
-
-        {/* Retirement Phase Summary */}
+        
+        {/* Retirement Phase Tile */}
         {phaseSummaries.retirementSummary && (
           <PhaseSummaryTile
             title="Retirement Phase"
@@ -605,11 +599,12 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
             totalWithdrawal={phaseSummaries.retirementSummary.totalWithdrawal}
             formatAmount={formatDisplayValue}
             colorClasses={{
-              bgGradient: 'bg-gradient-to-r from-purple-500 to-pink-600',
-              textAccent: 'text-purple-600',
-              borderAccent: 'border-purple-400',
-              hoverBg: 'hover:bg-purple-50'
+              bgGradient: "bg-gradient-to-r from-purple-500 to-pink-600",
+              textAccent: "text-purple-600",
+              borderAccent: darkMode ? "border-purple-800" : "border-purple-200",
+              hoverBg: "hover:bg-purple-50"
             }}
+            darkMode={darkMode}
           />
         )}
       </div>
@@ -619,31 +614,48 @@ export const ScheduleDetails: React.FC<ScheduleDetailsProps> = ({
   // Filter buttons for full schedule view
   const renderPhaseFilterButtons = () => {
     return (
-      <div className="flex flex-wrap items-center gap-1 sm:gap-2">
-        <span className="text-xs sm:text-sm text-gray-500 mr-1">Filter:</span>
+      <div className={`inline-flex rounded-md shadow-sm mb-4 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'} p-1`}>
         <button
-          className={`px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-lg ${state.filteredPhase === 'all' 
-            ? 'bg-gray-700 text-white font-medium' 
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          className={`px-4 py-2 text-sm font-medium rounded-md ${
+            state.filteredPhase === 'all'
+              ? darkMode 
+                ? 'bg-gray-900 text-white' 
+                : 'bg-white text-gray-700 shadow-sm'
+              : darkMode 
+                ? 'text-gray-300 hover:bg-gray-800' 
+                : 'text-gray-700 hover:bg-gray-100'
+          }`}
           onClick={() => handlePhaseFilter('all')}
         >
           All Phases
         </button>
         <button
-          className={`px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-lg ${state.filteredPhase === 'investment' 
-            ? 'bg-blue-600 text-white font-medium' 
-            : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}`}
+          className={`px-4 py-2 text-sm font-medium rounded-md ${
+            state.filteredPhase === 'investment'
+              ? darkMode 
+                ? 'bg-gray-900 text-white' 
+                : 'bg-white text-gray-700 shadow-sm'
+              : darkMode 
+                ? 'text-gray-300 hover:bg-gray-800' 
+                : 'text-gray-700 hover:bg-gray-100'
+          }`}
           onClick={() => handlePhaseFilter('investment')}
         >
-          Investment Phase
+          Investment
         </button>
         <button
-          className={`px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-lg ${state.filteredPhase === 'retirement' 
-            ? 'bg-purple-600 text-white font-medium' 
-            : 'bg-purple-50 text-purple-700 hover:bg-purple-100'}`}
+          className={`px-4 py-2 text-sm font-medium rounded-md ${
+            state.filteredPhase === 'retirement'
+              ? darkMode 
+                ? 'bg-gray-900 text-white' 
+                : 'bg-white text-gray-700 shadow-sm'
+              : darkMode 
+                ? 'text-gray-300 hover:bg-gray-800' 
+                : 'text-gray-700 hover:bg-gray-100'
+          }`}
           onClick={() => handlePhaseFilter('retirement')}
         >
-          Retirement Phase
+          Retirement
         </button>
       </div>
     );
