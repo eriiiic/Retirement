@@ -218,908 +218,913 @@ const FIREPage: React.FC = () => {
   ], []);
 
   return (
-    <>
+    <div className="max-w-6xl mx-auto px-4 py-8 bg-gray-50">
       <Helmet>
-        <title>Financial Independence, Retire Early (FIRE) | Ultimate Guide</title>
-        <meta name="description" content="Learn how to achieve financial freedom and retire on your own terms with our comprehensive guide to the FIRE movement principles and strategies." />
+        <title>FIRE: Financial Independence, Retire Early | Retirement Planning Guide</title>
+        <meta name="description" content="Learn about the FIRE movement (Financial Independence, Retire Early) and how to achieve financial freedom through smart investing and intentional spending." />
         
-        {/* OpenGraph / Facebook */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://FIRECalculator.ai/fire" />
-        <meta property="og:title" content="Financial Independence, Retire Early (FIRE) | Ultimate Guide" />
-        <meta property="og:description" content="Learn how to achieve financial freedom and retire on your own terms with our comprehensive guide to the FIRE movement principles and strategies." />
-        <meta property="og:image" content="/blog-images/fire-og-image.png" />
-        <meta property="og:updated_time" content="2023-03-08" />
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content="FIRE: Financial Independence, Retire Early | Ultimate Guide" />
+        <meta property="og:description" content="Learn how to achieve financial independence and retire decades earlier with FIRE strategies, calculators, and step-by-step guidance." />
+        <meta property="og:image" content="https://yourdomain.com/images/fire-social-card.jpg" />
+        <meta property="og:url" content="https://yourdomain.com/fire" />
+        <meta property="og:site_name" content="Retirement Planner" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:url" content="https://FIRECalculator.ai/fire" />
-        <meta name="twitter:title" content="Financial Independence, Retire Early (FIRE) | Ultimate Guide" />
-        <meta name="twitter:description" content="Learn how to achieve financial freedom and retire on your own terms with our comprehensive guide to the FIRE movement principles and strategies." />
-        <meta name="twitter:image" content="/blog-images/fire-twitter-card.png" />
+        <meta name="twitter:title" content="FIRE: Financial Independence, Retire Early | Ultimate Guide" />
+        <meta name="twitter:description" content="Learn how to achieve financial independence and retire decades earlier with FIRE strategies, calculators, and step-by-step guidance." />
+        <meta name="twitter:image" content="https://yourdomain.com/images/fire-social-card.jpg" />
+        
+        {/* LinkedIn */}
+        <meta property="linkedin:title" content="FIRE: Financial Independence, Retire Early | Ultimate Guide" />
+        <meta property="linkedin:description" content="Learn how to achieve financial independence and retire decades earlier with FIRE strategies, calculators, and step-by-step guidance." />
+        <meta property="linkedin:image" content="https://yourdomain.com/images/fire-social-card.jpg" />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://yourdomain.com/fire" />
       </Helmet>
 
-      <div className="max-w-6xl mx-auto px-4 py-8 bg-gray-50">
-        {/* Page Header with Gradient Background */}
-        <div className="mb-10 rounded-xl overflow-hidden shadow-lg">
-          <div className={`py-12 px-6 ${isSafariBrowser ? 'bg-indigo-600' : 'bg-gradient-to-r from-indigo-600 to-purple-600'}`}>
-            <div className="mb-6 sm:mb-8 text-center">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
-                FIRE: Financial Independence, Retire Early
-              </h1>
-              <p className="text-gray-100 text-sm sm:text-base max-w-2xl mx-auto font-medium">
-                Learn how the FIRE movement can help you achieve financial freedom, escape the 9-5 grind,
-                and design a life centered around your passions and priorities.
-              </p>
-              <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-lg py-3 px-4 inline-block">
-                <nav className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm">
-                  <a href="#what-is-fire" className="text-white hover:text-indigo-200 font-medium transition-colors">What is FIRE?</a>
-                  <a href="#fire-formula" className="text-white hover:text-indigo-200 font-medium transition-colors">FIRE Formula</a>
-                  <a href="#fire-types" className="text-white hover:text-indigo-200 font-medium transition-colors">Types of FIRE</a>
-                  <a href="#faq" className="text-white hover:text-indigo-200 font-medium transition-colors">FAQ</a>
-                </nav>
-              </div>
+      {/* Page Header with Gradient Background */}
+      <div className="mb-10 rounded-xl overflow-hidden shadow-lg">
+        <div className={`py-12 px-6 ${isSafariBrowser ? 'bg-indigo-600' : 'bg-gradient-to-r from-indigo-600 to-purple-600'}`}>
+          <div className="mb-6 sm:mb-8 text-center">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
+              FIRE: Financial Independence, Retire Early
+            </h1>
+            <p className="text-gray-100 text-sm sm:text-base max-w-2xl mx-auto font-medium">
+              Learn how the FIRE movement can help you achieve financial freedom, escape the 9-5 grind,
+              and design a life centered around your passions and priorities.
+            </p>
+            <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-lg py-3 px-4 inline-block">
+              <nav className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm">
+                <a href="#what-is-fire" className="text-white hover:text-indigo-200 font-medium transition-colors">What is FIRE?</a>
+                <a href="#fire-formula" className="text-white hover:text-indigo-200 font-medium transition-colors">FIRE Formula</a>
+                <a href="#fire-types" className="text-white hover:text-indigo-200 font-medium transition-colors">Types of FIRE</a>
+                <a href="#faq" className="text-white hover:text-indigo-200 font-medium transition-colors">FAQ</a>
+              </nav>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Introduction Section */}
-        <Section className="mb-10 bg-white rounded-xl shadow-md overflow-hidden">
-          <div className="prose prose-lg max-w-none px-6 py-8">
-            <SectionHeader 
-              id="what-is-fire" 
-              title="What is FIRE?" 
-              className="mb-6"
-              icon={
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              }
-            />
-            
-            <div className="space-y-6">
-              <p className="text-gray-700 text-lg leading-relaxed">
-                <span className="font-semibold text-indigo-600">FIRE</span> stands for <span className="font-semibold">Financial Independence, Retire Early</span>. It's a movement focused on extreme savings and investments that allow people to retire much earlier than traditional budgets and retirement plans would allow.
-              </p>
-              
-              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border border-indigo-100">
-                <p className="text-gray-800 italic">
-                  "Financial independence means having enough income to pay your living expenses for the rest of your life without having to work full-time. Retire early means having the freedom to pursue your dreams and ambitions whenever you want."
-                </p>
-              </div>
-
-              <p className="text-gray-700 text-lg leading-relaxed">
-                The FIRE movement gained popularity in the 2010s, inspired by the 1992 book <span className="italic">"Your Money or Your Life"</span> by Vicki Robin and Joe Dominguez, as well as the 2010 book <span className="italic">"Early Retirement Extreme"</span> by Jacob Lund Fisker.
-              </p>
-
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">The Two Core Pillars of FIRE</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-white p-4 rounded-lg shadow-sm">
-                    <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
-                      <span className="text-indigo-600 mr-2">FI</span>
-                      Financial Independence
-                    </h4>
-                    <p className="text-gray-700">
-                      Having sufficient personal wealth to live without needing to work actively 
-                      for basic necessities. Your assets generate enough passive income to cover your living expenses.
-                    </p>
-                  </div>
-                  <div className="bg-white p-4 rounded-lg shadow-sm">
-                    <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
-                      <span className="text-green-600 mr-2">RE</span>
-                      Retire Early
-                    </h4>
-                    <p className="text-gray-700">
-                      Leveraging financial independence to leave traditional work decades before the conventional 
-                      retirement age of 65+, creating freedom to pursue your true interests.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-indigo-100 to-purple-100 p-6 rounded-xl border border-indigo-200 mb-8 transform hover:scale-[1.02] transition-transform duration-300">
-                <div className="flex flex-col md:flex-row items-center">
-                  <div className="mb-4 md:mb-0 md:mr-6 flex-shrink-0">
-                    <div className="w-24 h-24 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
-                      <span className="text-4xl text-white">🔥</span>
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 mb-2">
-                      The FIRE Origin Story
-                    </h3>
-                    <p className="text-indigo-900 italic border-l-4 border-indigo-300 pl-4 text-lg">
-                      "Financial Independence is having enough income (from investments, passive businesses, or 
-                      other sources) to pay for your living expenses for the rest of your life without having to 
-                      work for money."
-                    </p>
-                    <p className="text-gray-700 mt-2">
-                      The FIRE movement grew from the 1992 bestseller "Your Money or Your Life" by Vicki Robin 
-                      and Joe Dominguez, later popularized by bloggers like Mr. Money Mustache who retired at 30.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                  <h4 className="font-semibold text-gray-900 mb-2">Why FIRE is Growing</h4>
-                  <ul className="text-gray-700 space-y-2">
-                    <li>• Dissatisfaction with 9-5 work</li>
-                    <li>• Seeking meaning beyond consumption</li>
-                    <li>• Greater awareness of work-life balance</li>
-                    <li>• Access to low-cost index funds</li>
-                  </ul>
-                </div>
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                  <h4 className="font-semibold text-gray-900 mb-2">Essential Components</h4>
-                  <ul className="text-gray-700 space-y-2">
-                    <li>• High savings rate (50%+ of income)</li>
-                    <li>• Low-cost index fund investing</li>
-                    <li>• Lifestyle optimization</li>
-                    <li>• Financial literacy and planning</li>
-                  </ul>
-                </div>
-                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                  <h4 className="font-semibold text-gray-900 mb-2">Who Is It For?</h4>
-                  <ul className="text-gray-700 space-y-2">
-                    <li>• Those seeking work/life freedom</li>
-                    <li>• Value-focused individuals</li>
-                    <li>• People wanting career flexibility</li>
-                    <li>• Those rejecting consumerism</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Section>
-
-        {/* FIRE Basics Section */}
-        <Card className={`mb-10 p-8 ${isSafariBrowser ? 'bg-blue-50' : 'bg-gradient-to-br from-white to-blue-50'}`}>
+      {/* Introduction Section */}
+      <Section className="mb-10 bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="prose prose-lg max-w-none px-6 py-8">
           <SectionHeader 
-            title="The FIRE Formula: How It Works" 
+            id="what-is-fire" 
+            title="What is FIRE?" 
+            className="mb-6"
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             }
           />
-          <div id="fire-formula"></div>
           
-          <div className="space-y-8">
-            {/* FIRE Formula */}
-            <div className="bg-white p-6 rounded-xl shadow-md border border-blue-100">
-              <div className="text-center mb-6">
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg inline-block">
-                  <p className="text-2xl font-mono font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-                    Target Nest Egg = Annual Expenses × 25
+          <div className="space-y-6">
+            <p className="text-gray-700 text-lg leading-relaxed">
+              <span className="font-semibold text-indigo-600">FIRE</span> stands for <span className="font-semibold">Financial Independence, Retire Early</span>. It's a movement focused on extreme savings and investments that allow people to retire much earlier than traditional budgets and retirement plans would allow.
+            </p>
+            
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-lg border border-indigo-100">
+              <p className="text-gray-800 italic">
+                "Financial independence means having enough income to pay your living expenses for the rest of your life without having to work full-time. Retire early means having the freedom to pursue your dreams and ambitions whenever you want."
+              </p>
+            </div>
+
+            <p className="text-gray-700 text-lg leading-relaxed">
+              The FIRE movement gained popularity in the 2010s, inspired by the 1992 book <span className="italic">"Your Money or Your Life"</span> by Vicki Robin and Joe Dominguez, as well as the 2010 book <span className="italic">"Early Retirement Extreme"</span> by Jacob Lund Fisker.
+            </p>
+
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">The Two Core Pillars of FIRE</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
+                    <span className="text-indigo-600 mr-2">FI</span>
+                    Financial Independence
+                  </h4>
+                  <p className="text-gray-700">
+                    Having sufficient personal wealth to live without needing to work actively 
+                    for basic necessities. Your assets generate enough passive income to cover your living expenses.
                   </p>
                 </div>
-                <p className="text-gray-600 mt-2">Based on the 4% Safe Withdrawal Rate</p>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Left Column: Formula Components */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">Key Components:</h4>
-                  <ul className="space-y-3 text-gray-700">
-                    <li className="flex items-center">
-                      <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-mono font-bold text-blue-600 mr-3">E</span>
-                      <div>
-                        <span className="font-medium">Annual Expenses</span>
-                        <p className="text-sm text-gray-600">Your total yearly spending in retirement</p>
-                      </div>
-                    </li>
-                    <li className="flex items-center">
-                      <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-mono font-bold text-blue-600 mr-3">25</span>
-                      <div>
-                        <span className="font-medium">Multiplier</span>
-                        <p className="text-sm text-gray-600">Based on the 4% rule (100 ÷ 4 = 25)</p>
-                      </div>
-                    </li>
-                    <li className="flex items-center">
-                      <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-mono font-bold text-blue-600 mr-3">4%</span>
-                      <div>
-                        <span className="font-medium">Safe Withdrawal Rate</span>
-                        <p className="text-sm text-gray-600">Historically sustainable withdrawal rate</p>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Right Column: Example Calculation */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">Example Calculation:</h4>
-                  <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-lg">
-                    <p className="text-gray-700 mb-2">
-                      If your annual expenses are <span className="font-semibold">$40,000</span>:
-                    </p>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span>Target Nest Egg:</span>
-                        <span className="font-mono font-bold text-indigo-600">$40,000 × 25</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span>Required Savings:</span>
-                        <span className="font-mono font-bold text-indigo-600">$1,000,000</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span>Sustainable Withdrawal:</span>
-                        <span className="font-mono font-bold text-indigo-600">$40,000/year (4%)</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-                    <h5 className="font-medium text-gray-900 mb-1">The 4% Rule Explained:</h5>
-                    <p className="text-sm text-gray-700">
-                      Based on the Trinity Study, withdrawing 4% of your portfolio in year one and adjusting 
-                      for inflation in subsequent years has historically provided a high probability of your 
-                      money lasting 30+ years across various market conditions.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Savings Rate and Time to FIRE */}
-            <div className="bg-white p-6 rounded-xl shadow-md border border-blue-100">
-              <h4 className="text-xl font-semibold text-gray-900 mb-4">The Magic Number: Your Savings Rate</h4>
-              <p className="text-gray-700 mb-4">
-                Your savings rate is the single most important factor determining how quickly you can achieve FIRE.
-              </p>
-              
-              <div className="overflow-x-auto">
-                <table className="min-w-full bg-white rounded-lg overflow-hidden">
-                  <thead className="bg-blue-50">
-                    <tr>
-                      <th className="py-3 px-4 text-left font-medium text-gray-800">Savings Rate</th>
-                      <th className="py-3 px-4 text-left font-medium text-gray-800">Years to FIRE</th>
-                      <th className="py-3 px-4 text-left font-medium text-gray-800">Assuming 7% Returns</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    <tr>
-                      <td className="py-2 px-4">10%</td>
-                      <td className="py-2 px-4">51 years</td>
-                      <td className="py-2 px-4">Standard retirement timeline</td>
-                    </tr>
-                    <tr>
-                      <td className="py-2 px-4">25%</td>
-                      <td className="py-2 px-4">32 years</td>
-                      <td className="py-2 px-4">Slightly early retirement</td>
-                    </tr>
-                    <tr>
-                      <td className="py-2 px-4">50%</td>
-                      <td className="py-2 px-4">17 years</td>
-                      <td className="py-2 px-4">Classic FIRE timeline</td>
-                    </tr>
-                    <tr>
-                      <td className="py-2 px-4">65%</td>
-                      <td className="py-2 px-4">10.5 years</td>
-                      <td className="py-2 px-4">Aggressive FIRE path</td>
-                    </tr>
-                    <tr>
-                      <td className="py-2 px-4">75%</td>
-                      <td className="py-2 px-4">7 years</td>
-                      <td className="py-2 px-4">Extreme FIRE approach</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              
-              <p className="text-sm text-gray-600 mt-4">
-                This table assumes consistent savings rate and investment returns. Individual results may vary based on market conditions, income growth, and lifestyle changes.
-              </p>
-            </div>
-
-            {/* Key Investment Principles */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gradient-to-b from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
-                <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                  <span className="bg-green-600 text-white p-1.5 rounded-full mr-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </span>
-                  Income Growth
-                </h4>
-                <p className="text-gray-700 text-sm">
-                  Increase your earning potential through skills development, side hustles, and career advancement 
-                  to accelerate your journey to FIRE.
-                </p>
-              </div>
-              
-              <div className="bg-gradient-to-b from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
-                <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                  <span className="bg-blue-600 text-white p-1.5 rounded-full mr-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  </span>
-                  Expense Optimization
-                </h4>
-                <p className="text-gray-700 text-sm">
-                  Cut costs on the things that bring little value while spending intentionally on what truly 
-                  matters to you. Focus on the "big three": housing, transportation, and food.
-                </p>
-              </div>
-              
-              <div className="bg-gradient-to-b from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
-                <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-                  <span className="bg-purple-600 text-white p-1.5 rounded-full mr-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </span>
-                  Strategic Investing
-                </h4>
-                <p className="text-gray-700 text-sm">
-                  Harness the power of low-cost index funds, tax-advantaged accounts, and compound interest to grow 
-                  your wealth efficiently and passively.
-                </p>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Types of FIRE Section */}
-        <Section className="mb-10">
-          <div className="prose prose-lg max-w-none">
-            <SectionHeader 
-              id="fire-types" 
-              title="Find Your FIRE: Different Approaches to Financial Independence" 
-              icon={
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              }
-            />
-
-            <p className="text-gray-700 mb-6">
-              There isn't just one way to achieve FIRE. The movement has evolved to include several variations 
-              that accommodate different financial goals, risk tolerances, and lifestyle preferences.
-            </p>
-
-            <div className="grid grid-cols-1 gap-6 mb-8">
-              {fireTypes.map((type, index) => (
-                <div key={index} className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
-                  <div className="flex flex-col md:flex-row">
-                    <div className="md:w-1/4 mb-4 md:mb-0">
-                      <div className={`inline-flex items-center justify-center p-3 rounded-lg ${
-                        index === 0 ? 'bg-yellow-100 text-yellow-700' : 
-                        index === 1 ? 'bg-green-100 text-green-700' : 
-                        index === 2 ? 'bg-indigo-100 text-indigo-700' : 
-                        index === 3 ? 'bg-blue-100 text-blue-700' :
-                        'bg-purple-100 text-purple-700'
-                      }`}>
-                        <h3 className="text-xl font-bold">{type.type}</h3>
-                      </div>
-                    </div>
-                    <div className="md:w-3/4 md:pl-6">
-                      <p className="text-gray-700 mb-4">{type.description}</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-600"><span className="font-medium">Typical Savings Rate:</span> {type.savingsRate}</p>
-                          <p className="text-sm text-gray-600"><span className="font-medium">Lifestyle:</span> {type.lifestyle}</p>
-                          <p className="text-sm text-gray-600"><span className="font-medium">Target Amount:</span> {type.retirementAmount}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600"><span className="font-medium">Benefits:</span> {type.benefits}</p>
-                          <p className="text-sm text-gray-600"><span className="font-medium">Challenges:</span> {type.challenges}</p>
-                        </div>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-4">Learn more about <a href={`/fire-types/${type.type.toLowerCase()}`}>{type.type}</a></p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-100">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Finding Your FIRE Path</h3>
-              <p className="text-gray-700 mb-4">
-                The right FIRE approach for you depends on your personal values, financial situation, and vision for your ideal life.
-                Ask yourself these key questions:
-              </p>
-              <ul className="space-y-2 text-gray-700">
-                <li className="flex items-start">
-                  <span className="text-indigo-600 mr-2">•</span>
-                  <span>What standard of living do you want in retirement?</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-indigo-600 mr-2">•</span>
-                  <span>How quickly do you want to reach financial independence?</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-indigo-600 mr-2">•</span>
-                  <span>Do you want to quit working entirely, or transition to more meaningful work?</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-indigo-600 mr-2">•</span>
-                  <span>How much are you willing to sacrifice now for freedom later?</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-indigo-600 mr-2">•</span>
-                  <span>What activities and experiences truly bring you joy and fulfillment?</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </Section>
-
-        {/* Call to Action Section */}
-        <div className="mb-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl overflow-hidden shadow-lg">
-          <div className="px-6 py-12 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-              Ready to Start Your FIRE Journey?
-            </h2>
-            <p className="text-indigo-100 max-w-2xl mx-auto mb-8">
-              Take the first step toward financial independence with our free retirement calculator and personalized recommendations.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 justify-center items-center">
-              <a 
-                href="/calculator" 
-                className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-                Try Our FIRE Calculator
-              </a>
-              <a 
-                href="/compound-interest" 
-                className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-indigo-200 text-base font-medium rounded-md text-white hover:bg-white/10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Explore Compound Interest
-              </a>
-            </div>
-          </div>
-        </div>
-
-        {/* Conclusion Section */}
-        <Section className={`mb-10 ${isSafariBrowser ? 'bg-indigo-50' : 'bg-gradient-to-br from-white to-indigo-50'}`}>
-          <div className="prose prose-lg max-w-none">
-            <SectionHeader 
-              title="Your Journey to Financial Independence Starts Today" 
-              icon={
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              }
-            />
-            
-            <div className="space-y-6">
-              <p className="text-gray-700 text-lg leading-relaxed">
-                The FIRE movement isn't just about retiring early—it's about gaining the freedom to live life on your own terms.
-                By combining intentional spending, strategic investing, and thoughtful planning, you can break free from financial 
-                constraints decades earlier than conventional wisdom suggests.
-              </p>
-              
-              <p className="text-gray-700 text-lg leading-relaxed">
-                Remember that FIRE is a highly personal journey. Your version might look different from someone else's,
-                and that's perfectly fine. The key is to find the balance between enjoying today and building for tomorrow
-                that works for your unique situation and values.
-              </p>
-
-              <div className="bg-white p-6 rounded-xl shadow-md border border-indigo-100">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Ready to Take Your First Steps?</h3>
-                <div className="space-y-3">
-                  <p className="text-gray-700">Here's your actionable FIRE starter plan:</p>
-                  <ol className="list-decimal pl-5 space-y-2 text-gray-700">
-                    <li><strong>Calculate your savings rate</strong> as a percentage of your take-home pay</li>
-                    <li><strong>Track your expenses</strong> for at least one month to establish a baseline</li>
-                    <li><strong>Open or max out tax-advantaged accounts</strong> like 401(k)s and IRAs</li>
-                    <li><strong>Identify one major expense</strong> you can reduce without affecting your happiness</li>
-                    <li><strong>Build an emergency fund</strong> of 3-6 months of expenses</li>
-                  </ol>
-                  <p className="text-gray-700 mt-4">
-                    The key to FIRE success is consistency and patience. Small improvements compound dramatically over time,
-                    just like your investments. Start today, adjust as needed, and keep the long view in mind.
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
+                    <span className="text-green-600 mr-2">RE</span>
+                    Retire Early
+                  </h4>
+                  <p className="text-gray-700">
+                    Leveraging financial independence to leave traditional work decades before the conventional 
+                    retirement age of 65+, creating freedom to pursue your true interests.
                   </p>
                 </div>
               </div>
             </div>
-          </div>
-        </Section>
-
-        {/* FAQ Section */}
-        <div id="faq"></div>
-        <Section className="mb-10 bg-white rounded-xl shadow-md">
-          <div className="prose prose-lg max-w-none p-6">
-            <SectionHeader 
-              title="Frequently Asked Questions" 
-              className="mb-8"
-              icon={
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              }
-            />
             
-            <p className="text-gray-600 mb-8">
-              Get answers to common questions about the FIRE journey, strategies, and challenges you might face along the way.
-            </p>
-            
-            <div className="bg-white rounded-lg divide-y divide-gray-200 border border-gray-100">
-              <FAQItem 
-                question="What is the 4% rule and is it still reliable?" 
-                answer={
-                  <>
-                    <p>The 4% rule is a guideline for retirement withdrawals developed from the Trinity Study, suggesting you can withdraw 4% of your portfolio in the first year of retirement, then adjust that amount for inflation each subsequent year.</p>
-                    <p>While it has historically been reliable for 30-year retirement periods, some considerations for today's FIRE seekers include:</p>
-                    <ul>
-                      <li>Longer retirement periods (potentially 40-60 years) may require a more conservative withdrawal rate (3-3.5%)</li>
-                      <li>Current market valuations and interest rates differ from historical averages</li>
-                      <li>Flexibility in spending during market downturns can significantly improve success rates</li>
-                    </ul>
-                    <p>For added safety, consider using a variable withdrawal strategy or building a buffer beyond your target number.</p>
-                  </>
-                } 
-              />
-              
-              <FAQItem 
-                question="Is FIRE only for high-income earners?" 
-                answer={
-                  <>
-                    <p>While a high income can accelerate your path to FIRE, it's not a requirement. FIRE is achievable at various income levels through:</p>
-                    <ul>
-                      <li>Maintaining a high savings rate relative to your income</li>
-                      <li>Geographic arbitrage (living in lower-cost areas)</li>
-                      <li>Lifestyle optimization to reduce expenses</li>
-                      <li>Side hustles and income diversification</li>
-                      <li>Pursuing variations like LeanFIRE that require less capital</li>
-                    </ul>
-                    <p>The key factor is the gap between your income and expenses, not the absolute income level. A person earning $50,000 who saves 50% will reach FIRE faster than someone earning $200,000 who saves only 10%.</p>
-                  </>
-                } 
-              />
-              
-              <FAQItem 
-                question="How do I account for healthcare costs in my FIRE plan?" 
-                answer={
-                  <>
-                    <p>Healthcare is often the biggest wild card in FIRE planning, especially in the U.S. Consider these approaches:</p>
-                    <ul>
-                      <li><strong>ACA Health Insurance:</strong> Factor in premiums and potential subsidies based on your modified adjusted gross income</li>
-                      <li><strong>Health Sharing Ministries:</strong> Alternative to traditional insurance (though with significant limitations)</li>
-                      <li><strong>Part-time work:</strong> BaristaFIRE strategy to maintain employer health benefits</li>
-                      <li><strong>Buffer fund:</strong> Set aside an additional $100,000-$300,000 specifically for healthcare uncertainties</li>
-                      <li><strong>Medical tourism:</strong> Option for major procedures in countries with quality, affordable care</li>
-                    </ul>
-                    <p>Most successful FIRE plans include significantly higher healthcare allocations than what you currently pay while employed.</p>
-                  </>
-                } 
-              />
-              
-              <FAQItem 
-                question="What investments are best for achieving FIRE?" 
-                answer={
-                  <>
-                    <p>The most common and recommended investment approach for FIRE consists of:</p>
-                    <ul>
-                      <li><strong>Low-cost index funds:</strong> Total market or S&P 500 funds with expense ratios under 0.1%</li>
-                      <li><strong>Tax-advantaged accounts:</strong> 401(k)s, IRAs, HSAs maximized before taxable accounts</li>
-                      <li><strong>Simple asset allocation:</strong> Typically 70-90% stocks and 10-30% bonds, adjusting as you approach FIRE</li>
-                    </ul>
-                    <p>While some FIRE pursuers incorporate real estate or other alternative investments, the core of most FIRE portfolios remains broadly diversified, low-cost index funds due to their:</p>
-                    <ul>
-                      <li>Historical returns (7-10% before inflation)</li>
-                      <li>Low maintenance requirements</li>
-                      <li>Liquidity</li>
-                      <li>Broad diversification</li>
-                    </ul>
-                  </>
-                } 
-              />
-              
-              <FAQItem 
-                question="How can I access retirement funds before age 59½ without penalties?" 
-                answer={
-                  <>
-                    <p>Several strategies exist to access retirement funds early without the 10% penalty:</p>
-                    <ul>
-                      <li><strong>Roth Conversion Ladder:</strong> Convert traditional IRA funds to Roth, then withdraw the converted amount penalty-free after a 5-year waiting period</li>
-                      <li><strong>Rule 72(t)/SEPP:</strong> Take substantially equal periodic payments based on your life expectancy</li>
-                      <li><strong>Taxable accounts:</strong> Build a bridge of non-retirement investments to cover expenses until you can access retirement accounts</li>
-                      <li><strong>Roth IRA contributions:</strong> Withdraw your original contributions (not earnings) at any time without penalty</li>
-                      <li><strong>HSA accounts:</strong> Save receipts for medical expenses to reimburse yourself in retirement</li>
-                    </ul>
-                    <p>Most FIRE plans use a combination of these strategies in different life stages.</p>
-                  </>
-                } 
-              />
-              
-              <FAQItem 
-                question="What happens if the market crashes right after I retire?" 
-                answer={
-                  <>
-                    <p>This is known as "sequence of returns risk" and it's one of the biggest threats to a FIRE plan. Strategies to mitigate this risk include:</p>
-                    <ul>
-                      <li><strong>Cash buffer:</strong> Keep 1-3 years of expenses in cash/short-term bonds</li>
-                      <li><strong>Variable withdrawal strategy:</strong> Reduce spending during market downturns</li>
-                      <li><strong>Part-time work:</strong> Create some income during the first few years of retirement</li>
-                      <li><strong>More conservative withdrawal rate:</strong> Use 3-3.5% instead of 4%</li>
-                      <li><strong>"Bond tent":</strong> Temporarily increase bond allocation around retirement date</li>
-                    </ul>
-                    <p>The first 5-10 years of retirement returns have a disproportionate impact on long-term success, so having contingency plans for this period is crucial.</p>
-                  </>
-                } 
-              />
-
-              <FAQItem 
-                question="How do I avoid lifestyle inflation as my income grows?" 
-                answer={
-                  <>
-                    <p>Lifestyle inflation (increasing spending as income rises) is one of the biggest obstacles to reaching FIRE. Effective strategies include:</p>
-                    <ul>
-                      <li><strong>Automatic savings:</strong> Increase savings rate with each raise or bonus</li>
-                      <li><strong>Conscious spending plan:</strong> Decide in advance which upgrades actually improve your happiness</li>
-                      <li><strong>Delay major upgrades:</strong> Wait 30 days before making any lifestyle-increasing purchase</li>
-                      <li><strong>Find free or low-cost upgrades:</strong> Improve quality of life without permanent cost increases</li>
-                      <li><strong>Track net worth:</strong> Focus on the growing number rather than expanding lifestyle</li>
-                    </ul>
-                    <p>The most successful FIRE achievers typically maintain a fairly consistent lifestyle even as their incomes and net worth grow substantially.</p>
-                  </>
-                } 
-              />
-
-              <FAQItem 
-                question="Is it better to pay off debt or invest when pursuing FIRE?" 
-                answer={
-                  <>
-                    <p>This depends on several factors, with interest rates being the primary consideration:</p>
-                    <ul>
-                      <li><strong>High-interest debt (&gt;7%):</strong> Almost always better to pay off before investing beyond employer match</li>
-                      <li><strong>Moderate interest (4-7%):</strong> Consider the psychological benefit of debt freedom vs. potentially higher returns</li>
-                      <li><strong>Low-interest debt (&lt;4%):</strong> Often mathematically optimal to invest while making minimum payments</li>
-                    </ul>
-                    <p>Other considerations that might favor debt payoff:</p>
-                    <ul>
-                      <li>Emotional/psychological benefits of being debt-free</li>
-                      <li>Simplifying finances before retirement</li>
-                      <li>Reducing fixed expenses (increasing flexibility)</li>
-                      <li>Risk reduction during market volatility</li>
-                    </ul>
-                    <p>Many FIRE pursuers take a hybrid approach, investing in tax-advantaged accounts while aggressively paying down debt.</p>
-                  </>
-                } 
-              />
-
-              <FAQItem 
-                question="What's the biggest mistake people make when pursuing FIRE?" 
-                answer={
-                  <>
-                    <p>Common FIRE mistakes include:</p>
-                    <ul>
-                      <li><strong>Focusing only on the finish line:</strong> Neglecting to build a life you enjoy on the journey</li>
-                      <li><strong>Extreme frugality without purpose:</strong> Cutting expenses that actually bring joy and value</li>
-                      <li><strong>Neglecting health:</strong> Saving money at the expense of physical and mental wellbeing</li>
-                      <li><strong>Not planning for post-FIRE life:</strong> Retiring from something rather than to something</li>
-                      <li><strong>Rigid adherence to the plan:</strong> Inability to adapt to changing circumstances or priorities</li>
-                    </ul>
-                    <p>The most successful FIRE journeys balance present enjoyment with future security, focus on value-based spending rather than deprivation, and evolve as life circumstances change.</p>
-                  </>
-                } 
-              />
-
-              <FAQItem 
-                question="How do I talk to my partner about FIRE if they're not interested?" 
-                answer={
-                  <>
-                    <p>Aligning financially with a partner is crucial for FIRE success. Try these approaches:</p>
-                    <ul>
-                      <li><strong>Focus on values and goals:</strong> Discuss what you both want long-term rather than the mechanics of FIRE</li>
-                      <li><strong>Start small:</strong> Suggest a "financial date night" to review spending and savings without agenda</li>
-                      <li><strong>Highlight freedom, not restriction:</strong> Emphasize what FIRE enables rather than what it limits</li>
-                      <li><strong>Share success stories:</strong> Introduce them to FIRE content that resonates with their interests</li>
-                      <li><strong>Consider compromise:</strong> "Partial FIRE" or "Coast FIRE" might be more appealing</li>
-                    </ul>
-                    <p>Remember that financial compatibility requires ongoing communication and mutual respect for different perspectives. Sometimes a financial advisor as a neutral third party can help facilitate these conversations.</p>
-                  </>
-                } 
-              />
-
-              <FAQItem 
-                question="How does compound interest work and why is it so important for FIRE?" 
-                answer={
-                  <>
-                    <p>Compound interest is often called the eighth wonder of the world for good reason. It's the process where your investment returns generate their own returns over time, creating an exponential growth curve.</p>
-                    <p>Here's how it works:</p>
-                    <ul>
-                      <li><strong>Year 1:</strong> You invest $10,000 and earn 7% ($700), giving you $10,700</li>
-                      <li><strong>Year 2:</strong> That $10,700 earns 7% ($749), giving you $11,449</li>
-                      <li><strong>Year 10:</strong> Your initial $10,000 has grown to $19,672 without adding any new money</li>
-                      <li><strong>Year 30:</strong> That same $10,000 becomes $76,123 just through compound growth</li>
-                    </ul>
-                    <p>For FIRE seekers, compound interest is the primary engine that makes early retirement possible. The earlier you start investing, the more time your money has to compound, which is why many FIRE enthusiasts prioritize high savings rates early in their careers.</p>
-                    <p>This is also why small improvements in your investment return rate (through low-cost index funds) or small increases in your savings rate can dramatically reduce the time needed to reach financial independence.</p>
-                  </>
-                } 
-              />
-              
-              <FAQItem 
-                question="What personal finance habits are most important to develop for FIRE success?" 
-                answer={
-                  <>
-                    <p>The journey to FIRE requires developing several key financial habits:</p>
-                    <ul>
-                      <li><strong>Expense tracking:</strong> Monitoring every dollar spent to identify optimization opportunities and ensure alignment with values</li>
-                      <li><strong>Automatic investing:</strong> Setting up automatic transfers to investment accounts to remove emotion and ensure consistency</li>
-                      <li><strong>Financial education:</strong> Continuous learning about investing, tax optimization, and wealth-building strategies</li>
-                      <li><strong>Value-based spending:</strong> Learning to spend freely on what truly matters to you while cutting ruthlessly on things that don't</li>
-                      <li><strong>Regular financial review:</strong> Quarterly or monthly check-ins on net worth, spending patterns, and progress toward goals</li>
-                      <li><strong>Long-term thinking:</strong> Making decisions based on 5-10 year outcomes rather than immediate gratification</li>
-                    </ul>
-                    <p>Most FIRE achievers report that the habits themselves become rewarding and continue long after financial independence is reached. The discipline, intention, and mindfulness around money often transfer to other areas of life as well.</p>
-                  </>
-                } 
-              />
-              
-              <FAQItem 
-                question="How can I balance saving for FIRE with other financial priorities like buying a home or paying for education?" 
-                answer={
-                  <>
-                    <p>Balancing multiple financial goals is a common challenge. Here's a framework that works for many FIRE pursuers:</p>
-                    <ol>
-                      <li><strong>Establish a financial hierarchy:</strong>
-                        <ul>
-                          <li>First tier: Emergency fund and high-interest debt elimination</li>
-                          <li>Second tier: Employer retirement match (100% immediate return)</li>
-                          <li>Third tier: Other major life goals and moderate-interest debt</li>
-                          <li>Fourth tier: Additional FIRE investments and low-interest debt</li>
-                        </ul>
-                      </li>
-                      <li><strong>Consider opportunity costs:</strong> For example, if your mortgage is at 3% but you expect 7% investment returns, it might make mathematical sense to invest rather than pay extra on the mortgage</li>
-                      <li><strong>Use separate accounts:</strong> Create dedicated savings accounts for different goals to track progress and prevent co-mingling of funds</li>
-                      <li><strong>Recalibrate regularly:</strong> Review your priorities annually as life circumstances change</li>
-                    </ol>
-                    <p>Remember that some expenses like education or a reasonable home purchase can be viewed as investments that may actually accelerate your FIRE journey through increased earning potential or reduced long-term costs.</p>
-                  </>
-                } 
-              />
-
-              <FAQItem 
-                question="What tax-optimization strategies are most effective for FIRE pursuers?" 
-                answer={
-                  <>
-                    <p>Tax optimization can significantly accelerate your path to FIRE. The most effective strategies include:</p>
-                    <ul>
-                      <li><strong>Tax-advantaged account maximization:</strong> 401(k), IRA, HSA contributions to reduce current tax burden and allow tax-free growth</li>
-                      <li><strong>Tax-loss harvesting:</strong> Selling investments at a loss to offset capital gains while maintaining market exposure</li>
-                      <li><strong>Strategic Roth conversions:</strong> Converting traditional retirement funds to Roth in low-income years to manage tax brackets in retirement</li>
-                      <li><strong>Asset location optimization:</strong> Placing tax-inefficient investments in tax-advantaged accounts and tax-efficient ones in taxable accounts</li>
-                      <li><strong>Geographic arbitrage:</strong> Living in low or no income tax states/countries during high-earning or withdrawal phases</li>
-                      <li><strong>Qualified Dividends and Long-Term Capital Gains:</strong> Structuring investments to take advantage of lower tax rates on these income types</li>
-                    </ul>
-                    <p>Remember that tax laws change frequently, so maintaining flexibility in your plan and regularly consulting with a tax professional can help ensure you're using the most current and applicable strategies for your situation.</p>
-                  </>
-                } 
-              />
+            <div className="bg-gradient-to-br from-indigo-100 to-purple-100 p-6 rounded-xl border border-indigo-200 mb-8 transform hover:scale-[1.02] transition-transform duration-300">
+              <div className="flex flex-col md:flex-row items-center">
+                <div className="mb-4 md:mb-0 md:mr-6 flex-shrink-0">
+                  <div className="w-24 h-24 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                    <span className="text-4xl text-white">🔥</span>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 mb-2">
+                    The FIRE Origin Story
+                  </h3>
+                  <p className="text-indigo-900 italic border-l-4 border-indigo-300 pl-4 text-lg">
+                    "Financial Independence is having enough income (from investments, passive businesses, or 
+                    other sources) to pay for your living expenses for the rest of your life without having to 
+                    work for money."
+                  </p>
+                  <p className="text-gray-700 mt-2">
+                    The FIRE movement grew from the 1992 bestseller "Your Money or Your Life" by Vicki Robin 
+                    and Joe Dominguez, later popularized by bloggers like Mr. Money Mustache who retired at 30.
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
-        </Section>
 
-        {/* Blog Post Schema for SEO */}
-        <script type="application/ld+json" dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BlogPosting",
-            "headline": "FIRE Movement: Financial Independence, Retire Early Guide",
-            "description": "Learn everything about the FIRE movement, from core principles to practical strategies for achieving financial independence and early retirement.",
-            "author": {
-              "@type": "Organization",
-              "name": "AI FIRE Retirement Planner"
-            },
-            "datePublished": new Date().toISOString().split('T')[0],
-            "dateModified": new Date().toISOString().split('T')[0],
-            "image": "https://example.com/images/fire-movement.jpg",
-            "publisher": {
-              "@type": "Organization",
-              "name": "AI FIRE Retirement Planner",
-              "logo": {
-                "@type": "ImageObject",
-                "url": "https://example.com/logo.png"
-              }
-            },
-            "mainEntityOfPage": {
-              "@type": "WebPage",
-              "@id": "https://example.com/fire"
-            }
-          })
-        }} />
-
-        {/* FAQ Schema Markup */}
-        <script type="application/ld+json" dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            "mainEntity": [
-              {
-                "@type": "Question",
-                "name": "What is the 4% rule and is it still reliable?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "The 4% rule is a guideline for retirement withdrawals developed from the Trinity Study, suggesting you can withdraw 4% of your portfolio in the first year of retirement, then adjust that amount for inflation each subsequent year. While historically reliable for 30-year periods, longer retirements may require a more conservative 3-3.5% rate. Consider using variable withdrawal strategies for added safety."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "Is FIRE only for high-income earners?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "While a high income can accelerate your path to FIRE, it's not a requirement. FIRE is achievable at various income levels through maintaining a high savings rate relative to your income, geographic arbitrage, lifestyle optimization, side hustles, and considering variations like LeanFIRE that require less capital. The key factor is the gap between income and expenses, not absolute income."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "How do I account for healthcare costs in my FIRE plan?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Healthcare is often the biggest wild card in FIRE planning. Consider ACA health insurance with potential subsidies, health sharing ministries, part-time work to maintain employer benefits (BaristaFIRE), setting aside an additional healthcare buffer fund, or medical tourism for major procedures. Most successful FIRE plans include significantly higher healthcare allocations than what you currently pay while employed."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "What investments are best for achieving FIRE?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "The most common investment approach for FIRE consists of low-cost index funds with expense ratios under 0.1%, tax-advantaged accounts like 401(k)s and IRAs, and a simple asset allocation typically 70-90% stocks and 10-30% bonds. The core of most FIRE portfolios remains broadly diversified, low-cost index funds due to their historical returns, low maintenance, liquidity, and broad diversification."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "How can I access retirement funds before age 59½ without penalties?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Several strategies exist: Roth Conversion Ladder (converting traditional IRA funds to Roth, then withdrawing after 5 years), Rule 72(t)/SEPP (taking substantially equal periodic payments), building a bridge of taxable accounts, withdrawing Roth IRA contributions, and using HSA accounts strategically. Most FIRE plans use a combination of these strategies in different life stages."
-                }
-              }
-            ]
-          })
-        }} />
-
-        {/* Call to Action */}
-        <div className="mb-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl overflow-hidden shadow-lg">
-          <div className="px-6 py-12 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-              Ready to Put Compound Interest to Work?
-            </h2>
-            <p className="text-indigo-100 max-w-2xl mx-auto mb-8">
-              Use our retirement calculator to see how your savings can grow over time and build a personalized 
-              plan for your financial future.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 justify-center items-center">
-              <a 
-                href="/" 
-                className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-                Try Our Retirement Calculator
-              </a>
-              <a 
-                href="/fire" 
-                className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-indigo-200 text-base font-medium rounded-md text-white hover:bg-white/10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Explore FIRE Movement
-              </a>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <h4 className="font-semibold text-gray-900 mb-2">Why FIRE is Growing</h4>
+                <ul className="text-gray-700 space-y-2">
+                  <li>• Dissatisfaction with 9-5 work</li>
+                  <li>• Seeking meaning beyond consumption</li>
+                  <li>• Greater awareness of work-life balance</li>
+                  <li>• Access to low-cost index funds</li>
+                </ul>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <h4 className="font-semibold text-gray-900 mb-2">Essential Components</h4>
+                <ul className="text-gray-700 space-y-2">
+                  <li>• High savings rate (50%+ of income)</li>
+                  <li>• Low-cost index fund investing</li>
+                  <li>• Lifestyle optimization</li>
+                  <li>• Financial literacy and planning</li>
+                </ul>
+              </div>
+              <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <h4 className="font-semibold text-gray-900 mb-2">Who Is It For?</h4>
+                <ul className="text-gray-700 space-y-2">
+                  <li>• Those seeking work/life freedom</li>
+                  <li>• Value-focused individuals</li>
+                  <li>• People wanting career flexibility</li>
+                  <li>• Those rejecting consumerism</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
+      </Section>
+
+      {/* FIRE Basics Section */}
+      <Card className={`mb-10 p-8 ${isSafariBrowser ? 'bg-blue-50' : 'bg-gradient-to-br from-white to-blue-50'}`}>
+        <SectionHeader 
+          title="The FIRE Formula: How It Works" 
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          }
+        />
+        <div id="fire-formula"></div>
         
-        {/* Add Footer Component */}
-        <Footer />
+        <div className="space-y-8">
+          {/* FIRE Formula */}
+          <div className="bg-white p-6 rounded-xl shadow-md border border-blue-100">
+            <div className="text-center mb-6">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg inline-block">
+                <p className="text-2xl font-mono font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                  Target Nest Egg = Annual Expenses × 25
+                </p>
+              </div>
+              <p className="text-gray-600 mt-2">Based on the 4% Safe Withdrawal Rate</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column: Formula Components */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-gray-900 mb-2">Key Components:</h4>
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-center">
+                    <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-mono font-bold text-blue-600 mr-3">E</span>
+                    <div>
+                      <span className="font-medium">Annual Expenses</span>
+                      <p className="text-sm text-gray-600">Your total yearly spending in retirement</p>
+                    </div>
+                  </li>
+                  <li className="flex items-center">
+                    <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-mono font-bold text-blue-600 mr-3">25</span>
+                    <div>
+                      <span className="font-medium">Multiplier</span>
+                      <p className="text-sm text-gray-600">Based on the 4% rule (100 ÷ 4 = 25)</p>
+                    </div>
+                  </li>
+                  <li className="flex items-center">
+                    <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-mono font-bold text-blue-600 mr-3">4%</span>
+                    <div>
+                      <span className="font-medium">Safe Withdrawal Rate</span>
+                      <p className="text-sm text-gray-600">Historically sustainable withdrawal rate</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Right Column: Example Calculation */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-gray-900 mb-2">Example Calculation:</h4>
+                <div className="bg-gradient-to-r from-indigo-50 to-blue-50 p-4 rounded-lg">
+                  <p className="text-gray-700 mb-2">
+                    If your annual expenses are <span className="font-semibold">$40,000</span>:
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span>Target Nest Egg:</span>
+                      <span className="font-mono font-bold text-indigo-600">$40,000 × 25</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Required Savings:</span>
+                      <span className="font-mono font-bold text-indigo-600">$1,000,000</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Sustainable Withdrawal:</span>
+                      <span className="font-mono font-bold text-indigo-600">$40,000/year (4%)</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                  <h5 className="font-medium text-gray-900 mb-1">The 4% Rule Explained:</h5>
+                  <p className="text-sm text-gray-700">
+                    Based on the Trinity Study, withdrawing 4% of your portfolio in year one and adjusting 
+                    for inflation in subsequent years has historically provided a high probability of your 
+                    money lasting 30+ years across various market conditions.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Savings Rate and Time to FIRE */}
+          <div className="bg-white p-6 rounded-xl shadow-md border border-blue-100">
+            <h4 className="text-xl font-semibold text-gray-900 mb-4">The Magic Number: Your Savings Rate</h4>
+            <p className="text-gray-700 mb-4">
+              Your savings rate is the single most important factor determining how quickly you can achieve FIRE.
+            </p>
+            
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white rounded-lg overflow-hidden">
+                <thead className="bg-blue-50">
+                  <tr>
+                    <th className="py-3 px-4 text-left font-medium text-gray-800">Savings Rate</th>
+                    <th className="py-3 px-4 text-left font-medium text-gray-800">Years to FIRE</th>
+                    <th className="py-3 px-4 text-left font-medium text-gray-800">Assuming 7% Returns</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  <tr>
+                    <td className="py-2 px-4">10%</td>
+                    <td className="py-2 px-4">51 years</td>
+                    <td className="py-2 px-4">Standard retirement timeline</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-4">25%</td>
+                    <td className="py-2 px-4">32 years</td>
+                    <td className="py-2 px-4">Slightly early retirement</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-4">50%</td>
+                    <td className="py-2 px-4">17 years</td>
+                    <td className="py-2 px-4">Classic FIRE timeline</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-4">65%</td>
+                    <td className="py-2 px-4">10.5 years</td>
+                    <td className="py-2 px-4">Aggressive FIRE path</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-4">75%</td>
+                    <td className="py-2 px-4">7 years</td>
+                    <td className="py-2 px-4">Extreme FIRE approach</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <p className="text-sm text-gray-600 mt-4">
+              This table assumes consistent savings rate and investment returns. Individual results may vary based on market conditions, income growth, and lifestyle changes.
+            </p>
+          </div>
+
+          {/* Key Investment Principles */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-gradient-to-b from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <span className="bg-green-600 text-white p-1.5 rounded-full mr-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </span>
+                Income Growth
+              </h4>
+              <p className="text-gray-700 text-sm">
+                Increase your earning potential through skills development, side hustles, and career advancement 
+                to accelerate your journey to FIRE.
+              </p>
+            </div>
+            
+            <div className="bg-gradient-to-b from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <span className="bg-blue-600 text-white p-1.5 rounded-full mr-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </span>
+                Expense Optimization
+              </h4>
+              <p className="text-gray-700 text-sm">
+                Cut costs on the things that bring little value while spending intentionally on what truly 
+                matters to you. Focus on the "big three": housing, transportation, and food.
+              </p>
+            </div>
+            
+            <div className="bg-gradient-to-b from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <span className="bg-purple-600 text-white p-1.5 rounded-full mr-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </span>
+                Strategic Investing
+              </h4>
+              <p className="text-gray-700 text-sm">
+                Harness the power of low-cost index funds, tax-advantaged accounts, and compound interest to grow 
+                your wealth efficiently and passively.
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Types of FIRE Section */}
+      <Section className="mb-10">
+        <div className="prose prose-lg max-w-none">
+          <SectionHeader 
+            id="fire-types" 
+            title="Find Your FIRE: Different Approaches to Financial Independence" 
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            }
+          />
+
+          <p className="text-gray-700 mb-6">
+            There isn't just one way to achieve FIRE. The movement has evolved to include several variations 
+            that accommodate different financial goals, risk tolerances, and lifestyle preferences.
+          </p>
+
+          <div className="grid grid-cols-1 gap-6 mb-8">
+            {fireTypes.map((type, index) => (
+              <div key={index} className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
+                <div className="flex flex-col md:flex-row">
+                  <div className="md:w-1/4 mb-4 md:mb-0">
+                    <div className={`inline-flex items-center justify-center p-3 rounded-lg ${
+                      index === 0 ? 'bg-yellow-100 text-yellow-700' : 
+                      index === 1 ? 'bg-green-100 text-green-700' : 
+                      index === 2 ? 'bg-indigo-100 text-indigo-700' : 
+                      index === 3 ? 'bg-blue-100 text-blue-700' :
+                      'bg-purple-100 text-purple-700'
+                    }`}>
+                      <h3 className="text-xl font-bold">{type.type}</h3>
+                    </div>
+                  </div>
+                  <div className="md:w-3/4 md:pl-6">
+                    <p className="text-gray-700 mb-4">{type.description}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600"><span className="font-medium">Typical Savings Rate:</span> {type.savingsRate}</p>
+                        <p className="text-sm text-gray-600"><span className="font-medium">Lifestyle:</span> {type.lifestyle}</p>
+                        <p className="text-sm text-gray-600"><span className="font-medium">Target Amount:</span> {type.retirementAmount}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600"><span className="font-medium">Benefits:</span> {type.benefits}</p>
+                        <p className="text-sm text-gray-600"><span className="font-medium">Challenges:</span> {type.challenges}</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-4">Learn more about <a href={`/fire-types/${type.type.toLowerCase()}`}>{type.type}</a></p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-100">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Finding Your FIRE Path</h3>
+            <p className="text-gray-700 mb-4">
+              The right FIRE approach for you depends on your personal values, financial situation, and vision for your ideal life.
+              Ask yourself these key questions:
+            </p>
+            <ul className="space-y-2 text-gray-700">
+              <li className="flex items-start">
+                <span className="text-indigo-600 mr-2">•</span>
+                <span>What standard of living do you want in retirement?</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-indigo-600 mr-2">•</span>
+                <span>How quickly do you want to reach financial independence?</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-indigo-600 mr-2">•</span>
+                <span>Do you want to quit working entirely, or transition to more meaningful work?</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-indigo-600 mr-2">•</span>
+                <span>How much are you willing to sacrifice now for freedom later?</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-indigo-600 mr-2">•</span>
+                <span>What activities and experiences truly bring you joy and fulfillment?</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </Section>
+
+      {/* Call to Action Section */}
+      <div className="mb-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl overflow-hidden shadow-lg">
+        <div className="px-6 py-12 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+            Ready to Start Your FIRE Journey?
+          </h2>
+          <p className="text-indigo-100 max-w-2xl mx-auto mb-8">
+            Take the first step toward financial independence with our free retirement calculator and personalized recommendations.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 justify-center items-center">
+            <a 
+              href="/calculator" 
+              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Try Our FIRE Calculator
+            </a>
+            <a 
+              href="/compound-interest" 
+              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-indigo-200 text-base font-medium rounded-md text-white hover:bg-white/10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Explore Compound Interest
+            </a>
+          </div>
+        </div>
       </div>
-    </>
+
+      {/* Conclusion Section */}
+      <Section className={`mb-10 ${isSafariBrowser ? 'bg-indigo-50' : 'bg-gradient-to-br from-white to-indigo-50'}`}>
+        <div className="prose prose-lg max-w-none">
+          <SectionHeader 
+            title="Your Journey to Financial Independence Starts Today" 
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            }
+          />
+          
+          <div className="space-y-6">
+            <p className="text-gray-700 text-lg leading-relaxed">
+              The FIRE movement isn't just about retiring early—it's about gaining the freedom to live life on your own terms.
+              By combining intentional spending, strategic investing, and thoughtful planning, you can break free from financial 
+              constraints decades earlier than conventional wisdom suggests.
+            </p>
+            
+            <p className="text-gray-700 text-lg leading-relaxed">
+              Remember that FIRE is a highly personal journey. Your version might look different from someone else's,
+              and that's perfectly fine. The key is to find the balance between enjoying today and building for tomorrow
+              that works for your unique situation and values.
+            </p>
+
+            <div className="bg-white p-6 rounded-xl shadow-md border border-indigo-100">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Ready to Take Your First Steps?</h3>
+              <div className="space-y-3">
+                <p className="text-gray-700">Here's your actionable FIRE starter plan:</p>
+                <ol className="list-decimal pl-5 space-y-2 text-gray-700">
+                  <li><strong>Calculate your savings rate</strong> as a percentage of your take-home pay</li>
+                  <li><strong>Track your expenses</strong> for at least one month to establish a baseline</li>
+                  <li><strong>Open or max out tax-advantaged accounts</strong> like 401(k)s and IRAs</li>
+                  <li><strong>Identify one major expense</strong> you can reduce without affecting your happiness</li>
+                  <li><strong>Build an emergency fund</strong> of 3-6 months of expenses</li>
+                </ol>
+                <p className="text-gray-700 mt-4">
+                  The key to FIRE success is consistency and patience. Small improvements compound dramatically over time,
+                  just like your investments. Start today, adjust as needed, and keep the long view in mind.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* FAQ Section */}
+      <div id="faq"></div>
+      <Section className="mb-10 bg-white rounded-xl shadow-md">
+        <div className="prose prose-lg max-w-none p-6">
+          <SectionHeader 
+            title="Frequently Asked Questions" 
+            className="mb-8"
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          />
+          
+          <p className="text-gray-600 mb-8">
+            Get answers to common questions about the FIRE journey, strategies, and challenges you might face along the way.
+          </p>
+          
+          <div className="bg-white rounded-lg divide-y divide-gray-200 border border-gray-100">
+            <FAQItem 
+              question="What is the 4% rule and is it still reliable?" 
+              answer={
+                <>
+                  <p>The 4% rule is a guideline for retirement withdrawals developed from the Trinity Study, suggesting you can withdraw 4% of your portfolio in the first year of retirement, then adjust that amount for inflation each subsequent year.</p>
+                  <p>While it has historically been reliable for 30-year retirement periods, some considerations for today's FIRE seekers include:</p>
+                  <ul>
+                    <li>Longer retirement periods (potentially 40-60 years) may require a more conservative withdrawal rate (3-3.5%)</li>
+                    <li>Current market valuations and interest rates differ from historical averages</li>
+                    <li>Flexibility in spending during market downturns can significantly improve success rates</li>
+                  </ul>
+                  <p>For added safety, consider using a variable withdrawal strategy or building a buffer beyond your target number.</p>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="Is FIRE only for high-income earners?" 
+              answer={
+                <>
+                  <p>While a high income can accelerate your path to FIRE, it's not a requirement. FIRE is achievable at various income levels through:</p>
+                  <ul>
+                    <li>Maintaining a high savings rate relative to your income</li>
+                    <li>Geographic arbitrage (living in lower-cost areas)</li>
+                    <li>Lifestyle optimization to reduce expenses</li>
+                    <li>Side hustles and income diversification</li>
+                    <li>Pursuing variations like LeanFIRE that require less capital</li>
+                  </ul>
+                  <p>The key factor is the gap between your income and expenses, not the absolute income level. A person earning $50,000 who saves 50% will reach FIRE faster than someone earning $200,000 who saves only 10%.</p>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="How do I account for healthcare costs in my FIRE plan?" 
+              answer={
+                <>
+                  <p>Healthcare is often the biggest wild card in FIRE planning, especially in the U.S. Consider these approaches:</p>
+                  <ul>
+                    <li><strong>ACA Health Insurance:</strong> Factor in premiums and potential subsidies based on your modified adjusted gross income</li>
+                    <li><strong>Health Sharing Ministries:</strong> Alternative to traditional insurance (though with significant limitations)</li>
+                    <li><strong>Part-time work:</strong> BaristaFIRE strategy to maintain employer health benefits</li>
+                    <li><strong>Buffer fund:</strong> Set aside an additional $100,000-$300,000 specifically for healthcare uncertainties</li>
+                    <li><strong>Medical tourism:</strong> Option for major procedures in countries with quality, affordable care</li>
+                  </ul>
+                  <p>Most successful FIRE plans include significantly higher healthcare allocations than what you currently pay while employed.</p>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="What investments are best for achieving FIRE?" 
+              answer={
+                <>
+                  <p>The most common and recommended investment approach for FIRE consists of:</p>
+                  <ul>
+                    <li><strong>Low-cost index funds:</strong> Total market or S&P 500 funds with expense ratios under 0.1%</li>
+                    <li><strong>Tax-advantaged accounts:</strong> 401(k)s, IRAs, HSAs maximized before taxable accounts</li>
+                    <li><strong>Simple asset allocation:</strong> Typically 70-90% stocks and 10-30% bonds, adjusting as you approach FIRE</li>
+                  </ul>
+                  <p>While some FIRE pursuers incorporate real estate or other alternative investments, the core of most FIRE portfolios remains broadly diversified, low-cost index funds due to their:</p>
+                  <ul>
+                    <li>Historical returns (7-10% before inflation)</li>
+                    <li>Low maintenance requirements</li>
+                    <li>Liquidity</li>
+                    <li>Broad diversification</li>
+                  </ul>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="How can I access retirement funds before age 59½ without penalties?" 
+              answer={
+                <>
+                  <p>Several strategies exist to access retirement funds early without the 10% penalty:</p>
+                  <ul>
+                    <li><strong>Roth Conversion Ladder:</strong> Convert traditional IRA funds to Roth, then withdraw the converted amount penalty-free after a 5-year waiting period</li>
+                    <li><strong>Rule 72(t)/SEPP:</strong> Take substantially equal periodic payments based on your life expectancy</li>
+                    <li><strong>Taxable accounts:</strong> Build a bridge of non-retirement investments to cover expenses until you can access retirement accounts</li>
+                    <li><strong>Roth IRA contributions:</strong> Withdraw your original contributions (not earnings) at any time without penalty</li>
+                    <li><strong>HSA accounts:</strong> Save receipts for medical expenses to reimburse yourself in retirement</li>
+                  </ul>
+                  <p>Most FIRE plans use a combination of these strategies in different life stages.</p>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="What happens if the market crashes right after I retire?" 
+              answer={
+                <>
+                  <p>This is known as "sequence of returns risk" and it's one of the biggest threats to a FIRE plan. Strategies to mitigate this risk include:</p>
+                  <ul>
+                    <li><strong>Cash buffer:</strong> Keep 1-3 years of expenses in cash/short-term bonds</li>
+                    <li><strong>Variable withdrawal strategy:</strong> Reduce spending during market downturns</li>
+                    <li><strong>Part-time work:</strong> Create some income during the first few years of retirement</li>
+                    <li><strong>More conservative withdrawal rate:</strong> Use 3-3.5% instead of 4%</li>
+                    <li><strong>"Bond tent":</strong> Temporarily increase bond allocation around retirement date</li>
+                  </ul>
+                  <p>The first 5-10 years of retirement returns have a disproportionate impact on long-term success, so having contingency plans for this period is crucial.</p>
+                </>
+              } 
+            />
+
+            <FAQItem 
+              question="How do I avoid lifestyle inflation as my income grows?" 
+              answer={
+                <>
+                  <p>Lifestyle inflation (increasing spending as income rises) is one of the biggest obstacles to reaching FIRE. Effective strategies include:</p>
+                  <ul>
+                    <li><strong>Automatic savings:</strong> Increase savings rate with each raise or bonus</li>
+                    <li><strong>Conscious spending plan:</strong> Decide in advance which upgrades actually improve your happiness</li>
+                    <li><strong>Delay major upgrades:</strong> Wait 30 days before making any lifestyle-increasing purchase</li>
+                    <li><strong>Find free or low-cost upgrades:</strong> Improve quality of life without permanent cost increases</li>
+                    <li><strong>Track net worth:</strong> Focus on the growing number rather than expanding lifestyle</li>
+                  </ul>
+                  <p>The most successful FIRE achievers typically maintain a fairly consistent lifestyle even as their incomes and net worth grow substantially.</p>
+                </>
+              } 
+            />
+
+            <FAQItem 
+              question="Is it better to pay off debt or invest when pursuing FIRE?" 
+              answer={
+                <>
+                  <p>This depends on several factors, with interest rates being the primary consideration:</p>
+                  <ul>
+                    <li><strong>High-interest debt (&gt;7%):</strong> Almost always better to pay off before investing beyond employer match</li>
+                    <li><strong>Moderate interest (4-7%):</strong> Consider the psychological benefit of debt freedom vs. potentially higher returns</li>
+                    <li><strong>Low-interest debt (&lt;4%):</strong> Often mathematically optimal to invest while making minimum payments</li>
+                  </ul>
+                  <p>Other considerations that might favor debt payoff:</p>
+                  <ul>
+                    <li>Emotional/psychological benefits of being debt-free</li>
+                    <li>Simplifying finances before retirement</li>
+                    <li>Reducing fixed expenses (increasing flexibility)</li>
+                    <li>Risk reduction during market volatility</li>
+                  </ul>
+                  <p>Many FIRE pursuers take a hybrid approach, investing in tax-advantaged accounts while aggressively paying down debt.</p>
+                </>
+              } 
+            />
+
+            <FAQItem 
+              question="What's the biggest mistake people make when pursuing FIRE?" 
+              answer={
+                <>
+                  <p>Common FIRE mistakes include:</p>
+                  <ul>
+                    <li><strong>Focusing only on the finish line:</strong> Neglecting to build a life you enjoy on the journey</li>
+                    <li><strong>Extreme frugality without purpose:</strong> Cutting expenses that actually bring joy and value</li>
+                    <li><strong>Neglecting health:</strong> Saving money at the expense of physical and mental wellbeing</li>
+                    <li><strong>Not planning for post-FIRE life:</strong> Retiring from something rather than to something</li>
+                    <li><strong>Rigid adherence to the plan:</strong> Inability to adapt to changing circumstances or priorities</li>
+                  </ul>
+                  <p>The most successful FIRE journeys balance present enjoyment with future security, focus on value-based spending rather than deprivation, and evolve as life circumstances change.</p>
+                </>
+              } 
+            />
+
+            <FAQItem 
+              question="How do I talk to my partner about FIRE if they're not interested?" 
+              answer={
+                <>
+                  <p>Aligning financially with a partner is crucial for FIRE success. Try these approaches:</p>
+                  <ul>
+                    <li><strong>Focus on values and goals:</strong> Discuss what you both want long-term rather than the mechanics of FIRE</li>
+                    <li><strong>Start small:</strong> Suggest a "financial date night" to review spending and savings without agenda</li>
+                    <li><strong>Highlight freedom, not restriction:</strong> Emphasize what FIRE enables rather than what it limits</li>
+                    <li><strong>Share success stories:</strong> Introduce them to FIRE content that resonates with their interests</li>
+                    <li><strong>Consider compromise:</strong> "Partial FIRE" or "Coast FIRE" might be more appealing</li>
+                  </ul>
+                  <p>Remember that financial compatibility requires ongoing communication and mutual respect for different perspectives. Sometimes a financial advisor as a neutral third party can help facilitate these conversations.</p>
+                </>
+              } 
+            />
+
+            <FAQItem 
+              question="How does compound interest work and why is it so important for FIRE?" 
+              answer={
+                <>
+                  <p>Compound interest is often called the eighth wonder of the world for good reason. It's the process where your investment returns generate their own returns over time, creating an exponential growth curve.</p>
+                  <p>Here's how it works:</p>
+                  <ul>
+                    <li><strong>Year 1:</strong> You invest $10,000 and earn 7% ($700), giving you $10,700</li>
+                    <li><strong>Year 2:</strong> That $10,700 earns 7% ($749), giving you $11,449</li>
+                    <li><strong>Year 10:</strong> Your initial $10,000 has grown to $19,672 without adding any new money</li>
+                    <li><strong>Year 30:</strong> That same $10,000 becomes $76,123 just through compound growth</li>
+                  </ul>
+                  <p>For FIRE seekers, compound interest is the primary engine that makes early retirement possible. The earlier you start investing, the more time your money has to compound, which is why many FIRE enthusiasts prioritize high savings rates early in their careers.</p>
+                  <p>This is also why small improvements in your investment return rate (through low-cost index funds) or small increases in your savings rate can dramatically reduce the time needed to reach financial independence.</p>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="What personal finance habits are most important to develop for FIRE success?" 
+              answer={
+                <>
+                  <p>The journey to FIRE requires developing several key financial habits:</p>
+                  <ul>
+                    <li><strong>Expense tracking:</strong> Monitoring every dollar spent to identify optimization opportunities and ensure alignment with values</li>
+                    <li><strong>Automatic investing:</strong> Setting up automatic transfers to investment accounts to remove emotion and ensure consistency</li>
+                    <li><strong>Financial education:</strong> Continuous learning about investing, tax optimization, and wealth-building strategies</li>
+                    <li><strong>Value-based spending:</strong> Learning to spend freely on what truly matters to you while cutting ruthlessly on things that don't</li>
+                    <li><strong>Regular financial review:</strong> Quarterly or monthly check-ins on net worth, spending patterns, and progress toward goals</li>
+                    <li><strong>Long-term thinking:</strong> Making decisions based on 5-10 year outcomes rather than immediate gratification</li>
+                  </ul>
+                  <p>Most FIRE achievers report that the habits themselves become rewarding and continue long after financial independence is reached. The discipline, intention, and mindfulness around money often transfer to other areas of life as well.</p>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="How can I balance saving for FIRE with other financial priorities like buying a home or paying for education?" 
+              answer={
+                <>
+                  <p>Balancing multiple financial goals is a common challenge. Here's a framework that works for many FIRE pursuers:</p>
+                  <ol>
+                    <li><strong>Establish a financial hierarchy:</strong>
+                      <ul>
+                        <li>First tier: Emergency fund and high-interest debt elimination</li>
+                        <li>Second tier: Employer retirement match (100% immediate return)</li>
+                        <li>Third tier: Other major life goals and moderate-interest debt</li>
+                        <li>Fourth tier: Additional FIRE investments and low-interest debt</li>
+                      </ul>
+                    </li>
+                    <li><strong>Consider opportunity costs:</strong> For example, if your mortgage is at 3% but you expect 7% investment returns, it might make mathematical sense to invest rather than pay extra on the mortgage</li>
+                    <li><strong>Use separate accounts:</strong> Create dedicated savings accounts for different goals to track progress and prevent co-mingling of funds</li>
+                    <li><strong>Recalibrate regularly:</strong> Review your priorities annually as life circumstances change</li>
+                  </ol>
+                  <p>Remember that some expenses like education or a reasonable home purchase can be viewed as investments that may actually accelerate your FIRE journey through increased earning potential or reduced long-term costs.</p>
+                </>
+              } 
+            />
+
+            <FAQItem 
+              question="What tax-optimization strategies are most effective for FIRE pursuers?" 
+              answer={
+                <>
+                  <p>Tax optimization can significantly accelerate your path to FIRE. The most effective strategies include:</p>
+                  <ul>
+                    <li><strong>Tax-advantaged account maximization:</strong> 401(k), IRA, HSA contributions to reduce current tax burden and allow tax-free growth</li>
+                    <li><strong>Tax-loss harvesting:</strong> Selling investments at a loss to offset capital gains while maintaining market exposure</li>
+                    <li><strong>Strategic Roth conversions:</strong> Converting traditional retirement funds to Roth in low-income years to manage tax brackets in retirement</li>
+                    <li><strong>Asset location optimization:</strong> Placing tax-inefficient investments in tax-advantaged accounts and tax-efficient ones in taxable accounts</li>
+                    <li><strong>Geographic arbitrage:</strong> Living in low or no income tax states/countries during high-earning or withdrawal phases</li>
+                    <li><strong>Qualified Dividends and Long-Term Capital Gains:</strong> Structuring investments to take advantage of lower tax rates on these income types</li>
+                  </ul>
+                  <p>Remember that tax laws change frequently, so maintaining flexibility in your plan and regularly consulting with a tax professional can help ensure you're using the most current and applicable strategies for your situation.</p>
+                </>
+              } 
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* Blog Post Schema for SEO */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{
+        __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          "headline": "FIRE Movement: Financial Independence, Retire Early Guide",
+          "description": "Learn everything about the FIRE movement, from core principles to practical strategies for achieving financial independence and early retirement.",
+          "author": {
+            "@type": "Organization",
+            "name": "AI FIRE Retirement Planner"
+          },
+          "datePublished": new Date().toISOString().split('T')[0],
+          "dateModified": new Date().toISOString().split('T')[0],
+          "image": "https://example.com/images/fire-movement.jpg",
+          "publisher": {
+            "@type": "Organization",
+            "name": "AI FIRE Retirement Planner",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://example.com/logo.png"
+            }
+          },
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https://example.com/fire"
+          }
+        })
+      }} />
+
+      {/* FAQ Schema Markup */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{
+        __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is the 4% rule and is it still reliable?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The 4% rule is a guideline for retirement withdrawals developed from the Trinity Study, suggesting you can withdraw 4% of your portfolio in the first year of retirement, then adjust that amount for inflation each subsequent year. While historically reliable for 30-year periods, longer retirements may require a more conservative 3-3.5% rate. Consider using variable withdrawal strategies for added safety."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is FIRE only for high-income earners?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "While a high income can accelerate your path to FIRE, it's not a requirement. FIRE is achievable at various income levels through maintaining a high savings rate relative to your income, geographic arbitrage, lifestyle optimization, side hustles, and considering variations like LeanFIRE that require less capital. The key factor is the gap between income and expenses, not absolute income."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I account for healthcare costs in my FIRE plan?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Healthcare is often the biggest wild card in FIRE planning. Consider ACA health insurance with potential subsidies, health sharing ministries, part-time work to maintain employer benefits (BaristaFIRE), setting aside an additional healthcare buffer fund, or medical tourism for major procedures. Most successful FIRE plans include significantly higher healthcare allocations than what you currently pay while employed."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What investments are best for achieving FIRE?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The most common investment approach for FIRE consists of low-cost index funds with expense ratios under 0.1%, tax-advantaged accounts like 401(k)s and IRAs, and a simple asset allocation typically 70-90% stocks and 10-30% bonds. The core of most FIRE portfolios remains broadly diversified, low-cost index funds due to their historical returns, low maintenance, liquidity, and broad diversification."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How can I access retirement funds before age 59½ without penalties?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Several strategies exist: Roth Conversion Ladder (converting traditional IRA funds to Roth, then withdrawing after 5 years), Rule 72(t)/SEPP (taking substantially equal periodic payments), building a bridge of taxable accounts, withdrawing Roth IRA contributions, and using HSA accounts strategically. Most FIRE plans use a combination of these strategies in different life stages."
+              }
+            }
+          ]
+        })
+      }} />
+
+      {/* Call to Action */}
+      <div className="mb-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl overflow-hidden shadow-lg">
+        <div className="px-6 py-12 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+            Ready to Put Compound Interest to Work?
+          </h2>
+          <p className="text-indigo-100 max-w-2xl mx-auto mb-8">
+            Use our retirement calculator to see how your savings can grow over time and build a personalized 
+            plan for your financial future.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 justify-center items-center">
+            <a 
+              href="/" 
+              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Try Our Retirement Calculator
+            </a>
+            <a 
+              href="/fire" 
+              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-indigo-200 text-base font-medium rounded-md text-white hover:bg-white/10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Explore FIRE Movement
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      {/* Add Footer Component */}
+      <Footer />
+    </div>
   );
 };
 
