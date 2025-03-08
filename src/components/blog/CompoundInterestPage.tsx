@@ -1,5 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Title, Subtitle, Card, Section, SectionTitle } from '../common/StyledComponents';
+import { Helmet } from 'react-helmet';
+import { isSafari } from '../../utils/browserDetection';
+import Footer from '../common/Footer';
+
 import {
   LineChart,
   Line,
@@ -12,21 +16,42 @@ import {
   Label
 } from 'recharts';
 
-// Safari detection utility
-const isSafari = () => {
-  const ua = navigator.userAgent.toLowerCase();
-  return ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1;
+// FAQ Item Component
+interface FAQItemProps {
+  question: string;
+  answer: React.ReactNode;
+}
+
+const FAQItem: React.FC<FAQItemProps> = ({ question, answer }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="border-b border-gray-200 py-5">
+      <button
+        className="flex justify-between items-center w-full text-left focus:outline-none group transition-all"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <h3 className="text-lg font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
+          {question}
+        </h3>
+        <span className={`ml-6 flex-shrink-0 p-1.5 rounded-full bg-gray-100 group-hover:bg-indigo-100 transition-all ${isOpen ? 'transform rotate-180' : ''}`}>
+          <svg className="h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        </span>
+      </button>
+      {isOpen && (
+        <div className="mt-4 prose prose-indigo">
+          <div className="text-base text-gray-700 bg-gray-50 p-5 rounded-lg border border-indigo-100">
+            {answer}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 const CompoundInterestPage: React.FC = () => {
-  // State for Safari detection
-  const [isSafariBrowser, setIsSafariBrowser] = useState(false);
-  
-  // Detect Safari browser on component mount
-  useEffect(() => {
-    setIsSafariBrowser(isSafari());
-  }, []);
-
   // State for interactive formula example
   const [principal, setPrincipal] = useState(5000);
   const [rate, setRate] = useState(8);
@@ -34,85 +59,176 @@ const CompoundInterestPage: React.FC = () => {
   const [compound, setCompound] = useState(12);
 
   // Calculate compound interest for the interactive example
-  const calculateCompoundInterest = () => {
+  const compoundInterest = useMemo(() => {
+    // Handle edge cases
+    if (principal <= 0 || rate <= 0 || years <= 0 || compound <= 0) {
+      return "0.00";
+    }
+    
     const r = rate / 100;
     const n = compound;
     const t = years;
     const P = principal;
-    return (P * Math.pow(1 + r/n, n*t)).toFixed(2);
-  };
+    
+    try {
+      return (P * Math.pow(1 + r/n, n*t)).toFixed(2);
+    } catch (error) {
+      console.error("Error calculating compound interest:", error);
+      return "Error";
+    }
+  }, [principal, rate, years, compound]);
 
   // Generate data for the comparison chart
-  const generateComparisonData = () => {
-    const data = [];
-    for (let year = 0; year <= years; year++) {
-      const simpleInterest = principal * (1 + (rate / 100) * year);
-      const compoundInterest = principal * Math.pow(1 + (rate / 100) / compound, compound * year);
-      data.push({
-        year,
-        simple: Math.round(simpleInterest * 100) / 100,
-        compound: Math.round(compoundInterest * 100) / 100,
-      });
+  const comparisonData = useMemo(() => {
+    // Handle edge cases
+    if (principal <= 0 || rate <= 0 || years < 0 || compound <= 0) {
+      return [];
     }
-    return data;
-  };
+    
+    const data = [];
+    try {
+      for (let year = 0; year <= years; year++) {
+        const simpleInterest = principal * (1 + (rate / 100) * year);
+        const compoundInterest = principal * Math.pow(1 + (rate / 100) / compound, compound * year);
+        data.push({
+          year,
+          simple: Number(simpleInterest.toFixed(2)),
+          compound: Number(compoundInterest.toFixed(2)),
+        });
+      }
+      return data;
+    } catch (error) {
+      console.error("Error generating comparison data:", error);
+      return [];
+    }
+  }, [principal, rate, years, compound]);
 
   // Calculate investment growth over time
-  const calculateGrowth = (
-    monthlyContribution: number,
-    startAge: number,
-    endAge: number,
-    annualReturn: number = 7,
-    stopContributionAge?: number
-  ) => {
-    const data = [];
-    let total = 0;
-    const monthlyRate = annualReturn / 100 / 12;
-    
-    for (let age = startAge; age <= endAge; age++) {
-      // Add monthly contributions and growth for the year
-      for (let month = 0; month < 12; month++) {
-        // Only add contribution if before stopContributionAge (if specified) or before endAge
-        const shouldContribute = (!stopContributionAge && age < endAge) || 
-                               (stopContributionAge && age < stopContributionAge);
-        
-        if (shouldContribute) {
-          total = (total + monthlyContribution) * (1 + monthlyRate);
-        } else {
-          total = total * (1 + monthlyRate);
-        }
+  const calculateGrowth = useMemo(() => {
+    return (
+      monthlyContribution: number,
+      startAge: number,
+      endAge: number,
+      annualReturn: number = 7,
+      stopContributionAge?: number
+    ) => {
+      // Handle edge cases
+      if (monthlyContribution < 0 || startAge < 0 || endAge <= startAge || annualReturn < 0) {
+        return [];
       }
       
-      data.push({
-        age,
-        total: Math.round(total * 100) / 100,
-        contribution: Math.round((age < (stopContributionAge || endAge) ? 
-          (age - startAge + 1) * 12 * monthlyContribution : 
-          (stopContributionAge ? (stopContributionAge - startAge) * 12 * monthlyContribution : 0)) * 100) / 100
-      });
-    }
-    
-    return data;
-  };
+      // Ensure stopContributionAge is valid
+      if (stopContributionAge !== undefined && 
+          (stopContributionAge < startAge || stopContributionAge > endAge)) {
+        stopContributionAge = endAge;
+      }
+      
+      const data = [];
+      let total = 0;
+      const monthlyRate = annualReturn / 100 / 12;
+      
+      try {
+        for (let age = startAge; age <= endAge; age++) {
+          // Add monthly contributions and growth for the year
+          for (let month = 0; month < 12; month++) {
+            // Only add contribution if before stopContributionAge (if specified) or before endAge
+            const shouldContribute = (!stopContributionAge && age < endAge) || 
+                                   (stopContributionAge && age < stopContributionAge);
+            
+            if (shouldContribute) {
+              total = (total + monthlyContribution) * (1 + monthlyRate);
+            } else {
+              total = total * (1 + monthlyRate);
+            }
+          }
+          
+          // Calculate total contribution
+          const contributionYears = stopContributionAge 
+            ? Math.min(age - startAge + 1, stopContributionAge - startAge)
+            : (age < endAge ? age - startAge + 1 : 0);
+          const totalContribution = contributionYears * 12 * monthlyContribution;
+          
+          data.push({
+            age,
+            total: Number(total.toFixed(2)),
+            contribution: Number(totalContribution.toFixed(2))
+          });
+        }
+        
+        return data;
+      } catch (error) {
+        console.error("Error calculating growth:", error);
+        return [];
+      }
+    };
+  }, []);
+
+  // Early and late investor data for the comparison chart
+  const earlyInvestorData = useMemo(() => 
+    calculateGrowth(200, 25, 65, 7, 35), 
+  [calculateGrowth]);
+  
+  const lateInvestorData = useMemo(() => 
+    calculateGrowth(200, 35, 65), 
+  [calculateGrowth]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="mb-6 sm:mb-8 text-center">
-        <div className={`inline-block mb-4 px-4 py-2 rounded-lg shadow-sm ${isSafariBrowser ? 'bg-indigo-50' : 'bg-gradient-to-r from-indigo-50 to-purple-50'}`}>
-          <h1 className={`text-2xl sm:text-3xl md:text-4xl font-bold ${isSafariBrowser ? 'text-indigo-600' : 'text-gradient'}`}>
-            Understanding Compound Interest: Your Path to Financial Growth
-          </h1>
+    <div className="max-w-6xl mx-auto px-4 py-8 bg-gray-50">
+      <Helmet>
+        <title>Understanding Compound Interest | Retirement Planning Guide</title>
+        <meta name="description" content="Learn how compound interest works, calculate your potential returns, and discover strategies to maximize your long-term wealth growth." />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content="Understanding Compound Interest | Financial Growth Guide" />
+        <meta property="og:description" content="Learn how compound interest can transform your savings into substantial wealth and accelerate your path to financial independence." />
+        <meta property="og:image" content="https://yourdomain.com/images/compound-interest-social-card.jpg" />
+        <meta property="og:url" content="https://yourdomain.com/compound-interest" />
+        <meta property="og:site_name" content="Retirement Planner" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Understanding Compound Interest | Financial Growth Guide" />
+        <meta name="twitter:description" content="Learn how compound interest can transform your savings into substantial wealth and accelerate your path to financial independence." />
+        <meta name="twitter:image" content="https://yourdomain.com/images/compound-interest-social-card.jpg" />
+        
+        {/* LinkedIn */}
+        <meta property="linkedin:title" content="Understanding Compound Interest | Financial Growth Guide" />
+        <meta property="linkedin:description" content="Learn how compound interest can transform your savings into substantial wealth and accelerate your path to financial independence." />
+        <meta property="linkedin:image" content="https://yourdomain.com/images/compound-interest-social-card.jpg" />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://yourdomain.com/compound-interest" />
+      </Helmet>
+
+      {/* Page Header with Gradient Background */}
+      <div className="mb-10 rounded-xl overflow-hidden shadow-lg">
+        <div className={`py-12 px-6 ${isSafari() ? 'bg-indigo-600' : 'bg-gradient-to-r from-indigo-600 to-purple-600'}`}>
+          <div className="mb-6 sm:mb-8 text-center">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
+              Understanding Compound Interest: Your Path to Financial Growth
+            </h1>
+            <p className="text-gray-100 text-sm sm:text-base max-w-2xl mx-auto font-medium">
+              Learn how compound interest can transform your savings into substantial wealth over time, 
+              and why it's considered one of the most powerful forces in financial planning.
+            </p>
+            <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-lg py-3 px-4 inline-block">
+              <nav className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm">
+                <a href="#what-is-compound-interest" className="text-white hover:text-indigo-200 font-medium transition-colors">What is Compound Interest?</a>
+                <a href="#compound-formula" className="text-white hover:text-indigo-200 font-medium transition-colors">Formula</a>
+                <a href="#investment-growth" className="text-white hover:text-indigo-200 font-medium transition-colors">Investment Growth</a>
+                <a href="#calculator" className="text-white hover:text-indigo-200 font-medium transition-colors">Calculator</a>
+                <a href="#faq" className="text-white hover:text-indigo-200 font-medium transition-colors">FAQ</a>
+              </nav>
+            </div>
+          </div>
         </div>
-        <p className="text-gray-800 text-sm sm:text-base max-w-2xl mx-auto font-medium">
-          Learn how compound interest can transform your savings into substantial wealth over time, 
-          and why it's considered one of the most powerful forces in financial planning.
-        </p>
       </div>
 
       {/* Enhanced Introduction Section */}
-      <Section className={`mb-10 ${isSafariBrowser ? 'bg-indigo-50' : 'bg-gradient-to-br from-white to-indigo-50'}`}>
+      <Section className="mb-10 bg-gradient-to-br from-white to-indigo-50">
         <div className="prose prose-lg max-w-none">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+          <h2 id="what-is-compound-interest" className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
             <span className="bg-indigo-600 text-white p-2 rounded-full mr-3">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -191,7 +307,8 @@ const CompoundInterestPage: React.FC = () => {
       </Section>
 
       {/* Enhanced Formula Section */}
-      <Card className={`mb-10 p-8 ${isSafariBrowser ? 'bg-blue-50' : 'bg-gradient-to-br from-white to-blue-50'}`}>
+      <Card className={`mb-10 p-8 bg-gradient-to-br from-white to-blue-50`}>
+        <div id="compound-formula"></div>
         <SectionTitle className="mb-6 flex items-center">
           <span className="bg-blue-600 text-white p-2 rounded-full mr-3">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ display: 'block' }}>
@@ -346,7 +463,7 @@ const CompoundInterestPage: React.FC = () => {
       {/* Enhanced Visual Comparison Section */}
       <Section className="mb-10">
         <div className="prose prose-lg max-w-none">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+          <h2 id="investment-growth" className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
             <span className="bg-green-600 text-white p-2 rounded-full mr-3">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
@@ -408,7 +525,7 @@ const CompoundInterestPage: React.FC = () => {
                   </p>
                   <p className="text-lg font-semibold text-blue-600">
                     ${principal} invested at {rate}% for {years} years = 
-                    ${calculateCompoundInterest()}
+                    ${compoundInterest}
                   </p>
                 </div>
               </div>
@@ -421,9 +538,11 @@ const CompoundInterestPage: React.FC = () => {
             <div className="h-[400px]" style={{ minHeight: '400px', width: '100%', overflow: 'hidden' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart 
-                  data={generateComparisonData()} 
+                  data={comparisonData} 
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   style={{ overflow: 'visible' }}
+                  aria-label="Chart comparing simple and compound interest over time"
+                  role="img"
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
@@ -453,7 +572,7 @@ const CompoundInterestPage: React.FC = () => {
                     strokeWidth={2}
                     dot={false}
                     activeDot={{ r: 8 }}
-                    isAnimationActive={!isSafariBrowser}
+                    isAnimationActive={true}
                   />
                   <Line
                     type="monotone"
@@ -463,7 +582,7 @@ const CompoundInterestPage: React.FC = () => {
                     strokeWidth={2}
                     dot={false}
                     activeDot={{ r: 8 }}
-                    isAnimationActive={!isSafariBrowser}
+                    isAnimationActive={true}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -566,7 +685,7 @@ const CompoundInterestPage: React.FC = () => {
                   <div className="mt-4 p-4 bg-white rounded-lg shadow-sm">
                     <div className="text-sm text-gray-600 mb-1">Value at Age 65:</div>
                     <div className="text-2xl font-bold text-purple-600">
-                      ${calculateGrowth(200, 25, 65, 7, 35)[40].total.toLocaleString()}
+                      ${earlyInvestorData[40].total.toLocaleString()}
                     </div>
                     <div className="text-sm text-gray-500 mt-1">
                       (Invested for 10 years, then let it grow for 30 more years)
@@ -601,7 +720,7 @@ const CompoundInterestPage: React.FC = () => {
                   <div className="mt-4 p-4 bg-white rounded-lg shadow-sm">
                     <div className="text-sm text-gray-600 mb-1">Value at Age 65:</div>
                     <div className="text-2xl font-bold text-blue-600">
-                      ${calculateGrowth(200, 35, 65)[30].total.toLocaleString()}
+                      ${lateInvestorData[30].total.toLocaleString()}
                     </div>
                     <div className="text-sm text-gray-500 mt-1">
                       (Investing continuously until retirement)
@@ -622,6 +741,8 @@ const CompoundInterestPage: React.FC = () => {
                   <LineChart 
                     margin={{ top: 10, right: 30, left: 20, bottom: 15 }}
                     style={{ overflow: 'visible' }}
+                    aria-label="Chart comparing early and late investment strategies"
+                    role="img"
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
@@ -647,7 +768,7 @@ const CompoundInterestPage: React.FC = () => {
                     />
                     <Legend wrapperStyle={{ paddingTop: '20px' }}/>
                     <Line
-                      data={calculateGrowth(200, 25, 65, 7, 35)}
+                      data={earlyInvestorData}
                       type="monotone"
                       dataKey="total"
                       name="Emily (Early Start)"
@@ -655,10 +776,10 @@ const CompoundInterestPage: React.FC = () => {
                       strokeWidth={2}
                       dot={false}
                       activeDot={{ r: 8 }}
-                      isAnimationActive={!isSafariBrowser}
+                      isAnimationActive={true}
                     />
                     <Line
-                      data={calculateGrowth(200, 35, 65)}
+                      data={lateInvestorData}
                       type="monotone"
                       dataKey="total"
                       name="Leo (Late Start)"
@@ -666,7 +787,7 @@ const CompoundInterestPage: React.FC = () => {
                       strokeWidth={2}
                       dot={false}
                       activeDot={{ r: 8 }}
-                      isAnimationActive={!isSafariBrowser}
+                      isAnimationActive={true}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -1061,39 +1182,275 @@ const CompoundInterestPage: React.FC = () => {
         </div>
       </Section>
 
-      {/* Call to Action */}
-      <Card className="p-8 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100">
-        <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Ready to Put Compound Interest to Work?</h3>
-        <p className="text-gray-700 text-center mb-6 max-w-2xl mx-auto">
-          Use our retirement calculator to see how your savings can grow over time and build a personalized 
-          plan for your financial future.
-        </p>
-        <div className="flex justify-center">
-          <a
-            href="/"
-            className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-md shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1"
-          >
-            Try Our Retirement Calculator
-          </a>
+      {/* FAQ Section */}
+      <div id="faq"></div>
+      <Section className="mb-10 bg-white rounded-xl shadow-md">
+        <div className="prose prose-lg max-w-none p-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+            <span className="bg-indigo-600 text-white p-2 rounded-full mr-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
+            Frequently Asked Questions
+          </h2>
+          
+          <p className="text-gray-600 mb-8">
+            Get answers to common questions about compound interest, investments, and strategies to maximize your returns.
+          </p>
+          
+          <div className="bg-white rounded-lg divide-y divide-gray-200 border border-gray-100">
+            <FAQItem 
+              question="What's the difference between simple and compound interest?" 
+              answer={
+                <>
+                  <p>The main differences between simple and compound interest are:</p>
+                  <ul>
+                    <li><strong>Simple interest</strong> is calculated only on the initial principal amount. If you invest $1,000 at 5% simple interest, you'll earn $50 per year regardless of how long you hold the investment.</li>
+                    <li><strong>Compound interest</strong> is calculated on both the initial principal and the accumulated interest from previous periods. With the same $1,000 at 5% compound interest, you'll earn $50 in year one, but in year two you'll earn 5% on $1,050 ($52.50), and so on.</li>
+                  </ul>
+                  <p>This difference becomes dramatic over long periods. After 30 years, $1,000 with 5% simple interest would grow to $2,500, while with 5% compound interest it would reach approximately $4,322.</p>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="How does compounding frequency affect returns?" 
+              answer={
+                <>
+                  <p>Compounding frequency refers to how often interest is calculated and added to your principal. The more frequently interest compounds, the faster your money grows.</p>
+                  <p>Common compounding frequencies include:</p>
+                  <ul>
+                    <li><strong>Annual:</strong> Interest compounds once per year</li>
+                    <li><strong>Quarterly:</strong> Interest compounds four times per year</li>
+                    <li><strong>Monthly:</strong> Interest compounds twelve times per year</li>
+                    <li><strong>Daily:</strong> Interest compounds 365 times per year</li>
+                  </ul>
+                  <p>For example, $10,000 invested at 6% for 10 years would grow to:</p>
+                  <ul>
+                    <li>$17,908 with annual compounding</li>
+                    <li>$18,140 with quarterly compounding</li>
+                    <li>$18,194 with monthly compounding</li>
+                    <li>$18,221 with daily compounding</li>
+                  </ul>
+                  <p>The difference becomes more significant with higher interest rates and longer time periods.</p>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="What types of investments typically provide compound returns?" 
+              answer={
+                <>
+                  <p>Many investment vehicles offer compound returns, including:</p>
+                  <ul>
+                    <li><strong>Stocks and equity funds:</strong> Companies that reinvest profits or pay dividends that you reinvest</li>
+                    <li><strong>Bonds and fixed-income funds:</strong> When interest payments are reinvested</li>
+                    <li><strong>Certificates of Deposit (CDs):</strong> Particularly those with interest compounding options</li>
+                    <li><strong>Savings accounts:</strong> Most compound interest daily or monthly</li>
+                    <li><strong>Dividend-paying investments:</strong> When dividends are automatically reinvested to purchase more shares</li>
+                    <li><strong>Real estate:</strong> Through property appreciation and rental income reinvestment</li>
+                    <li><strong>Retirement accounts:</strong> 401(k)s, IRAs, and other tax-advantaged accounts where earnings are reinvested</li>
+                  </ul>
+                  <p>The key to maximizing compound returns is consistent reinvestment of earnings rather than withdrawing them.</p>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="What is the Rule of 72 and how can I use it?" 
+              answer={
+                <>
+                  <p>The Rule of 72 is a simple mental math shortcut to estimate how long it will take for an investment to double in value, given a fixed annual rate of return.</p>
+                  <p><strong>The formula:</strong> Years to double = 72 ÷ Annual interest rate</p>
+                  <p>For example:</p>
+                  <ul>
+                    <li>At 6% return, money doubles in approximately 12 years (72 ÷ 6 = 12)</li>
+                    <li>At 8% return, money doubles in approximately 9 years (72 ÷ 8 = 9)</li>
+                    <li>At 10% return, money doubles in approximately 7.2 years (72 ÷ 10 = 7.2)</li>
+                  </ul>
+                  <p>This rule works reasonably well for interest rates between 4% and 12%. You can also use it backward: if you need your money to double in 6 years, you'd need an annual return of about 12% (72 ÷ 6 = 12).</p>
+                  <p>The Rule of 72 helps illustrate how small differences in return rates can dramatically impact wealth accumulation over time.</p>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="How do dividends contribute to compound growth?" 
+              answer={
+                <>
+                  <p>Dividends can significantly enhance compound growth when reinvested through a process called dividend reinvestment:</p>
+                  <ol>
+                    <li><strong>Initial investment:</strong> You purchase shares of a dividend-paying company or fund</li>
+                    <li><strong>Dividend payment:</strong> The company distributes a portion of profits to shareholders</li>
+                    <li><strong>Reinvestment:</strong> Instead of taking the dividend as cash, you use it to purchase additional shares</li>
+                    <li><strong>Compound effect:</strong> Your next dividend will be larger because you now own more shares</li>
+                    <li><strong>Repetition:</strong> This cycle continues, accelerating your total return over time</li>
+                  </ol>
+                  <p>Many investors use Dividend Reinvestment Plans (DRIPs) to automatically reinvest dividends. The power comes from:</p>
+                  <ul>
+                    <li>Increasing share count over time without additional cash investment</li>
+                    <li>Dollar-cost averaging through regular reinvestment</li>
+                    <li>Dividend growth if companies increase their payouts over time</li>
+                  </ul>
+                  <p>Studies have shown that reinvested dividends have accounted for a significant portion of the stock market's total return over time.</p>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="What are the tax implications of compound interest?" 
+              answer={
+                <>
+                  <p>The tax implications of compound interest vary depending on the investment vehicle and account type:</p>
+                  <ul>
+                    <li><strong>Taxable accounts:</strong> Interest, dividends, and capital gains are typically taxed in the year they're earned, which reduces the effective compounding rate</li>
+                    <li><strong>Tax-deferred accounts:</strong> (Traditional 401(k)s, IRAs) Taxes are paid only when you withdraw funds, allowing full compounding of pre-tax amounts</li>
+                    <li><strong>Tax-free accounts:</strong> (Roth 401(k)s, Roth IRAs) No taxes on qualified withdrawals, providing tax-free compounding</li>
+                  </ul>
+                  <p>Tax considerations:</p>
+                  <ul>
+                    <li>Interest income is typically taxed as ordinary income (potentially higher rates)</li>
+                    <li>Qualified dividends and long-term capital gains usually have lower tax rates</li>
+                    <li>Compounding in taxable accounts is most efficient with tax-efficient investments (index ETFs, municipal bonds, etc.)</li>
+                  </ul>
+                  <p>Tax-advantaged accounts can dramatically increase the power of compounding by deferring or eliminating the tax drag, making them ideal vehicles for long-term compound growth.</p>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="How can I start investing with little money?" 
+              answer={
+                <>
+                  <p>You can start benefiting from compound interest with almost any amount of money:</p>
+                  <ul>
+                    <li><strong>Micro-investing apps:</strong> Platforms like Acorns, Stash, or Robinhood allow you to start with as little as $5</li>
+                    <li><strong>Fractional shares:</strong> Many brokerages now let you buy portions of expensive stocks</li>
+                    <li><strong>Index ETFs:</strong> Low-cost exchange-traded funds often have no minimum investment requirements</li>
+                    <li><strong>Employer retirement plans:</strong> Many 401(k) plans have no minimum contribution requirements</li>
+                    <li><strong>Treasury securities:</strong> Some government bonds can be purchased for as little as $100</li>
+                    <li><strong>High-yield savings accounts:</strong> Many online banks offer accounts with no minimum balance</li>
+                  </ul>
+                  <p>Key strategies for small investors:</p>
+                  <ul>
+                    <li>Start with whatever you can afford—consistency matters more than amount</li>
+                    <li>Automate contributions to remove the temptation to spend</li>
+                    <li>Focus on low-fee investment options to maximize returns</li>
+                    <li>Consider round-up services that invest your spare change</li>
+                    <li>Gradually increase your contributions as your income grows</li>
+                  </ul>
+                  <p>Remember, the magic of compound interest comes more from time in the market than initial investment size. Starting small today is far better than waiting until you have "enough" to invest.</p>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="What is negative compound interest and how does it affect debt?" 
+              answer={
+                <>
+                  <p>"Negative compound interest" refers to compound interest working against you through debt, particularly credit cards and high-interest loans:</p>
+                  <ul>
+                    <li>Just as compound interest grows your investments exponentially, it can also grow your debts exponentially</li>
+                    <li>With credit cards, interest is typically compounded daily and applied monthly</li>
+                    <li>If you only make minimum payments, most goes to interest rather than principal</li>
+                    <li>Unpaid interest is added to your balance, creating a cycle where you pay interest on prior interest</li>
+                  </ul>
+                  <p>For example, a $5,000 credit card balance at 18% APR:</p>
+                  <ul>
+                    <li>Making only minimum payments (2% of balance): Would take 39 years to pay off with total interest of $13,000+</li>
+                    <li>Making fixed $200 monthly payments: Would take 2.7 years to pay off with total interest of about $1,330</li>
+                  </ul>
+                  <p>To escape negative compounding:</p>
+                  <ul>
+                    <li>Pay more than the minimum payment</li>
+                    <li>Focus on highest-interest debts first</li>
+                    <li>Consider consolidating high-interest debts to a lower rate</li>
+                    <li>Stop adding new debt while paying down existing balances</li>
+                  </ul>
+                  <p>Understanding negative compound interest can be just as valuable as understanding positive compound interest for your overall financial health.</p>
+                </>
+              } 
+            />
+            
+            <FAQItem 
+              question="How does inflation impact compound returns?" 
+              answer={
+                <>
+                  <p>Inflation erodes the purchasing power of money over time, which affects compound returns in several ways:</p>
+                  <ul>
+                    <li><strong>Nominal vs. Real Returns:</strong> Your "nominal" return is the stated interest rate or investment gain, while your "real" return is the nominal return minus inflation</li>
+                    <li><strong>Example:</strong> If your investment grows at 7% but inflation is 3%, your real return is only 4%</li>
+                  </ul>
+                  <p>The impact over time:</p>
+                  <ul>
+                    <li>If $10,000 grows at 7% compounded annually for 30 years, it would reach about $76,123 in nominal terms</li>
+                    <li>But with 3% annual inflation, the purchasing power would only be equivalent to about $31,883 in today's dollars</li>
+                  </ul>
+                  <p>Strategies to combat inflation:</p>
+                  <ul>
+                    <li>Target investment returns that exceed inflation by a comfortable margin (historically, stocks have provided the best inflation-adjusted returns)</li>
+                    <li>Consider inflation-protected securities like TIPS (Treasury Inflation-Protected Securities)</li>
+                    <li>Include assets that historically perform well during inflation (real estate, certain commodities)</li>
+                    <li>Adjust savings rates to account for inflation's impact on your target retirement amount</li>
+                  </ul>
+                  <p>When planning for long-term goals, always focus on real (inflation-adjusted) returns rather than nominal returns to ensure your purchasing power truly grows over time.</p>
+                </>
+              } 
+            />
+          </div>
         </div>
-      </Card>
+      </Section>
 
-      {/* Add this at the bottom of the component */}
+      {/* Call to Action */}
+      <div className="mb-10 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl overflow-hidden shadow-lg">
+        <div className="px-6 py-12 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+            Ready to Put Compound Interest to Work?
+          </h2>
+          <p className="text-indigo-100 max-w-2xl mx-auto mb-8">
+            Use our retirement calculator to see how your savings can grow over time and build a personalized 
+            plan for your financial future.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 justify-center items-center">
+            <a 
+              href="/" 
+              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-white hover:bg-indigo-50 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              Try Our Retirement Calculator
+            </a>
+            <a 
+              href="/fire" 
+              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border border-indigo-200 text-base font-medium rounded-md text-white hover:bg-white/10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Explore FIRE Movement
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Add basic styles for charts */}
       <style>
         {`
-          @supports (-webkit-hyphens:none) {
-            /* Additional Safari-specific styles if needed */
-            .chart-container {
-              min-height: 400px;
-              width: 100%;
-            }
-            
-            svg {
-              display: block;
-            }
+          .chart-container {
+            min-height: 400px;
+            width: 100%;
+          }
+          
+          svg {
+            display: block;
           }
         `}
       </style>
+      
+      {/* Add Footer Component */}
+      <Footer />
     </div>
   );
 };
