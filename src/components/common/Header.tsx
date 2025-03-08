@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showMenuAnimation, setShowMenuAnimation] = useState(false);
   const location = useLocation();
+  const { darkMode, toggleDarkMode } = useTheme();
   
   // Detect scrolling to add a background effect
   useEffect(() => {
@@ -57,7 +59,11 @@ const Header = () => {
   };
 
   return (
-    <header className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md' : 'bg-white/95 backdrop-blur-sm'}`}>
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${
+      isScrolled 
+        ? darkMode ? 'bg-gray-800 shadow-md' : 'bg-white shadow-md' 
+        : darkMode ? 'bg-gray-800/95 backdrop-blur-sm' : 'bg-white/95 backdrop-blur-sm'
+    }`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and site title */}
@@ -81,8 +87,10 @@ const Header = () => {
               className={`text-sm font-medium transition-all duration-200 px-4 py-2 rounded-md flex items-center ${
                 isActive('/') 
                   ? 'text-white bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md transform scale-105' 
-                  : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 hover:scale-105'
-              }`}
+                  : darkMode 
+                    ? 'text-gray-300 hover:text-indigo-400 hover:bg-indigo-900/30'
+                    : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
+              } hover:scale-105`}
             >
               <span className="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -97,8 +105,10 @@ const Header = () => {
               className={`text-sm font-medium transition-all duration-200 px-4 py-2 rounded-md flex items-center relative ${
                 isActive('/blog') 
                   ? 'text-white bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md transform scale-105' 
-                  : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 hover:scale-105'
-              }`}
+                  : darkMode 
+                    ? 'text-gray-300 hover:text-indigo-400 hover:bg-indigo-900/30'
+                    : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
+              } hover:scale-105`}
             >
               <span className="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -118,8 +128,10 @@ const Header = () => {
               className={`text-sm font-medium transition-all duration-200 px-4 py-2 rounded-md flex items-center relative ${
                 isActive('/compound-interest') 
                   ? 'text-white bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md transform scale-105' 
-                  : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 hover:scale-105'
-              }`}
+                  : darkMode 
+                    ? 'text-gray-300 hover:text-indigo-400 hover:bg-indigo-900/30'
+                    : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
+              } hover:scale-105`}
             >
               <span className="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -137,8 +149,10 @@ const Header = () => {
               className={`text-sm font-medium transition-all duration-200 px-4 py-2 rounded-md flex items-center relative ${
                 isActive('/fire') 
                   ? 'text-white bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md transform scale-105' 
-                  : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 hover:scale-105'
-              }`}
+                  : darkMode 
+                    ? 'text-gray-300 hover:text-indigo-400 hover:bg-indigo-900/30'
+                    : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
+              } hover:scale-105`}
             >
               <span className="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -150,16 +164,59 @@ const Header = () => {
                 Hot
               </span>
             </Link>
+
+            {/* Dark mode toggle for desktop */}
+            <button
+              onClick={toggleDarkMode}
+              className="text-sm font-medium transition-all duration-200 p-2 rounded-md flex items-center justify-center text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {darkMode ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </button>
           </nav>
           
           {/* Mobile menu button with initial attention animation */}
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden flex items-center space-x-2">
+            {/* Dark mode toggle for mobile */}
+            <button
+              onClick={toggleDarkMode}
+              className={`p-2 rounded-md transition-all duration-300 ${
+                darkMode 
+                  ? 'text-yellow-400 bg-gray-700 hover:bg-gray-600' 
+                  : 'text-indigo-600 bg-gray-100 hover:bg-gray-200'
+              }`}
+              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {darkMode ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </button>
+            
+            {/* Existing hamburger menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className={`inline-flex items-center justify-center p-2 rounded-md transition-all duration-300 ${
                 isMenuOpen
-                ? 'text-white bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md scale-110'
-                : 'text-indigo-600 bg-gradient-to-r from-indigo-100 to-purple-100 border border-indigo-200 hover:from-indigo-200 hover:to-purple-200 hover:shadow-sm'
+                  ? darkMode 
+                    ? 'text-white bg-gradient-to-r from-indigo-500 to-purple-500 shadow-md scale-110' 
+                    : 'text-white bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md scale-110'
+                  : darkMode 
+                    ? 'text-indigo-400 bg-gray-700 hover:bg-gray-600' 
+                    : 'text-indigo-600 bg-gradient-to-r from-indigo-100 to-purple-100 border border-indigo-200 hover:from-indigo-200 hover:to-purple-200 hover:shadow-sm'
               } ${
                 showMenuAnimation ? 'animate-attention-pulse' : ''
               }`}
@@ -196,13 +253,15 @@ const Header = () => {
           isMenuOpen ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0 h-0'
         }`}
       >
-        <div className="px-4 py-3 space-y-2 bg-white shadow-lg border-t border-gray-100">
+        <div className={`px-4 py-3 space-y-2 ${darkMode ? 'bg-gray-800 shadow-lg border-t border-gray-700' : 'bg-white shadow-lg border-t border-gray-100'}`}>
           <Link
             to="/"
             className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors ${
               isActive('/') 
                 ? 'text-white bg-gradient-to-r from-indigo-600 to-purple-600' 
-                : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
+                : darkMode 
+                  ? 'text-gray-300 hover:text-indigo-400 hover:bg-gray-700' 
+                  : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
             }`}
             onClick={() => setIsMenuOpen(false)}
           >
@@ -219,7 +278,9 @@ const Header = () => {
             className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors relative ${
               isActive('/blog') 
                 ? 'text-white bg-gradient-to-r from-indigo-600 to-purple-600' 
-                : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
+                : darkMode 
+                  ? 'text-gray-300 hover:text-indigo-400 hover:bg-gray-700' 
+                  : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
             }`}
             onClick={() => setIsMenuOpen(false)}
           >
@@ -243,7 +304,9 @@ const Header = () => {
             className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors relative ${
               isActive('/compound-interest') 
                 ? 'text-white bg-gradient-to-r from-indigo-600 to-purple-600' 
-                : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
+                : darkMode 
+                  ? 'text-gray-300 hover:text-indigo-400 hover:bg-gray-700' 
+                  : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
             }`}
             onClick={() => setIsMenuOpen(false)}
           >
@@ -265,7 +328,9 @@ const Header = () => {
             className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors relative ${
               isActive('/fire') 
                 ? 'text-white bg-gradient-to-r from-indigo-600 to-purple-600' 
-                : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
+                : darkMode 
+                  ? 'text-gray-300 hover:text-indigo-400 hover:bg-gray-700' 
+                  : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
             }`}
             onClick={() => setIsMenuOpen(false)}
           >

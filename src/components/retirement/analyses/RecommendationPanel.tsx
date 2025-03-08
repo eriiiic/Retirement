@@ -3,10 +3,22 @@ import { FormatAmountFunction } from '../types';
 import { colors, typography, spacing, components, cx } from '../../../styles/styleGuide';
 import { SectionTitle, Card } from '../../common/StyledComponents';
 import { calculateDelayedScenario } from '../../../utils/financialCalculations';
+import { useTheme } from '../../../context/ThemeContext';
+import Modal from '../../common/Modal';
 
 // Helper function for consistent percentage formatting with 1 decimal place
 const formatPercentage = (value: number): string => {
   return `${value.toFixed(1)}%`;
+};
+
+// Add the formatCurrency function if it doesn't exist
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(value);
 };
 
 interface Recommendation {
@@ -50,6 +62,7 @@ const RecommendationModal: React.FC<{
   position: { x: number; y: number };
 }> = ({ isOpen, onClose, recommendation, position }) => {
   if (!isOpen) return null;
+  const { darkMode } = useTheme();
 
   return (
     <div 
@@ -59,18 +72,44 @@ const RecommendationModal: React.FC<{
         top: `${position.y - 100}px`
       }}
     >
-      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200 w-64">
-        <h3 className="font-semibold text-gray-800 mb-1">{recommendation.change}</h3>
-        <p className="text-xs text-gray-600">{recommendation.impact}</p>
+      <div className={cx(
+        "p-3 rounded-lg shadow-lg border w-64",
+        darkMode 
+          ? "bg-gray-800 border-indigo-700 text-gray-200" 
+          : "bg-white border-indigo-200"
+      )}>
+        <h3 className={cx(
+          "font-semibold mb-1",
+          darkMode ? "text-gray-100" : "text-gray-800"
+        )}>{recommendation.change}</h3>
+        <p className={cx(
+          "text-xs",
+          darkMode ? "text-gray-300" : "text-gray-700"
+        )}>{recommendation.impact}</p>
         {recommendation.impact_detail && (
-          <p className="text-xs text-indigo-600 mt-1 italic">{recommendation.impact_detail}</p>
+          <p className={cx(
+            "text-xs mt-1 italic",
+            darkMode ? "text-indigo-400" : "text-indigo-700"
+          )}>{recommendation.impact_detail}</p>
         )}
-        <div className="mt-2 border-t border-gray-100 pt-2">
-          <div className="text-xs text-gray-700 font-medium mb-1">Implementation Steps:</div>
-          <ul className="text-xs text-gray-600 space-y-1">
+        <div className={cx(
+          "mt-2 border-t pt-2",
+          darkMode ? "border-indigo-700" : "border-indigo-100"
+        )}>
+          <div className={cx(
+            "text-xs font-medium mb-1",
+            darkMode ? "text-indigo-400" : "text-indigo-800"
+          )}>Implementation Steps:</div>
+          <ul className={cx(
+            "text-xs space-y-1",
+            darkMode ? "text-gray-300" : "text-gray-700"
+          )}>
             {getImplementationSteps(recommendation).map((step, index) => (
               <li key={index} className="flex items-start">
-                <span className="mr-1.5">•</span>
+                <span className={cx(
+                  "mr-1.5",
+                  darkMode ? "text-indigo-400" : "text-indigo-500"
+                )}>•</span>
                 <span>{step}</span>
               </li>
             ))}
@@ -118,6 +157,7 @@ const RecommendationItem = React.memo(({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const { change, impact, impact_detail, priority } = recommendation;
+  const { darkMode } = useTheme();
   
   // More descriptive labels for the priority
   const priorityLabel = priority === 'High' 
@@ -178,41 +218,65 @@ const RecommendationItem = React.memo(({
       <div 
         className={cx(
           "flex items-center p-2 sm:p-2.5 rounded-lg border group transition-all duration-200 cursor-help",
-          priority === 'High' ? "border-red-100 hover:bg-red-50" : 
-          priority === 'Medium' ? "border-yellow-100 hover:bg-yellow-50" : 
-          "border-blue-100 hover:bg-blue-50"
+          darkMode ? (
+            priority === 'High' ? "border-red-700 bg-red-900/30 hover:bg-red-900/50" : 
+            priority === 'Medium' ? "border-yellow-700 bg-yellow-900/30 hover:bg-yellow-900/50" : 
+            "border-indigo-700 bg-indigo-900/30 hover:bg-indigo-900/50"
+          ) : (
+            priority === 'High' ? "border-red-200 bg-red-50/50 hover:bg-red-100/70" : 
+            priority === 'Medium' ? "border-yellow-200 bg-yellow-50/50 hover:bg-yellow-100/70" : 
+            "border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/70"
+          )
         )}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
         <div className={cx(
           "w-7 sm:w-8 h-7 sm:h-8 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0",
-          priority === 'High' ? "bg-red-100 text-red-600" : 
-          priority === 'Medium' ? "bg-yellow-100 text-yellow-600" : 
-          "bg-blue-100 text-blue-600"
+          darkMode ? (
+            priority === 'High' ? "bg-red-800 text-red-300" : 
+            priority === 'Medium' ? "bg-yellow-800 text-yellow-300" : 
+            "bg-indigo-800 text-indigo-300"
+          ) : (
+            priority === 'High' ? "bg-red-200 text-red-700" : 
+            priority === 'Medium' ? "bg-yellow-200 text-yellow-700" : 
+            "bg-indigo-200 text-indigo-700"
+          )
         )}>
           {getIcon()}
         </div>
         <div className="flex-grow min-w-0">
-          <div className="text-xs sm:text-sm font-medium text-gray-800 truncate">{change}</div>
-          <div className="text-xs text-gray-500 truncate">{impact}</div>
+          <div className={cx(
+            "text-xs sm:text-sm font-medium truncate",
+            darkMode ? "text-gray-200" : "text-gray-800"
+          )}>{change}</div>
+          <div className={cx(
+            "text-xs truncate",
+            darkMode ? "text-gray-400" : "text-gray-700"
+          )}>{impact}</div>
           {impact_detail && (
-            <div className="text-[10px] sm:text-xs italic text-indigo-600 mt-0.5 truncate">{impact_detail}</div>
+            <div className={cx(
+              "text-[10px] sm:text-xs italic mt-0.5 truncate",
+              darkMode ? "text-indigo-400" : "text-indigo-700"
+            )}>{impact_detail}</div>
           )}
         </div>
-        <div 
-          className={cx(
-            "px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium ml-1 sm:ml-2 flex-shrink-0",
-            priority === 'High' ? "bg-red-100 text-red-800" : 
-            priority === 'Medium' ? "bg-yellow-100 text-yellow-800" : 
-            "bg-blue-100 text-blue-800"
-          )}
-          title={priorityDescription}
-        >
+        <div className={cx(
+          "ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap",
+          darkMode ? (
+            priority === 'High' ? "bg-red-900 text-red-300" : 
+            priority === 'Medium' ? "bg-yellow-900 text-yellow-300" : 
+            "bg-indigo-900 text-indigo-300"
+          ) : (
+            priority === 'High' ? "bg-red-100 text-red-700" : 
+            priority === 'Medium' ? "bg-yellow-100 text-yellow-700" : 
+            "bg-indigo-100 text-indigo-700"
+          )
+        )}>
           {priorityLabel}
         </div>
       </div>
-
+      
       <RecommendationModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -235,6 +299,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
   currentAge,
   risk
 }) => {
+  const { darkMode } = useTheme();
   // Calculate optimalDelayYears using the same logic as RetirementDelayCard
   const calculateOptimalDelayYears = useMemo(() => {
     // Handle case when necessary data is missing
@@ -329,25 +394,56 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
 
   const optimalDelayYears = calculateOptimalDelayYears;
 
+  // Calculate suggested values
+  const suggestedWithdrawalRate = Math.min(withdrawalRate.safe, withdrawalRate.current * 0.85);
+  const suggestedMonthlyWithdrawal = monthlyRetirementWithdrawal * (suggestedWithdrawalRate / withdrawalRate.current);
+  
+  // Check if withdrawal rate is high (greater than 6%)
+  const isWithdrawalRateSafe = withdrawalRate.isSafe;
+  const isWithdrawalRateHigh = withdrawalRate.current > 6;
+
   return (
     <Card className="overflow-hidden lg:col-span-2">
-      <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 px-3 sm:px-4 py-2 sm:py-3 border-b border-indigo-200 flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className={cx(
+        "px-3 sm:px-4 py-2 sm:py-3 border-b flex items-center",
+        darkMode 
+          ? "bg-indigo-900/50 border-indigo-700" 
+          : "bg-gradient-to-r from-indigo-50 to-indigo-100 border-indigo-200"
+      )}>
+        <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+          "h-4 w-4 mr-2",
+          darkMode ? "text-indigo-400" : "text-indigo-600"
+        )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
-        <SectionTitle className="text-indigo-800 mb-0 text-sm sm:text-base">Recommended Action Plan</SectionTitle>
+        <h3 className={cx(
+          "mb-0 text-sm sm:text-base font-semibold",
+          darkMode ? "text-indigo-300" : "text-indigo-800"
+        )}>Recommended Action Plan</h3>
       </div>
       <div className="p-2 sm:p-3 space-y-1.5 sm:space-y-2">
-        <div className="pb-1.5 border-b border-gray-100 mb-1 flex justify-between items-center">
-          <div className="text-xs text-gray-500 font-medium">
+        <div className={cx(
+          "pb-1.5 border-b mb-1 flex justify-between items-center",
+          darkMode ? "border-indigo-700" : "border-indigo-200"
+        )}>
+          <div className={cx(
+            "text-xs font-medium",
+            darkMode ? "text-indigo-300" : "text-indigo-700"
+          )}>
             {withdrawalRate.current <= 4 ? 'Top Priorities' : 
              withdrawalRate.current <= 6 ? 'Recommended Actions to Improve Security' : 
              'Critical Actions Required'}
           </div>
-          <div className="text-xs text-gray-500 font-medium flex items-center gap-1">
+          <div className={cx(
+            "text-xs font-medium flex items-center gap-1",
+            darkMode ? "text-indigo-300" : "text-indigo-700"
+          )}>
             <span className="hidden sm:inline">Impact</span>
             <span className="sm:hidden">Priority</span>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+              "h-3 w-3",
+              darkMode ? "text-indigo-400" : "text-indigo-500"
+            )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </div>
@@ -393,28 +489,64 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
           })
         }
 
-        <div className="bg-gray-50 rounded-lg p-2 border border-gray-200 mt-2">
+        <div className={cx(
+          "rounded-lg p-2 border mt-2",
+          darkMode ? "bg-indigo-900/40 border-indigo-700" : "bg-indigo-100/70 border-indigo-200"
+        )}>
           <div className="flex items-center justify-between mb-1.5">
-            <div className="text-xs font-medium text-gray-500">Current withdrawal rate:</div>
-              <div className={cx(
+            <div className={cx(
+              "text-xs font-medium",
+              darkMode ? "text-indigo-300" : "text-indigo-800"
+            )}>Current withdrawal rate:</div>
+            <div className={cx(
               "text-sm font-bold flex items-center",
-              withdrawalRate.isSafe ? "text-green-600" : "text-red-600"
-              )}>
+              darkMode ? (
+                withdrawalRate.current <= 4 ? "text-green-400" : 
+                withdrawalRate.current <= 6 ? "text-yellow-400" : 
+                "text-red-400"
+              ) : (
+                withdrawalRate.current <= 4 ? "text-green-600" : 
+                withdrawalRate.current <= 6 ? "text-yellow-600" : 
+                "text-red-600"
+              )
+            )}>
               {formatPercentage(withdrawalRate.current)}
-              <span className="ml-1.5 text-xs font-normal px-1.5 py-0.5 rounded-full bg-gray-100">
-                {withdrawalRate.isSafe ? "safe" : "high"}
+              <span className="ml-1.5">
+                {withdrawalRate.current <= 4 
+                  ? <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                      "h-4 w-4",
+                      darkMode ? "text-green-400" : "text-green-500"
+                    )} viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  : <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                      "h-4 w-4",
+                      darkMode ? "text-red-400" : "text-red-500"
+                    )} viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                }
               </span>
-              </div>
             </div>
+          </div>
           
           {/* Withdrawal rate progress bar container */}
           <div className="relative">
             {/* Safe zone indicator */}
-            <div className="absolute inset-y-0 left-0 bg-green-100 rounded-l-full" style={{ width: '50%' }}></div>
+            <div className={cx(
+              "absolute inset-y-0 left-0 rounded-l-full",
+              darkMode ? "bg-green-900/50" : "bg-green-100"
+            )} style={{ width: '50%' }}></div>
             {/* Warning zone indicator */}
-            <div className="absolute inset-y-0 left-[50%] bg-yellow-100" style={{ width: '25%' }}></div>
+            <div className={cx(
+              "absolute inset-y-0 left-[50%]", 
+              darkMode ? "bg-yellow-900/50" : "bg-yellow-100"
+            )} style={{ width: '25%' }}></div>
             {/* Danger zone indicator */}
-            <div className="absolute inset-y-0 left-[75%] bg-red-100 rounded-r-full" style={{ width: '25%' }}></div>
+            <div className={cx(
+              "absolute inset-y-0 left-[75%] rounded-r-full",
+              darkMode ? "bg-red-900/50" : "bg-red-100"
+            )} style={{ width: '25%' }}></div>
             
             {/* Main progress bar */}
             <div 
@@ -423,41 +555,60 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
               aria-valuenow={Math.round(withdrawalRate.current * 10) / 10}
               aria-valuemin={0}
               aria-valuemax={8}
-              aria-label="Withdrawal rate progress"
             >
+              {/* Current rate indicator */}
               <div 
                 className={cx(
-                  "h-2 rounded-full transition-all duration-500",
-                  withdrawalRate.current <= 4 ? "bg-green-500" :
-                  withdrawalRate.current <= 6 ? "bg-yellow-500" :
-                  "bg-red-500"
-                )} 
-                style={{ width: `${Math.min(100, (withdrawalRate.current / 8) * 100)}%` }}
+                  "absolute -top-[3px] w-2 h-8 rounded-full transition-all",
+                  darkMode ? (
+                    withdrawalRate.current <= 4 ? "bg-green-400" : 
+                    withdrawalRate.current <= 6 ? "bg-yellow-400" : 
+                    "bg-red-400"
+                  ) : (
+                    withdrawalRate.current <= 4 ? "bg-green-600" : 
+                    withdrawalRate.current <= 6 ? "bg-yellow-600" : 
+                    "bg-red-600"
+                  )
+                )}
+                style={{ 
+                  left: `${Math.min(100, (withdrawalRate.current / 8) * 100)}%`,
+                  transform: 'translateX(-50%)' 
+                }}
               ></div>
-            </div>
-            
-            {/* Safe withdrawal rate marker */}
-            <div className="absolute top-[-4px] h-3 flex items-center" style={{ left: `${(withdrawalRate.safe / 8) * 100}%` }}>
-              <div className="h-3 w-0.5 bg-green-700"></div>
-              <div className="absolute left-1.5 top-[-12px] text-[9px] text-green-700 whitespace-nowrap">
-                Safe rate (4%)
-              </div>
             </div>
           </div>
           
           {/* Legend */}
-          <div className="mt-3 flex items-center justify-center gap-3 text-[10px]">
-            <div className="flex items-center">
-              <div className="w-2 h-2 rounded-full bg-green-100 mr-1"></div>
-              <span className="text-gray-600">Safe (0-4%)</span>
+          <div className="flex justify-between mt-2 text-[10px]">
+            <div className={cx(
+              "flex items-center",
+              darkMode ? "text-green-400" : "text-green-700"
+            )}>
+              <div className={cx(
+                "w-2 h-2 rounded-full mr-1",
+                darkMode ? "bg-green-700" : "bg-green-200"
+              )}></div>
+              Safe (0-4%)
             </div>
-            <div className="flex items-center">
-              <div className="w-2 h-2 rounded-full bg-yellow-100 mr-1"></div>
-              <span className="text-gray-600">Warning (4-6%)</span>
+            <div className={cx(
+              "flex items-center",
+              darkMode ? "text-yellow-400" : "text-yellow-700"
+            )}>
+              <div className={cx(
+                "w-2 h-2 rounded-full mr-1",
+                darkMode ? "bg-yellow-700" : "bg-yellow-200"
+              )}></div>
+              Warning (4-6%)
             </div>
-            <div className="flex items-center">
-              <div className="w-2 h-2 rounded-full bg-red-100 mr-1"></div>
-              <span className="text-gray-600">High Risk ({'>'}6%)</span>
+            <div className={cx(
+              "flex items-center",
+              darkMode ? "text-red-400" : "text-red-700"
+            )}>
+              <div className={cx(
+                "w-2 h-2 rounded-full mr-1",
+                darkMode ? "bg-red-700" : "bg-red-200"
+              )}></div>
+              High Risk (6%+)
             </div>
           </div>
         </div>
@@ -465,85 +616,150 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
         <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-lg p-2.5 border border-indigo-100">
           <div className="text-xs space-y-2">
             <div>
-              <div className="text-xs font-medium text-indigo-800 mb-1.5 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              <div className={cx(
+                "text-xs font-medium mb-1 flex items-center",
+                darkMode ? "text-indigo-800" : "text-indigo-700"
+              )}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
                 Implementation Strategy
               </div>
               
-              <div className="text-gray-600 mb-2">
+              <div className={cx(
+                "text-xs",
+                darkMode ? "text-gray-300" : "text-gray-600"
+              )}>
                 {withdrawalRate.isSafe ? (
-                  <div>
-                    <span className="font-semibold text-green-700 flex items-center">
+                  <>
+                    <span className={cx(
+                      "font-semibold flex items-center",
+                      darkMode ? "text-green-400" : "text-green-600"
+                    )}>
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Your withdrawal rate is within safe parameters
+                      Your withdrawal strategy is sustainable
                     </span>
-                    <ul className="mt-1 list-disc pl-4 text-xs space-y-1">
-                      <li>Implement highest priority recommendations first</li>
-                      <li>Optional 1-2 year retirement delay for additional security</li>
-                      <li>Consider tax-efficient withdrawal sequencing</li>
+                    <ul className={cx(
+                      "mt-2 list-disc pl-4 text-xs space-y-1.5",
+                      darkMode ? "text-gray-300" : "text-gray-700"
+                    )}>
+                      <li>Your current withdrawal rate of <span className={cx(
+                        "font-medium",
+                        darkMode ? "text-green-400" : "text-green-600"
+                      )}>{formatPercentage(withdrawalRate.current)}</span> is within the safe zone</li>
+                      <li>Continue with your current withdrawal strategy</li>
+                      <li>Maintain regular portfolio reviews to ensure continued alignment with market conditions</li>
                     </ul>
-                  </div>
-                ) : withdrawalRate.current <= 6 ? (
-                  <div>
-                    <span className="font-semibold text-amber-700 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <div className={cx(
+                      "pl-3 py-1.5 mt-2 rounded-sm border-l-4",
+                      darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
+                    )}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                        "h-3.5 w-3.5 inline mr-1", 
+                        darkMode ? "text-blue-400" : "text-blue-700"
+                      )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Your withdrawal rate needs attention
+                      <span className={cx(
+                        "font-medium",
+                        darkMode ? "text-blue-300" : "text-blue-800"
+                      )}>Action:</span> 
+                      <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
+                        Maintain your current withdrawal rate and review annually
+                      </span>
+                    </div>
+                  </>
+                ) : withdrawalRate.current <= 6 ? (
+                  <>
+                    <span className={cx(
+                      "font-semibold flex items-center",
+                      darkMode ? "text-yellow-400" : "text-yellow-600"
+                    )}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      Withdrawal strategy needs attention
                     </span>
-                    <ul className="mt-1 list-disc pl-4 text-xs space-y-1">
-                      <li>Address recommended actions to strengthen your plan</li>
-                      <li>Review retirement timing to improve security</li>
-                      <li>Evaluate flexible spending strategies for non-essential expenses</li>
+                    <ul className={cx(
+                      "mt-2 list-disc pl-4 text-xs space-y-1.5",
+                      darkMode ? "text-gray-300" : "text-gray-700"
+                    )}>
+                      <li>Your current withdrawal rate of <span className={cx(
+                        "font-medium",
+                        darkMode ? "text-yellow-400" : "text-yellow-600"
+                      )}>{formatPercentage(withdrawalRate.current)}</span> is slightly above recommended limits</li>
+                      <li>Consider a moderate reduction to <span className={cx(
+                        "font-medium",
+                        darkMode ? "text-green-400" : "text-green-600"
+                      )}>{formatCurrency(suggestedMonthlyWithdrawal)}</span> per month ({formatPercentage(suggestedWithdrawalRate)})</li>
+                      <li>This adjustment would significantly improve the long-term sustainability of your retirement plan</li>
                     </ul>
-                  </div>
+                    <div className={cx(
+                      "pl-3 py-1.5 mt-2 rounded-sm border-l-4",
+                      darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
+                    )}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                        "h-3.5 w-3.5 inline mr-1", 
+                        darkMode ? "text-blue-400" : "text-blue-700"
+                      )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className={cx(
+                        "font-medium",
+                        darkMode ? "text-blue-300" : "text-blue-800"
+                      )}>Recommended Action:</span> 
+                      <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
+                        Gradually reduce withdrawal rate over the next 6 months
+                      </span>
+                    </div>
+                  </>
                 ) : (
-                  <div>
-                    <span className="font-semibold text-red-700 flex items-center">
+                  <>
+                    <span className={cx(
+                      "font-semibold flex items-center",
+                      darkMode ? "text-red-400" : "text-red-600"
+                    )}>
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Your withdrawal rate requires significant adjustment
+                      Urgent adjustment needed to withdrawal strategy
                     </span>
-                    <ul className="mt-1 list-disc pl-4 text-xs space-y-1">
-                      <li>Take critical actions immediately to address financial sustainability</li>
-                      <li>{optimalDelayYears > 0 ? 
-                          `Delay retirement by ${optimalDelayYears} ${optimalDelayYears === 1 ? 'year' : 'years'} to strengthen your position` :
-                          'Significant retirement delay recommended'}</li>
-                      <li>Develop a timeline with milestone checks to monitor progress</li>
+                    <ul className={cx(
+                      "mt-2 list-disc pl-4 text-xs space-y-1.5",
+                      darkMode ? "text-gray-300" : "text-gray-700"
+                    )}>
+                      <li>Your current withdrawal rate of <span className={cx(
+                        "font-medium",
+                        darkMode ? "text-red-400" : "text-red-600"
+                      )}>{formatPercentage(withdrawalRate.current)}</span> is unsustainably high</li>
+                      <li>This rate significantly increases the risk of depleting your capital prematurely</li>
+                      <li>Consider reducing your monthly withdrawals to <span className={cx(
+                        "font-medium",
+                        darkMode ? "text-green-400" : "text-green-600"
+                      )}>{formatCurrency(suggestedMonthlyWithdrawal)}</span> ({formatPercentage(suggestedWithdrawalRate)})</li>
+                      <li>Review your budget to identify potential areas for expense reduction</li>
                     </ul>
-                  </div>
-                )}
-              </div>
-              
-              <div className="bg-indigo-50 border-l-4 border-indigo-500 pl-3 py-1.5 rounded-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-indigo-800 font-medium">Recommended Action:</span>
-                <span className="text-xs ml-1">
-                  {withdrawalRate.isSafe 
-                    ? 'Continue with your investment strategy and monitor quarterly'
-                    : withdrawalRate.current <= 6 
-                      ? optimalDelayYears > 0
-                        ? `Delay retirement by ${optimalDelayYears} ${optimalDelayYears === 1 ? 'year' : 'years'} and implement recommended adjustments`
-                        : 'Implement recommended adjustments with moderate urgency'
-                      : optimalDelayYears > 0
-                        ? `Delay retirement by ${optimalDelayYears} ${optimalDelayYears === 1 ? 'year' : 'years'} and take immediate corrective action`
-                        : 'Take immediate corrective action to stabilize your financial future'}
-                </span>
-                {!withdrawalRate.isSafe && (
-                  <div className="mt-1 text-xs">
-                    <li><span className="text-indigo-700 font-medium">Priority:</span> {withdrawalRate.current <= 6 ? 'Medium' : 'High'}</li>
-                    <li><span className="text-indigo-700 font-medium">Timeline:</span> {withdrawalRate.current <= 6 ? '3-6 months' : '1-3 months'}</li>
-                    {optimalDelayYears > 0 && (
-                      <li><span className="text-indigo-700 font-medium">Recommended delay:</span> {optimalDelayYears} {optimalDelayYears === 1 ? 'year' : 'years'}</li>
-                    )}
-                  </div>
+                    <div className={cx(
+                      "pl-3 py-1.5 mt-2 rounded-sm border-l-4",
+                      darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
+                    )}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                        "h-3.5 w-3.5 inline mr-1", 
+                        darkMode ? "text-blue-400" : "text-blue-700"
+                      )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className={cx(
+                        "font-medium",
+                        darkMode ? "text-blue-300" : "text-blue-800"
+                      )}>Immediate Action:</span> 
+                      <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
+                        Reduce withdrawal rate by {formatPercentage(withdrawalRate.current - suggestedWithdrawalRate)} within the next 3 months
+                      </span>
+                    </div>
+                  </>
                 )}
               </div>
             </div>

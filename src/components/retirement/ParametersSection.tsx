@@ -4,6 +4,7 @@ import FormulaModal from './FormulaModal';
 import { generateModernRetirementReport } from '../../utils/modernPdfGenerator';
 import { colors, typography, spacing, components, cx } from '../../styles/styleGuide';
 import { calculateInflationAdjustedValue } from '../../utils/financialCalculations';
+import { useTheme } from '../../context/ThemeContext';
 
 // Define the customStyles variable before the component
 const customStyles = `
@@ -117,6 +118,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   chartRef,
   graphData = []  // Provide a default empty array
 }) => {
+  const { darkMode } = useTheme();
   const [inputValues, setInputValues] = useState({
     initialCapital: params.initialCapital.toString(),
     monthlyInvestment: params.monthlyInvestment.toString(),
@@ -780,14 +782,24 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               <div 
                 className={cx(
                   "absolute inset-0 w-full h-2 rounded-lg cursor-pointer",
-                  isDisabled ? 'bg-gray-300' : components.form.slider.track
+                  isDisabled 
+                    ? darkMode ? 'bg-gray-700' : 'bg-gray-300' 
+                    : darkMode ? 'bg-gray-700' : 'bg-gray-200'
                 )}
                 style={{ top: '50%', transform: 'translateY(-50%)' }}
               ></div>
               <div 
                 className={cx(
                   "absolute h-2 rounded-lg",
-                  isDisabled ? 'bg-gray-400' : 'bg-gradient-to-r from-purple-500 to-indigo-500'
+                  isDisabled 
+                    ? darkMode ? 'bg-gray-600' : 'bg-gray-400' 
+                    : darkMode
+                      ? id === 'annualReturnRate' || id === 'inflation'
+                          ? 'bg-gradient-to-r from-green-700 to-green-700/70'
+                          : 'bg-gradient-to-r from-purple-700 to-indigo-700' 
+                      : id === 'annualReturnRate' || id === 'inflation'
+                          ? 'bg-gradient-to-r from-green-500 to-green-500/70'
+                          : 'bg-gradient-to-r from-purple-500 to-indigo-500'
                 )}
                 style={{ 
                   width: `${((numericValue - min) / (max - min)) * 100}%`,
@@ -830,9 +842,26 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               />
               <div 
                 className={cx(
-                  "absolute w-4 h-4 bg-white border rounded-full shadow transition-all",
-                  isDisabled ? 'border-gray-400' : 'border-indigo-500',
-                  draggingSlider === id ? 'w-5 h-5 border-purple-600 scale-110 shadow-md' : ''
+                  "absolute w-4 h-4 rounded-full shadow transition-all",
+                  darkMode 
+                    ? id === 'annualReturnRate' || id === 'inflation'
+                        ? "bg-gray-200 border-green-500"
+                        : "bg-gray-200 border-gray-300" 
+                    : id === 'annualReturnRate' || id === 'inflation'
+                        ? "bg-white border-green-500"
+                        : "bg-white border",
+                  isDisabled 
+                    ? darkMode ? 'border-gray-600' : 'border-gray-400' 
+                    : darkMode
+                        ? id === 'annualReturnRate' || id === 'inflation'
+                            ? 'border-green-400'
+                            : 'border-indigo-400'
+                        : id === 'annualReturnRate' || id === 'inflation'
+                            ? 'border-green-500'
+                            : 'border-indigo-500',
+                  draggingSlider === id 
+                    ? 'w-5 h-5 scale-110 shadow-md' 
+                    : ''
                 )}
                 style={{ 
                   left: `${((numericValue - min) / (max - min)) * 100}%`,
@@ -857,17 +886,21 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   disabled={isDisabled}
                   onChange={(e) => handleInputChange(id, e.target.value)}
                   onBlur={(e) => handleInputBlur(id, e.target.value)}
-                  onFocus={() => handleInputFocus(id as string)}
-                  placeholder="46"
+                  onFocus={() => handleInputFocus(id)}
+                  placeholder="0"
                   className={cx(
-                    "w-full rounded-lg border border-gray-300 py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-right",
-                    typography.size.sm,
-                    colors.neutral[600],
-                    isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''
+                    "w-full px-3 py-2 rounded-md shadow-sm text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
+                    darkMode 
+                      ? "bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500"
+                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-400",
+                    isDisabled ? darkMode ? 'bg-gray-700 text-gray-500' : 'bg-gray-100 text-gray-400' : ''
                   )}
                   aria-label={`${label} input`}
                 />
-                <span className={cx(typography.size.xs, colors.neutral[600], "ml-1")}>years old</span>
+                <span className={cx(
+                  "ml-1 text-xs",
+                  darkMode ? "text-gray-400" : "text-gray-600"
+                )}>years old</span>
               </div>
             </div>
           ) : id === 'retirementInput' ? (
@@ -885,14 +918,18 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   onFocus={() => handleInputFocus(id as string)}
                   placeholder="65"
                   className={cx(
-                    "w-full rounded-lg border border-gray-300 py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-right",
-                    typography.size.sm,
-                    colors.neutral[700],
-                    isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''
+                    "w-full px-3 py-2 rounded-md shadow-sm text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
+                    darkMode 
+                      ? "bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500"
+                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-400",
+                    isDisabled ? darkMode ? 'bg-gray-700 text-gray-500' : 'bg-gray-100 text-gray-400' : ''
                   )}
                   aria-label={`${label} input`}
                 />
-                <span className={cx(typography.size.xs, colors.neutral[600], "ml-1")}>
+                <span className={cx(
+                  "ml-1 text-xs",
+                  darkMode ? "text-gray-400" : "text-gray-600"
+                )}>
                   {isRetirementInputAnAge() ? "years old" : "year"}
                 </span>
               </div>
@@ -903,9 +940,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 <div className="relative w-full">
                   {/* Currency symbol positioned on the left */}
                   <span className={cx(
-                    "absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none",
-                    typography.size.sm,
-                    colors.neutral[500]
+                    "absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-sm",
+                    darkMode ? "text-gray-400" : "text-gray-500"
                   )}>
                     {getCurrencySymbol(params.currency)}
                   </span>
@@ -925,12 +961,13 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                       const valueWithoutCurrency = removeCurrencySymbol(e.target.value);
                       handleInputBlur(id, valueWithoutCurrency);
                     }}
-                    onFocus={() => handleInputFocus(id as string)}
+                    onFocus={() => handleInputFocus(id)}
                     placeholder={placeholder}
                     className={cx(
-                      "w-full rounded-lg border border-gray-300 py-1.5 pl-6 pr-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-right",
-                      typography.size.sm,
-                      colors.neutral[700]
+                      "w-full pl-7 pr-3 py-2 rounded-md shadow-sm text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
+                      darkMode 
+                        ? "bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500"
+                        : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
                     )}
                     aria-label={`${label} input`}
                   />
@@ -951,13 +988,18 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   onFocus={() => handleInputFocus(id as string)}
                   placeholder="95"
                   className={cx(
-                    "w-full rounded-lg border border-gray-300 py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-right",
-                    typography.size.sm,
-                    colors.neutral[700]
+                    "w-full px-3 py-2 rounded-md shadow-sm text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
+                    darkMode 
+                      ? "bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500"
+                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-400",
+                    isDisabled ? darkMode ? 'bg-gray-700 text-gray-500' : 'bg-gray-100 text-gray-400' : ''
                   )}
                   aria-label={`${label} input`}
                 />
-                <span className={cx(typography.size.xs, colors.neutral[600], "ml-1")}>years old</span>
+                <span className={cx(
+                  "ml-1 text-xs",
+                  darkMode ? "text-gray-400" : "text-gray-600"
+                )}>years</span>
               </div>
             </div>
           ) : (
@@ -998,19 +1040,39 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   ? `${getCurrencySymbol(params.currency)} ${placeholder}` 
                   : placeholder}
                 className={cx(
-                  "w-full rounded-lg border border-gray-300 py-1.5 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-right",
-                  typography.size.sm,
-                  colors.neutral[700]
+                  "w-full px-3 py-2 rounded-md shadow-sm text-sm",
+                  darkMode 
+                    ? "bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500"
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-400",
+                  id === 'annualReturnRate' || id === 'inflation'
+                    ? darkMode 
+                        ? "focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+                        : "focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    : darkMode
+                        ? "focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        : "focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 )}
                 aria-label={`${label} input`}
               />
               {percentage && (
-                <span className={cx(typography.size.xs, colors.neutral[600], "ml-1.5")}>
+                <span className={cx(
+                  "ml-1.5 text-xs",
+                  darkMode 
+                    ? id === 'annualReturnRate' || id === 'inflation'
+                        ? "text-green-400" 
+                        : "text-gray-400"
+                    : id === 'annualReturnRate' || id === 'inflation'
+                        ? "text-green-600"
+                        : "text-gray-600"
+                )}>
                   %
                 </span>
               )}
               {suffix && !percentage && (
-                <span className="absolute inset-y-0 right-2 flex items-center text-gray-500 pointer-events-none text-xs">
+                <span className={cx(
+                  "ml-1.5 text-xs",
+                  darkMode ? "text-gray-400" : "text-gray-600"
+                )}>
                   {suffix}
                 </span>
               )}
@@ -1046,12 +1108,34 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   }, []);
 
   return (
-    <div className={cx("bg-gray-50 rounded-lg border border-gray-200 shadow-sm overflow-hidden p-4")}>
+    <div className={cx(
+      "rounded-2xl border shadow-sm overflow-hidden p-4",
+      darkMode 
+        ? "bg-gray-900 border-gray-700 shadow-lg" 
+        : "bg-gray-50 border-gray-200"
+    )}>
       {/* Header with Title */}
       <div className={cx("flex flex-col sm:flex-row justify-between items-start sm:items-center pb-2")}>
         <div>
-          <h2 className="text-xl font-semibold text-gradient mb-1 sm:mb-0">Define Your Plan</h2>
-          <p className={typography.style.subtitle}>Tailor your personal path to financial freedom</p>
+          <h2 className={cx(
+            typography.weight.semibold, 
+            "text-xl mb-1 sm:mb-0", 
+            components.header.withIcon,
+            darkMode ? "text-gradient-dark" : typography.style.gradient
+          )}>
+            <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+              "h-5 w-5 mr-2",
+              darkMode ? "text-indigo-400" : components.icon.colors.indigo
+            )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className={darkMode ? "text-white" : ""}>Define Your Plan</span>
+          </h2>
+          <p className={cx(
+            "sm:pl-7",
+            darkMode ? "text-gray-400" : typography.style.subtitle
+          )}>Tailor your personal path to financial freedom</p>
         </div>
           
         <div className="flex flex-row items-center justify-end w-full sm:w-auto gap-2 mt-3 sm:mt-0">
@@ -1060,8 +1144,12 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
             onClick={handleGeneratePDF}
             disabled={isPdfGenerating}
             className={cx(
-              "px-4 py-1.5 text-white text-xs font-medium rounded-lg flex items-center shadow-sm transition-colors duration-200",
-              isPdfGenerating ? 'bg-gray-400' : 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
+              "px-4 py-1.5 text-xs font-medium rounded-lg flex items-center shadow-sm transition-colors duration-200",
+              isPdfGenerating 
+                ? (darkMode ? 'bg-gray-600' : 'bg-gray-400') 
+                : (darkMode 
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white'
+                    : 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white')
             )}
             aria-label="Generate PDF Report"
           >
@@ -1085,20 +1173,32 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
           
           {/* Success message */}
           {showPdfSuccess && (
-            <div className={cx("absolute right-0 top-full mt-2 px-3 py-1 bg-green-100 text-green-800 text-xs rounded-md shadow-sm z-10")}>
+            <div className={cx(
+              "absolute right-0 top-full mt-2 px-3 py-1 text-xs rounded-md shadow-sm z-10",
+              darkMode ? "bg-green-900/50 text-green-300 border border-green-800" : "bg-green-100 text-green-800"
+            )}>
               PDF generated successfully!
             </div>
           )}
 
           <div className="flex items-center">
-            <span className={cx("text-xs font-semibold uppercase tracking-wider bg-gradient-to-r from-purple-500 to-indigo-500 bg-clip-text text-transparent mr-1")}>Currency:</span>
-            <div className="flex border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            <span className={cx(
+              "text-xs font-semibold uppercase tracking-wider bg-gradient-to-r from-purple-500 to-indigo-500 bg-clip-text text-transparent mr-1"
+            )}>Currency:</span>
+            <div className={cx(
+              "flex rounded-lg overflow-hidden shadow-sm border",
+              darkMode ? "border-gray-700" : "border-gray-200"
+            )}>
               <button 
                 className={cx(
                   "px-2.5 py-1.5 text-xs font-medium transition-all min-w-[2rem]",
                   params.currency === 'USD'
-                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                    ? darkMode 
+                        ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white'
+                        : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                    : darkMode
+                        ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
                 )}
                 onClick={() => handleCurrencyChange('USD')}
                 aria-label="Switch to US Dollar"
@@ -1109,8 +1209,12 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 className={cx(
                   "px-2.5 py-1.5 text-xs font-medium transition-all min-w-[2rem]",
                   params.currency === 'EUR'
-                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                    ? darkMode 
+                        ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white'
+                        : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                    : darkMode
+                        ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
                 )}
                 onClick={() => handleCurrencyChange('EUR')}
                 aria-label="Switch to Euro"
@@ -1121,8 +1225,12 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 className={cx(
                   "px-2.5 py-1.5 text-xs font-medium transition-all min-w-[2rem]",
                   params.currency === 'GBP'
-                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                    ? darkMode 
+                        ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white'
+                        : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                    : darkMode
+                        ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
                 )}
                 onClick={() => handleCurrencyChange('GBP')}
                 aria-label="Switch to British Pound"
@@ -1133,8 +1241,12 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 className={cx(
                   "px-2.5 py-1.5 text-xs font-medium transition-all min-w-[2rem]",
                   params.currency === 'JPY'
-                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                    ? darkMode 
+                        ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white'
+                        : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                    : darkMode
+                        ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
                 )}
                 onClick={() => handleCurrencyChange('JPY')}
                 aria-label="Switch to Japanese Yen"
@@ -1142,7 +1254,10 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 ¥
               </button>
             </div>
-            <span className={cx(typography.size.xs, "text-gray-500 ml-1 hidden sm:inline")}>Display only</span>
+            <span className={cx(
+              "ml-1 hidden sm:inline text-xs",
+              darkMode ? "text-gray-400" : "text-gray-500"
+            )}>Display only</span>
           </div>
         </div>
       </div>
@@ -1150,17 +1265,34 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
       {/* Grid layout directly in the component */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
         {/* Current Status Section - Optimized */}
-        <div className={cx("bg-gradient-to-b from-blue-50 to-white rounded-lg border border-blue-100 shadow-sm p-1 overflow-hidden")}>
-          <h3 className={cx("text-xs font-semibold text-blue-800 uppercase tracking-wider px-2 mb-0.5 py-0.5 flex items-center")}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className={cx(
+          "rounded-lg border shadow-sm p-1 overflow-hidden",
+          darkMode
+            ? "bg-gradient-to-b from-blue-900/30 to-gray-900 border-blue-800/50"
+            : "bg-gradient-to-b from-blue-50 to-white border-blue-100"
+        )}>
+          <h3 className={cx(
+            "text-xs font-semibold uppercase tracking-wider px-2 mb-0.5 py-0.5 flex items-center",
+            darkMode ? "text-blue-300" : "text-blue-800"
+          )}>
+            <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+              "h-3.5 w-3.5 mr-1.5",
+              darkMode ? "text-blue-400" : "text-blue-500"
+            )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             Current Status
           </h3>
           <div className={cx("space-y-0")}>
             <div className="p-1">
-              <h4 className="text-xs font-medium text-blue-800 flex items-center mb-0.5">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <h4 className={cx(
+                "text-xs font-medium flex items-center mb-0.5",
+                darkMode ? "text-blue-300" : "text-blue-800"
+              )}>
+                <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                  "h-3 w-3 mr-1",
+                  darkMode ? "text-blue-400" : "text-blue-500"
+                )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Initial Capital
@@ -1178,8 +1310,14 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
             </div>
             
             <div className="p-1">
-              <h4 className="text-xs font-medium text-blue-800 flex items-center mb-0.5">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <h4 className={cx(
+                "text-xs font-medium flex items-center mb-0.5",
+                darkMode ? "text-blue-300" : "text-blue-800"
+              )}>
+                <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                  "h-3 w-3 mr-1",
+                  darkMode ? "text-blue-400" : "text-blue-500"
+                )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 Current Age
@@ -1196,9 +1334,17 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               )}
             </div>
             
+
+            
             <div className="p-1">
-              <h4 className="text-xs font-medium text-blue-800 flex items-center mb-0.5">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <h4 className={cx(
+                "text-xs font-medium flex items-center mb-0.5",
+                darkMode ? "text-blue-300" : "text-blue-800"
+              )}>
+                <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                  "h-3 w-3 mr-1",
+                  darkMode ? "text-blue-400" : "text-blue-500"
+                )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
                 </svg>
                 Monthly Investment
@@ -1218,9 +1364,20 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         </div>
 
         {/* Retirement Plan Section - Optimized */}
-        <div className="bg-gradient-to-b from-purple-50 to-white rounded-lg border border-purple-100 shadow-sm p-1 overflow-hidden">
-          <h3 className="text-xs font-semibold text-purple-800 uppercase tracking-wider px-2 mb-0.5 py-0.5 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className={cx(
+          "rounded-lg border shadow-sm p-1 overflow-hidden",
+          darkMode
+            ? "bg-gradient-to-b from-purple-900/30 to-gray-900 border-purple-800/50"
+            : "bg-gradient-to-b from-purple-50 to-white border-purple-100"
+        )}>
+          <h3 className={cx(
+            "text-xs font-semibold uppercase tracking-wider px-2 mb-0.5 py-0.5 flex items-center",
+            darkMode ? "text-purple-300" : "text-purple-800"
+          )}>
+            <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+              "h-3.5 w-3.5 mr-1.5",
+              darkMode ? "text-purple-400" : "text-purple-500"
+            )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             Retirement Plan
@@ -1230,13 +1387,22 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
             <div className="p-1">
               {/* First row - add label and the auto-calculated tag when active */}
               <div className="flex justify-between items-center mb-0.5">
-                <h4 className="text-xs font-medium text-purple-800 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <h4 className={cx(
+                  "text-xs font-medium flex items-center",
+                  darkMode ? "text-purple-300" : "text-purple-800"
+                )}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                    "h-3 w-3 mr-1",
+                    darkMode ? "text-purple-400" : "text-purple-500"
+                  )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Retirement Age
                   {autoCalculateRetirementAge && (
-                    <span className="ml-1.5 text-xs text-purple-600 font-normal">(Auto-calculated)</span>
+                    <span className={cx(
+                      "ml-1.5 text-xs font-normal",
+                      darkMode ? "text-purple-400" : "text-purple-600"
+                    )}>(Auto-calculated)</span>
                   )}
                 </h4>
               </div>
@@ -1246,11 +1412,16 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 {/* Auto-calculate button - now wider with explicit text */}
                 <button
                   onClick={toggleAutoRetirementCalculation}
-                  className={`flex-shrink-0 mr-2 p-1.5 px-3 rounded-lg transition-all flex items-center w-32 sm:w-36 ${
+                  className={cx(
+                    "flex-shrink-0 mr-2 p-1.5 px-3 rounded-lg transition-all flex items-center w-32 sm:w-36",
                     autoCalculateRetirementAge 
-                      ? 'bg-purple-600 text-white ring-1 ring-purple-300' 
-                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
-                  }`}
+                      ? (darkMode 
+                        ? 'bg-purple-800 text-white ring-1 ring-purple-700' 
+                        : 'bg-purple-600 text-white ring-1 ring-purple-300') 
+                      : (darkMode
+                        ? 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-purple-900/50'
+                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50')
+                  )}
                   title="Calculate ideal retirement age for financial independence"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 sm:mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1262,7 +1433,12 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 </button>
                 
                 {/* Standard parameter input with reduced width */}
-                <div className={`flex-1 ${autoCalculateRetirementAge ? "opacity-70 pointer-events-none" : ""}`}>
+                <div className={cx(
+                  "flex-1",
+                  autoCalculateRetirementAge 
+                    ? "opacity-70 pointer-events-none" 
+                    : ""
+                )}>
                   {renderParameterInput(
                     "", // Empty label since we've added it manually above
                     "retirementInput", 
@@ -1287,7 +1463,10 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                     </svg>
                     Withdrawal Strategy
                   </h3>
-                  <p className="text-xs text-gray-500 mt-0.5 ml-4.5">
+                  <p className={cx(
+                    "text-xs mt-0.5 ml-4.5",
+                    darkMode ? "text-gray-400" : "text-gray-500"
+                  )}>
                     {params.withdrawalMode === 'amount'
                       ? "Specify how much you want to withdraw each month"
                       : params.withdrawalMode === 'age'
@@ -1295,33 +1474,51 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                         : "Define a withdrawal rate as percentage of your capital"}
                   </p>
                 </div>
-                <div className="flex w-full sm:w-auto border border-purple-200 rounded-lg overflow-hidden shadow-sm">
+                <div className={cx(
+                  "flex w-full sm:w-auto rounded-lg overflow-hidden shadow-sm border",
+                  darkMode ? "border-purple-800/50" : "border-purple-200"
+                )}>
                   <button 
-                    className={`flex-1 px-3 py-1.5 text-xs font-medium transition-all ${
+                    className={cx(
+                      "flex-1 px-3 py-1.5 text-xs font-medium transition-all",
                       params.withdrawalMode === 'amount'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-purple-50'
-                    }`}
+                        ? darkMode
+                          ? 'bg-purple-800 text-white'
+                          : 'bg-purple-600 text-white'
+                        : darkMode
+                          ? 'bg-gray-800 text-gray-300 hover:bg-purple-900/50'
+                          : 'bg-white text-gray-700 hover:bg-purple-50'
+                    )}
                     onClick={() => onParamChange('withdrawalMode', 'amount')}
                   >
                     Amount
                   </button>
                   <button 
-                    className={`flex-1 px-3 py-1.5 text-xs font-medium transition-all ${
+                    className={cx(
+                      "flex-1 px-3 py-1.5 text-xs font-medium transition-all",
                       params.withdrawalMode === 'age'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-purple-50'
-                    }`}
+                        ? darkMode
+                          ? 'bg-purple-800 text-white'
+                          : 'bg-purple-600 text-white'
+                        : darkMode
+                          ? 'bg-gray-800 text-gray-300 hover:bg-purple-900/50'
+                          : 'bg-white text-gray-700 hover:bg-purple-50'
+                    )}
                     onClick={() => onParamChange('withdrawalMode', 'age')}
                   >
                     Target Age
                   </button>
                   <button 
-                    className={`flex-1 px-3 py-1.5 text-xs font-medium transition-all ${
+                    className={cx(
+                      "flex-1 px-3 py-1.5 text-xs font-medium transition-all",
                       params.withdrawalMode === 'rate'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-purple-50'
-                    }`}
+                        ? darkMode
+                          ? 'bg-purple-800 text-white'
+                          : 'bg-purple-600 text-white'
+                        : darkMode
+                          ? 'bg-gray-800 text-gray-300 hover:bg-purple-900/50'
+                          : 'bg-white text-gray-700 hover:bg-purple-50'
+                    )}
                     onClick={() => onParamChange('withdrawalMode', 'rate')}
                   >
                     Rate
@@ -1343,11 +1540,16 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   {/* Mobile-only Inflation Adjusted Button */}
                   <button
                     onClick={() => onParamChange('inflationAdjustedWithdrawal', !params.inflationAdjustedWithdrawal)}
-                    className={`inflation-button-mobile p-1.5 px-2 rounded-lg transition-all flex items-center ${
+                    className={cx(
+                      "inflation-button-mobile p-1.5 px-2 rounded-lg transition-all flex items-center",
                       params.inflationAdjustedWithdrawal 
-                        ? 'bg-purple-600 text-white ring-1 ring-purple-300' 
-                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
-                    }`}
+                        ? darkMode
+                          ? 'bg-purple-800 text-white ring-1 ring-purple-700' 
+                          : 'bg-purple-600 text-white ring-1 ring-purple-300'
+                        : darkMode
+                          ? 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-purple-900/50'
+                          : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
+                    )}
                     title="Adjust the entered amount for inflation from today until retirement start"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1380,11 +1582,16 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   {/* Desktop-only Inflation Adjusted Button */}
                   <button
                     onClick={() => onParamChange('inflationAdjustedWithdrawal', !params.inflationAdjustedWithdrawal)}
-                    className={`inflation-button-desktop p-1.5 px-2 rounded-lg transition-all flex items-center justify-center ${
+                    className={cx(
+                      "inflation-button-desktop p-1.5 px-2 rounded-lg transition-all flex items-center justify-center",
                       params.inflationAdjustedWithdrawal 
-                        ? 'bg-purple-600 text-white ring-1 ring-purple-300' 
-                        : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
-                    }`}
+                        ? darkMode
+                          ? 'bg-purple-800 text-white ring-1 ring-purple-700' 
+                          : 'bg-purple-600 text-white ring-1 ring-purple-300'
+                        : darkMode
+                          ? 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-purple-900/50'
+                          : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
+                    )}
                     title="Adjust the entered amount for inflation from today until retirement start"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1404,20 +1611,26 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                       onTouchStart={(e) => handleSliderTouchStart("monthlyRetirementWithdrawal", e)}
                     >
                       <div 
-                        className={components.form.slider.track}
+                        className={cx(
+                          darkMode ? "bg-gray-700" : "bg-gray-200",
+                          "h-2 rounded-full"
+                        )}
                         style={{ top: '50%', transform: 'translateY(-50%)', position: 'absolute', height: '8px', width: '100%', borderRadius: '8px' }}
                       ></div>
                       <div 
-                        className="absolute h-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500"
+                        className={cx(
+                          "absolute h-2 rounded-lg",
+                          darkMode ? "bg-gradient-to-r from-purple-700 to-indigo-700" : "bg-gradient-to-r from-purple-500 to-indigo-500"
+                        )}
                         style={{ 
-                          width: `${((params.monthlyRetirementWithdrawal - getSliderConfig("monthlyRetirementWithdrawal").min) / (getSliderConfig("monthlyRetirementWithdrawal").max - getSliderConfig("monthlyRetirementWithdrawal").min)) * 100}%`,
                           top: '50%',
                           transform: 'translateY(-50%)',
+                          left: '0',
+                          width: `${((params.monthlyRetirementWithdrawal - getSliderConfig("monthlyRetirementWithdrawal").min) / (getSliderConfig("monthlyRetirementWithdrawal").max - getSliderConfig("monthlyRetirementWithdrawal").min)) * 100}%`,
                           height: '8px'
                         }}
                       ></div>
                       <input
-                        ref={el => sliderRefs.current["monthlyRetirementWithdrawal"] = el}
                         type="range"
                         min={getSliderConfig("monthlyRetirementWithdrawal").min}
                         max={getSliderConfig("monthlyRetirementWithdrawal").max}
@@ -1433,7 +1646,10 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                         style={{ top: '50%', transform: 'translateY(-50%)' }}
                       />
                       <div 
-                        className="absolute w-4 h-4 bg-white border rounded-full shadow transition-all"
+                        className={cx(
+                          "absolute w-4 h-4 rounded-full shadow transition-all",
+                          darkMode ? "bg-gray-200 border-gray-300" : "bg-white border"
+                        )}
                         style={{ 
                           left: `${((params.monthlyRetirementWithdrawal - getSliderConfig("monthlyRetirementWithdrawal").min) / (getSliderConfig("monthlyRetirementWithdrawal").max - getSliderConfig("monthlyRetirementWithdrawal").min)) * 100}%`,
                           top: '50%',
@@ -1447,7 +1663,11 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   {/* Custom Input Field */}
                   <div className="withdrawal-input-wrapper">
                     <div className="relative w-full">
-                      <span className="absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-sm text-gray-500">
+                      {/* Currency symbol positioned on the left */}
+                      <span className={cx(
+                        "absolute left-2 top-1/2 transform -translate-y-1/2 pointer-events-none text-sm",
+                        darkMode ? "text-gray-400" : "text-gray-500"
+                      )}>
                         {getCurrencySymbol(params.currency)}
                       </span>
                       <input
@@ -1466,7 +1686,12 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                         }}
                         onFocus={() => handleInputFocus("monthlyRetirementWithdrawal")}
                         placeholder="0"
-                        className="w-full rounded-lg border border-gray-300 py-1.5 pl-6 pr-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm text-sm text-right"
+                        className={cx(
+                          "w-full pl-7 pr-3 py-2 rounded-md shadow-sm text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
+                          darkMode 
+                            ? "bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500"
+                            : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
+                        )}
                         aria-label="Monthly retirement withdrawal input"
                       />
                     </div>
@@ -1475,8 +1700,14 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               </div>
             ) : params.withdrawalMode === 'age' ? (
               <div className="p-1">
-                <h4 className="text-xs font-medium text-purple-800 flex items-center mb-0.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <h4 className={cx(
+                  "text-xs font-medium flex items-center mb-0.5",
+                  darkMode ? "text-purple-300" : "text-purple-800"
+                )}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                    "h-3 w-3 mr-1",
+                    darkMode ? "text-purple-400" : "text-purple-500"
+                  )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Target Age
@@ -1494,8 +1725,14 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               </div>
             ) : (
               <div className="p-1">
-                <h4 className="text-xs font-medium text-purple-800 flex items-center mb-0.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <h4 className={cx(
+                  "text-xs font-medium flex items-center mb-0.5",
+                  darkMode ? "text-purple-300" : "text-purple-800"
+                )}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                    "h-3 w-3 mr-1",
+                    darkMode ? "text-purple-400" : "text-purple-500"
+                  )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
                   Withdrawal Rate
@@ -1517,22 +1754,45 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
       </div>
 
       {/* Market Assumptions Section - Optimized */}
-      <div className="mt-3 bg-gradient-to-b from-green-50 to-white rounded-lg border border-green-100 shadow-sm p-1 overflow-hidden">
-        <h3 className="text-xs font-semibold text-green-800 uppercase tracking-wider px-2 mb-2 py-0.5 flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className={cx(
+        "mt-3 rounded-lg border shadow-sm p-1 overflow-hidden",
+        darkMode
+          ? "bg-gradient-to-b from-green-900/30 to-gray-900 border-green-800/50"
+          : "bg-gradient-to-b from-green-50 to-white border-green-100"
+      )}>
+        <h3 className={cx(
+          "text-xs font-semibold uppercase tracking-wider px-2 mb-2 py-0.5 flex items-center",
+          darkMode ? "text-green-300" : "text-green-800"
+        )}>
+          <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+            "h-3.5 w-3.5 mr-1.5",
+            darkMode ? "text-green-400" : "text-green-500"
+          )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
           Market Assumptions
         </h3>
-        <p className="text-xs text-gray-600 italic px-2 mb-3 ml-5">
+        <p className={cx(
+          "text-xs italic px-2 mb-3 ml-5",
+          darkMode ? "text-gray-400" : "text-gray-600"
+        )}>
           These settings affect how your investments grow over time and how inflation impacts your withdrawal purchasing power.
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           {/* Annual Return Rate */}
-          <div className="bg-white rounded-lg border border-green-100 shadow-sm p-1">
-            <h4 className="text-xs font-medium text-green-800 flex items-center mb-0.5">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className={cx(
+            "rounded-lg border shadow-sm p-1",
+            darkMode ? "bg-gray-800 border-green-800/50" : "bg-white border-green-100"
+          )}>
+            <h4 className={cx(
+              "text-xs font-medium flex items-center mb-0.5",
+              darkMode ? "text-green-300" : "text-green-800"
+            )}>
+              <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                "h-3 w-3 mr-1",
+                darkMode ? "text-green-400" : "text-green-500"
+              )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
               Annual Return
@@ -1550,9 +1810,18 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
           </div>
           
           {/* Inflation Rate */}
-          <div className="bg-white rounded-lg border border-green-100 shadow-sm p-1">
-            <h4 className="text-xs font-medium text-green-800 flex items-center mb-0.5">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className={cx(
+            "rounded-lg border shadow-sm p-1",
+            darkMode ? "bg-gray-800 border-green-800/50" : "bg-white border-green-100"
+          )}>
+            <h4 className={cx(
+              "text-xs font-medium flex items-center mb-0.5",
+              darkMode ? "text-green-300" : "text-green-800"
+            )}>
+              <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                "h-3 w-3 mr-1",
+                darkMode ? "text-green-400" : "text-green-500"
+              )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Inflation
@@ -1570,37 +1839,62 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
           </div>
           
           {/* Compound Frequency */}
-          <div className="bg-white rounded-lg border border-green-100 shadow-sm p-1">
-            <h4 className="text-xs font-medium text-green-800 flex items-center mb-0.5">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className={cx(
+            "rounded-lg border shadow-sm p-1",
+            darkMode ? "bg-gray-800 border-green-800/50" : "bg-white border-green-100"
+          )}>
+            <h4 className={cx(
+              "text-xs font-medium flex items-center mb-0.5",
+              darkMode ? "text-green-300" : "text-green-800"
+            )}>
+              <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                "h-3 w-3 mr-1",
+                darkMode ? "text-green-400" : "text-green-500"
+              )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Compound Frequency
             </h4>
             <div className="p-1">
-              <p className="text-xs text-gray-600 mb-2">
+              <p className={cx(
+                "text-xs mb-2",
+                darkMode ? "text-gray-400" : "text-gray-600"
+              )}>
                 {params.compoundFrequency === 'monthly'
                   ? "Interest compounded monthly (higher returns)"
                   : "Interest compounded annually"}
               </p>
-              <div className="flex border border-green-200 rounded-lg overflow-hidden shadow-sm mt-2">
+              <div className={cx(
+                "flex rounded-lg overflow-hidden shadow-sm mt-2 border",
+                darkMode ? "border-green-800/50" : "border-green-200"
+              )}>
                 <button 
-                  className={`px-3 py-1 text-xs font-medium transition-all flex-1 ${
+                  className={cx(
+                    "px-3 py-1 text-xs font-medium transition-all flex-1",
                     params.compoundFrequency === 'monthly'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-green-50'
-                  }`}
+                      ? darkMode
+                          ? 'bg-green-800 text-white'
+                          : 'bg-green-600 text-white'
+                      : darkMode
+                          ? 'bg-gray-800 text-gray-300 hover:bg-green-900/50'
+                          : 'bg-white text-gray-700 hover:bg-green-50'
+                  )}
                   onClick={() => onParamChange('compoundFrequency', 'monthly')}
                   aria-label="Set monthly compounding"
                 >
                   Monthly
                 </button>
                 <button 
-                  className={`px-3 py-1 text-xs font-medium transition-all flex-1 ${
+                  className={cx(
+                    "px-3 py-1 text-xs font-medium transition-all flex-1",
                     params.compoundFrequency === 'annual'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-green-50'
-                  }`}
+                      ? darkMode
+                          ? 'bg-green-800 text-white'
+                          : 'bg-green-600 text-white'
+                      : darkMode
+                          ? 'bg-gray-800 text-gray-300 hover:bg-green-900/50'
+                          : 'bg-white text-gray-700 hover:bg-green-50'
+                  )}
                   onClick={() => onParamChange('compoundFrequency', 'annual')}
                   aria-label="Set annual compounding"
                 >

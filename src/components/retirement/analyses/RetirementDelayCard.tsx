@@ -4,6 +4,7 @@ import { colors, typography, spacing, components, cx } from '../../../styles/sty
 import { SectionTitle, Card, PositiveMetric } from '../../common/StyledComponents';
 import { calculateYearsUntilExhaustion, calculateDelayedScenario, calculateDelayedRetirementImpact } from '../../../utils/financialCalculations';
 import { formatPercentage } from '../../../utils/formatters';
+import { useTheme } from '../../../context/ThemeContext';
 
 interface RetirementDelayCardProps {
   risk: 'High' | 'Medium' | 'Low';
@@ -38,6 +39,7 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
   withdrawalMode,
   inflation
 }) => {
+  const { darkMode } = useTheme();
   // State to track which section is being hovered
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
   // State to track tooltip position
@@ -373,36 +375,90 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     switch(sectionType) {
       case 'currentPlan':
         return (
-          <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200 w-64 z-50">
-            <h3 className="font-semibold text-gray-800 mb-1">Current Retirement Plan</h3>
-            <p className="text-xs text-gray-600">Your current planned retirement starting at age {retirementStartAge}.</p>
-            <p className="text-xs text-gray-600 mt-1">Projected retirement capital: <span className="font-semibold">{formatDisplayValue(capitalAtRetirement)}</span></p>
-            <p className="text-xs text-gray-600 mt-1">This is your baseline retirement plan without any timing adjustments.</p>
+          <div className={cx(
+            "p-3 rounded-lg shadow-lg border w-64",
+            darkMode 
+              ? "bg-gray-800 border-blue-700 text-gray-200" 
+              : "bg-white border-gray-200"
+          )}>
+            <h3 className={cx(
+              "font-semibold mb-1",
+              darkMode ? "text-gray-100" : "text-gray-800"
+            )}>Current Retirement Plan</h3>
+            <p className={cx(
+              "text-xs",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>Your current planned retirement starting at age {retirementStartAge}.</p>
+            <p className={cx(
+              "text-xs mt-1",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>Projected retirement capital: <span className="font-semibold">{formatDisplayValue(capitalAtRetirement)}</span></p>
+            <p className={cx(
+              "text-xs mt-1",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>This is your baseline retirement plan without any timing adjustments.</p>
           </div>
         );
       case 'optimizedPlan':
         return (
-          <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200 w-64 z-50">
-            <h3 className="font-semibold text-gray-800 mb-1">Optimized Retirement Plan</h3>
-            <p className="text-xs text-gray-600">Recommended delay: <span className="font-semibold">{optimalDelayYears} {optimalDelayYears === 1 ? 'year' : 'years'}</span></p>
-            <p className="text-xs text-gray-600 mt-1">This represents a <span className="font-semibold">{formatPercentage(percentageIncrease)}</span> increase in retirement capital.</p>
+          <div className={cx(
+            "p-3 rounded-lg shadow-lg border w-64",
+            darkMode 
+              ? "bg-gray-800 border-blue-700 text-gray-200" 
+              : "bg-white border-gray-200"
+          )}>
+            <h3 className={cx(
+              "font-semibold mb-1",
+              darkMode ? "text-gray-100" : "text-gray-800"
+            )}>Optimized Retirement Plan</h3>
+            <p className={cx(
+              "text-xs",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>Recommended delay: <span className="font-semibold">{optimalDelayYears} {optimalDelayYears === 1 ? 'year' : 'years'}</span></p>
+            <p className={cx(
+              "text-xs mt-1",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>This represents a <span className="font-semibold">{formatPercentage(percentageIncrease)}</span> increase in retirement capital.</p>
             {isMaxDelayInsufficient && (
-              <p className="text-xs text-red-600 mt-1">Note: Even with this delay, additional strategies will be needed to reach your target.</p>
+              <p className={cx(
+                "text-xs mt-1",
+                darkMode ? "text-red-400" : "text-red-600"
+              )}>Note: Even with this delay, additional strategies will be needed to reach your target.</p>
             )}
           </div>
         );
       case 'capitalProjections':
         return (
-          <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200 w-64 z-50">
-            <h3 className="font-semibold text-gray-800 mb-1">Capital Projection Logic</h3>
-            <p className="text-xs text-gray-600">Our recommendation is based on ensuring your capital isn't exhausted before your target age ({params.maxAge}).</p>
-            <p className="text-xs text-gray-600 mt-1">Delaying retirement has multiple benefits:</p>
-            <ul className="text-xs text-gray-600 mt-1 list-disc pl-4">
+          <div className={cx(
+            "p-3 rounded-lg shadow-lg border w-64",
+            darkMode 
+              ? "bg-gray-800 border-blue-700 text-gray-200" 
+              : "bg-white border-gray-200"
+          )}>
+            <h3 className={cx(
+              "font-semibold mb-1",
+              darkMode ? "text-gray-100" : "text-gray-800"
+            )}>Capital Projection Logic</h3>
+            <p className={cx(
+              "text-xs",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>Our recommendation is based on ensuring your capital isn't exhausted before your target age ({params.maxAge}).</p>
+            <p className={cx(
+              "text-xs mt-1",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>Delaying retirement has multiple benefits:</p>
+            <ul className={cx(
+              "text-xs mt-1 list-disc pl-4",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>
               <li>Additional retirement contributions</li>
               <li>Extra investment growth time</li>
               <li>Fewer years of capital drawdown</li>
             </ul>
-            <p className="text-xs text-gray-600 mt-1">We've simulated your capital evolution to find the minimum delay needed to prevent exhaustion.</p>
+            <p className={cx(
+              "text-xs mt-1",
+              darkMode ? "text-gray-300" : "text-gray-600"
+            )}>We've simulated your capital evolution to find the minimum delay needed to prevent exhaustion.</p>
           </div>
         );
       default:
@@ -562,114 +618,234 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
   return (
     <>
       <Card className="overflow-hidden lg:col-span-2">
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-3 sm:px-4 py-2 sm:py-3 border-b border-blue-200 flex items-center justify-between">
+        <div className={cx(
+          "px-3 sm:px-4 py-2 sm:py-3 border-b flex items-center justify-between",
+          darkMode 
+            ? "bg-blue-900/50 border-blue-700" 
+            : "bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200"
+        )}>
           <div className="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+              "h-4 w-4 mr-2",
+              darkMode ? "text-blue-400" : "text-blue-600"
+            )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <SectionTitle className="text-blue-800 mb-0 text-sm sm:text-base">Retirement Age Strategy</SectionTitle>
+            <h3 className={cx(
+              "mb-0 text-sm sm:text-base font-semibold",
+              darkMode ? "text-blue-300" : "text-blue-800"
+            )}>Retirement Age Strategy</h3>
           </div>
           <div className={cx(
             "text-xs font-medium px-1.5 py-0.5 rounded-full",
-            risk === 'High' ? "bg-red-100 text-red-700" : 
-            risk === 'Medium' ? "bg-yellow-100 text-yellow-700" : 
-            "bg-blue-100 text-blue-700"
+            darkMode ? (
+              risk === 'High' ? "bg-red-900/70 text-red-300" : 
+              risk === 'Medium' ? "bg-yellow-900/70 text-yellow-300" : 
+              "bg-green-900/70 text-green-300"
+            ) : (
+              risk === 'High' ? "bg-red-100 text-red-700" : 
+              risk === 'Medium' ? "bg-yellow-100 text-yellow-700" : 
+              "bg-green-100 text-green-700"
+            )
           )}>
             {risk === 'High' ? 'Critical' : risk === 'Medium' ? 'Recommended' : 'Optional'}
           </div>
         </div>
         <div className="p-2 sm:p-3">
-          <div className="flex items-start mb-2.5 p-2 bg-blue-50/70 rounded-lg border border-blue-100">
-            <div className="w-9 h-9 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center mr-2.5 mt-0.5">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4.5 w-4.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className={cx(
+            "flex items-start mb-2.5 p-2 rounded-lg border",
+            darkMode 
+              ? "bg-blue-900/40 border-blue-700" 
+              : "bg-blue-100/70 border-blue-200"
+          )}>
+            <div className={cx(
+              "w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center mr-2.5 mt-0.5",
+              darkMode ? "bg-blue-800" : "bg-blue-200"
+            )}>
+              <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                "h-4.5 w-4.5",
+                darkMode ? "text-blue-300" : "text-blue-600"
+              )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
-              <div className="text-sm text-gray-700 flex items-center gap-1.5">
+              <div className={cx(
+                "text-sm flex items-center gap-1.5",
+                darkMode ? "text-gray-300" : "text-gray-700"
+              )}>
                 <span><span className="font-bold">Recommended</span> retirement delay</span>
               </div>
               <div className="flex items-baseline mt-1">
                 <PositiveMetric className="text-base">
                   {optimalDelayYears === 0 ? 'No delay needed' : `${optimalDelayYears} years`}
                 </PositiveMetric>
-                <span className="text-xs text-blue-700 ml-1">
+                <span className={cx(
+                  "text-xs ml-1",
+                  darkMode ? "text-blue-400" : "text-blue-700"
+                )}>
                   {optimalDelayYears > 0 ? `(+${formatDisplayValue(yearDelayImpact * optimalDelayYears)})` : '(on track)'}
                 </span>
               </div>
-              <div className="flex items-baseline text-[10px] text-blue-700">
+              <div className={cx(
+                "flex items-baseline text-[10px]",
+                darkMode ? "text-blue-400" : "text-blue-700"
+              )}>
                 <span>+{Math.round(yearsGained)} years of retirement coverage</span>
-                <span className="text-gray-500 ml-1">(until age {recommendedExhaustionAge})</span>
+                <span className={cx(
+                  "ml-1",
+                  darkMode ? "text-gray-500" : "text-gray-500"
+                )}>(until age {recommendedExhaustionAge})</span>
               </div>
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-2 mb-2.5">
-            <div className="bg-gray-50 p-2 rounded-lg border border-gray-100">
-              <div className="text-xs font-medium text-gray-500 flex items-center">
-                <span className="h-2 w-2 rounded-full bg-gray-400 mr-1.5"></span>
+            <div className={cx(
+              "p-2 rounded-lg border",
+              darkMode 
+                ? "bg-blue-900/30 border-blue-700" 
+                : "bg-blue-50/90 border-blue-200"
+            )}>
+              <div className={cx(
+                "text-xs font-medium flex items-center",
+                darkMode ? "text-gray-400" : "text-gray-700"
+              )}>
+                <span className={cx(
+                  "h-2 w-2 rounded-full mr-1.5",
+                  darkMode ? "bg-blue-600" : "bg-blue-400"
+                )}></span>
                 <span className="font-bold">Current</span>&nbsp;age
               </div>
-              <div className="text-sm font-semibold text-gray-700 mt-1">
+              <div className={cx(
+                "text-sm font-semibold mt-1",
+                darkMode ? "text-gray-300" : "text-gray-800"
+              )}>
                 {retirementStartAge} years
               </div>
-              <div className="text-[10px] text-gray-500">
+              <div className={cx(
+                "text-[10px]",
+                darkMode ? "text-gray-400" : "text-gray-700"
+              )}>
                 Capital: {formatDisplayValue(capitalAtRetirement)}
               </div>
-              <div className="text-[10px] text-gray-500 mt-1">
-                Funds last until age <span className={currentExhaustionAge < params.maxAge ? "text-red-500" : "text-green-500"}>{currentExhaustionAge}</span>
+              <div className={cx(
+                "text-[10px] mt-1",
+                darkMode ? "text-gray-400" : "text-gray-700"
+              )}>
+                Funds last until age <span className={currentExhaustionAge < params.maxAge 
+                  ? darkMode ? "text-red-400" : "text-red-600"
+                  : darkMode ? "text-green-400" : "text-green-600"
+                }>{currentExhaustionAge}</span>
               </div>
             </div>
 
-            <div className="bg-purple-50 p-2 rounded-lg border border-purple-100">
-              <div className="text-xs font-medium text-gray-500 flex items-center">
-                <span className="h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
+            <div className={cx(
+              "p-2 rounded-lg border",
+              darkMode 
+                ? "bg-blue-900/50 border-blue-700" 
+                : "bg-blue-100/80 border-blue-200"
+            )}>
+              <div className={cx(
+                "text-xs font-medium flex items-center",
+                darkMode ? "text-gray-400" : "text-gray-700"
+              )}>
+                <span className={cx(
+                  "h-2 w-2 rounded-full mr-1.5",
+                  darkMode ? "bg-blue-400" : "bg-blue-600"
+                )}></span>
                 <span className="font-bold">Ideal</span>&nbsp;age
               </div>
-              <div className="text-sm font-semibold text-purple-700 mt-1">
+              <div className={cx(
+                "text-sm font-semibold mt-1",
+                darkMode ? "text-blue-300" : "text-blue-800"
+              )}>
                 {retirementStartAge + calculateIdealDelay.years} years
               </div>
-              <div className="text-[10px] text-purple-700">
+              <div className={cx(
+                "text-[10px]",
+                darkMode ? "text-blue-300" : "text-blue-800"
+              )}>
                 +{formatDisplayValue(calculateIdealDelay.capitalIncrease)} capital
               </div>
-              <div className="text-[10px] text-purple-700 mt-1">
+              <div className={cx(
+                "text-[10px] mt-1",
+                darkMode ? "text-blue-300" : "text-blue-800"
+              )}>
                 Funds last until age <span className="font-semibold">{calculateIdealDelay.exhaustionAge}</span>
               </div>
             </div>
           </div>
           
-          <div className="bg-blue-50 rounded-lg p-2.5 border border-blue-100 mb-2.5 cursor-help"
+          {/* Capital increase projections */}
+          <div className={cx(
+            "bg-blue-100/70 rounded-lg p-2.5 border border-blue-200 mb-2.5 cursor-help",
+            darkMode ? "bg-blue-900/10 border-blue-700" : ""
+          )}
             onMouseEnter={(e) => handleMouseEnter('capitalProjections', e)}
             onMouseLeave={() => setHoveredSection(null)}
           >
             <div className="flex items-center mb-2">
-              <div className="w-4 h-4 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center mr-1.5">
-                <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
+              <div className={cx(
+                "w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center mr-1.5",
+                darkMode ? "bg-blue-800" : "bg-blue-200"
+              )}>
+                <div className={cx(
+                  "w-1.5 h-1.5 rounded-full",
+                  darkMode ? "bg-blue-400" : "bg-blue-600"
+                )}></div>
               </div>
-              <div className="text-xs font-medium text-blue-800">Capital increase projections</div>
+              <div className={cx(
+                "text-xs font-medium",
+                darkMode ? "text-blue-300" : "text-blue-800"
+              )}>Capital increase projections</div>
             </div>
             
             <div className="grid grid-cols-3 gap-1 mb-1">
-              <div className="text-[10px] font-medium text-gray-500">+1 year</div>
-              <div className="text-[10px] font-medium text-gray-500">+3 years</div>
-              <div className="text-[10px] font-medium text-gray-500">+5 years</div>
+              <div className={cx(
+                "text-[10px] font-medium",
+                darkMode ? "text-gray-400" : "text-gray-700"
+              )}>+1 year</div>
+              <div className={cx(
+                "text-[10px] font-medium",
+                darkMode ? "text-gray-400" : "text-gray-700"
+              )}>+3 years</div>
+              <div className={cx(
+                "text-[10px] font-medium",
+                darkMode ? "text-gray-400" : "text-gray-700"
+              )}>+5 years</div>
             </div>
             
             <div className="grid grid-cols-3 gap-1">
-              <div className="text-xs font-semibold text-blue-700">
+              <div className={cx(
+                "text-xs font-semibold",
+                darkMode ? "text-blue-300" : "text-blue-700"
+              )}>
                 {formatDisplayValue(delayScenarios[0].capital)}
               </div>
-              <div className="text-xs font-semibold text-blue-700">
+              <div className={cx(
+                "text-xs font-semibold",
+                darkMode ? "text-blue-300" : "text-blue-700"
+              )}>
                 {formatDisplayValue(delayScenarios[1].capital)}
               </div>
-              <div className="text-xs font-semibold text-blue-700">
+              <div className={cx(
+                "text-xs font-semibold",
+                darkMode ? "text-blue-300" : "text-blue-700"
+              )}>
                 {formatDisplayValue(delayScenarios[2].capital)}
               </div>
             </div>
             
-            <div className="mt-1.5 w-full bg-gray-200 rounded-full h-1.5">
+            <div className={cx(
+              "mt-1.5 w-full rounded-full h-1.5",
+              darkMode ? "bg-gray-700" : "bg-gray-200"
+            )}>
               <div 
-                className="h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-green-500"
+                className={cx(
+                  "h-1.5 rounded-full bg-gradient-to-r",
+                  darkMode ? "from-blue-700 to-green-700" : "from-blue-500 to-green-500"
+                )}
                 style={{ 
                   width: `${Math.min(100, (yearDelayImpact * 5) / capitalAtRetirement * 100)}%` 
                 }}
@@ -677,64 +853,156 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
             </div>
           </div>
           
-          <div className="bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-lg p-2.5 border border-blue-100">
+          {/* Strategic Timing Review - updated to match Key Recommendations styling */}
+          <div className={cx(
+            "rounded-lg p-2.5 border mb-2.5",
+            darkMode 
+              ? risk === 'High' ? "bg-red-900/30 border-red-700" 
+                : risk === 'Medium' ? "bg-yellow-900/30 border-yellow-700" 
+                : "bg-blue-900/30 border-blue-700"
+              : risk === 'High' ? "bg-gradient-to-r from-blue-500/10 to-red-500/10 border-red-200" 
+                : risk === 'Medium' ? "bg-gradient-to-r from-blue-500/10 to-yellow-500/10 border-yellow-200" 
+                : "bg-gradient-to-r from-blue-500/10 to-blue-500/10 border-blue-200"
+          )}>
             <div className="text-xs space-y-2">
               <div>
-                <div className="text-xs font-medium text-blue-800 mb-1 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div className={cx(
+                  "text-xs font-medium mb-1 flex items-center",
+                  darkMode 
+                    ? risk === 'High' ? "text-red-300" : risk === 'Medium' ? "text-yellow-300" : "text-blue-300" 
+                    : risk === 'High' ? "text-red-700" : risk === 'Medium' ? "text-yellow-700" : "text-blue-700"
+                )}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                   Strategic Timing Review
                 </div>
-                <div className="text-gray-600">
+                
+                {/* Add back the content with updated styling */}
+                <div className={cx(
+                  "text-xs",
+                  darkMode ? "text-gray-300" : "text-gray-600"
+                )}>
                   {risk === 'High' ? (
                     <>
                       {optimalDelayYears === 0 ? (
                         <>
-                          <span className="font-semibold text-orange-600 flex items-center">
+                          <span className={cx(
+                            "font-semibold flex items-center",
+                            darkMode ? "text-orange-400" : "text-orange-600"
+                          )}>
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                             Your capital is adequate but has limited safety buffer
                           </span>
-                          <ul className="mt-2 list-disc pl-4 text-xs space-y-1.5">
-                            <li>Current capital ({formatDisplayValue(capitalAtRetirement)}) is sufficient <span className="font-medium text-orange-600">but has limited buffer</span></li>
-                            <li>A 1-2 year delay would add <span className="font-semibold text-green-600">{formatDisplayValue(delayScenarios[1]?.capital - capitalAtRetirement)}</span> to your capital <span className="font-medium">({Math.ceil((delayScenarios[1]?.capital - capitalAtRetirement) / (effectiveMonthlyWithdrawal * 12))} additional years of safety)</span></li>
+                          <ul className={cx(
+                            "mt-2 list-disc pl-4 text-xs space-y-1.5",
+                            darkMode ? "text-gray-300" : "text-gray-700"
+                          )}>
+                            <li>Current capital ({formatDisplayValue(capitalAtRetirement)}) is sufficient <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-orange-400" : "text-orange-600"
+                            )}>but has limited buffer</span></li>
+                            <li>A 1-2 year delay would add <span className={cx(
+                              "font-semibold",
+                              darkMode ? "text-green-400" : "text-green-600"
+                            )}>{formatDisplayValue(delayScenarios[1]?.capital - capitalAtRetirement)}</span> to your capital <span className="font-medium">({Math.ceil((delayScenarios[1]?.capital - capitalAtRetirement) / (effectiveMonthlyWithdrawal * 12))} additional years of safety)</span></li>
                             <li>This creates a safety margin against market volatility, with projected capital at target age: <span className="font-medium">{formatDisplayValue(Math.max(0, projectedFinalCapital + (delayScenarios[1]?.capital - capitalAtRetirement)))}</span></li>
                           </ul>
-                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1.5 mt-2 rounded-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <div className={cx(
+                            "pl-3 py-1.5 mt-2 rounded-sm border-l-4",
+                            darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
+                          )}>
+                            <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                              "h-3.5 w-3.5 inline mr-1", 
+                              darkMode ? "text-blue-400" : "text-blue-700"
+                            )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span className="text-blue-800 font-medium">Recommended Action:</span> Consider a short delay for significantly improved financial security
-                            <div className="mt-1 text-xs">
-                              <li><span className="text-blue-700 font-medium">Capital impact:</span> {formatDisplayValue(delayScenarios[0]?.capital - capitalAtRetirement)} added</li>
-                              <li><span className="text-blue-700 font-medium">Projected retirement age:</span> {retirementStartAge + 1}</li>
+                            <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-blue-300" : "text-blue-800"
+                            )}>Recommended Action:</span> 
+                            <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
+                              Consider a short delay for significantly improved financial security
+                            </span>
+                            <div className={cx(
+                              "mt-1 text-xs",
+                              darkMode ? "text-gray-300" : "text-gray-700"
+                            )}>
+                              <li><span className={cx(
+                                "font-medium",
+                                darkMode ? "text-blue-300" : "text-blue-700"
+                              )}>Capital impact:</span> {formatDisplayValue(delayScenarios[0]?.capital - capitalAtRetirement)} added</li>
+                              <li><span className={cx(
+                                "font-medium",
+                                darkMode ? "text-blue-300" : "text-blue-700"
+                              )}>Projected retirement age:</span> {retirementStartAge + 1}</li>
                             </div>
                           </div>
                         </>
                       ) : (
                         <>
-                          <span className="font-semibold text-red-600 flex items-center">
+                          <span className={cx(
+                            "font-semibold flex items-center",
+                            darkMode ? "text-red-400" : "text-red-600"
+                          )}>
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             Critical: Delay retirement by {optimalDelayYears} {optimalDelayYears === 1 ? 'year' : 'years'}
                           </span>
-                          <ul className="mt-2 list-disc pl-4 text-xs space-y-1.5">
-                            <li>Without delay, your capital would be <span className="font-medium text-red-600">exhausted before target age</span> <span className="font-medium text-orange-600">(around age {statistics.exhaustionAge || Math.floor(retirementStartAge + (capitalAtRetirement / (effectiveMonthlyWithdrawal * 12)))})</span></li>
-                            <li>Delaying adds <span className="font-semibold text-green-600">{formatDisplayValue(additionalCapital)}</span> to your retirement capital <span className="font-medium">({Math.ceil(additionalCapital / (effectiveMonthlyWithdrawal * 12))} additional years of safety)</span></li>
-                            <li>This addresses <span className="font-medium text-green-600">{formatPercentage(gapClosurePercentage)}</span> of your capital gap</li>
+                          <ul className={cx(
+                            "mt-2 list-disc pl-4 text-xs space-y-1.5",
+                            darkMode ? "text-gray-300" : "text-gray-700"
+                          )}>
+                            <li>Without delay, your capital would be <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-red-400" : "text-red-600"
+                            )}>exhausted before target age</span> <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-orange-400" : "text-orange-600"
+                            )}>(around age {statistics.exhaustionAge || Math.floor(retirementStartAge + (capitalAtRetirement / (effectiveMonthlyWithdrawal * 12)))})</span></li>
+                            <li>Delaying adds <span className={cx(
+                              "font-semibold",
+                              darkMode ? "text-green-400" : "text-green-600"
+                            )}>{formatDisplayValue(additionalCapital)}</span> to your retirement capital <span className="font-medium">({Math.ceil(additionalCapital / (effectiveMonthlyWithdrawal * 12))} additional years of safety)</span></li>
+                            <li>This addresses <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-green-400" : "text-green-600"
+                            )}>{formatPercentage(gapClosurePercentage)}</span> of your capital gap</li>
                             <li>Extends capital longevity by <span className="font-medium">{yearsUntilExhaustionImprovement} years</span></li>
                           </ul>
-                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1.5 mt-2 rounded-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <div className={cx(
+                            "pl-3 py-1.5 mt-2 rounded-sm border-l-4",
+                            darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
+                          )}>
+                            <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                              "h-3.5 w-3.5 inline mr-1", 
+                              darkMode ? "text-blue-400" : "text-blue-700"
+                            )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span className="text-blue-800 font-medium">Recommended Action:</span> Consider consulting or flexible work arrangements
-                            <div className="mt-1 text-xs">
-                              <li><span className="text-blue-700 font-medium">Capital impact:</span> {formatDisplayValue(additionalCapital)} added</li>
-                              <li><span className="text-blue-700 font-medium">Projected retirement age:</span> {retirementStartAge + optimalDelayYears}</li>
+                            <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-blue-300" : "text-blue-800"
+                            )}>Recommended Action:</span>
+                            <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
+                              Consider consulting or flexible work arrangements
+                            </span>
+                            <div className={cx(
+                              "mt-1 text-xs",
+                              darkMode ? "text-gray-300" : "text-gray-700"
+                            )}>
+                              <span className={cx(
+                                "font-medium",
+                                darkMode ? "text-blue-300" : "text-blue-700"
+                              )}>Capital impact:</span> {formatDisplayValue(additionalCapital)} added |
+                              <span className={cx(
+                                "font-medium ml-1",
+                                darkMode ? "text-blue-300" : "text-blue-700"
+                              )}>Projected retirement age:</span> {retirementStartAge + optimalDelayYears}
                             </div>
                           </div>
                         </>
@@ -744,50 +1012,113 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
                     <>
                       {optimalDelayYears === 0 ? (
                         <>
-                          <span className="font-semibold text-amber-500 flex items-center">
+                          <span className={cx(
+                            "font-semibold flex items-center",
+                            darkMode ? "text-amber-400" : "text-amber-500"
+                          )}>
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             Plan Review Needed
                           </span>
-                          <ul className="mt-2 list-disc pl-4 text-xs space-y-1.5">
+                          <ul className={cx(
+                            "mt-2 list-disc pl-4 text-xs space-y-1.5",
+                            darkMode ? "text-gray-300" : "text-gray-700"
+                          )}>
                             <li>Your capital <span className="font-medium">({formatDisplayValue(capitalAtRetirement)})</span> meets required sustainability targets</li>
                             <li>Continue with your current investment and withdrawal strategy</li>
-                            <li className="text-orange-600">Consider a 1-year delay for an additional <span className="font-medium">{formatDisplayValue(yearDelayImpact)}</span> safety margin</li>
+                            <li className={darkMode ? "text-orange-400" : "text-orange-600"}>Consider a 1-year delay for an additional <span className="font-medium">{formatDisplayValue(yearDelayImpact)}</span> safety margin</li>
                           </ul>
-                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1.5 mt-2 rounded-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <div className={cx(
+                            "pl-3 py-1.5 mt-2 rounded-sm border-l-4",
+                            darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
+                          )}>
+                            <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                              "h-3.5 w-3.5 inline mr-1", 
+                              darkMode ? "text-blue-400" : "text-blue-700"
+                            )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span className="text-blue-800 font-medium">Action:</span> Maintain regular reviews and consider extending work period
-                            <div className="mt-1 text-xs">
-                              <li><span className="text-blue-700 font-medium">Capital impact:</span> {formatDisplayValue(yearDelayImpact)} per year</li>
-                              <li><span className="text-blue-700 font-medium">Current retirement age:</span> {retirementStartAge}</li>
+                            <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-blue-300" : "text-blue-800"
+                            )}>Action:</span>
+                            <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
+                              Maintain regular reviews and consider extending work period
+                            </span>
+                            <div className={cx(
+                              "mt-1 text-xs",
+                              darkMode ? "text-gray-300" : "text-gray-700"
+                            )}>
+                              <li><span className={cx(
+                                "font-medium",
+                                darkMode ? "text-blue-300" : "text-blue-700"
+                              )}>Capital impact:</span> {formatDisplayValue(yearDelayImpact)} per year</li>
+                              <li><span className={cx(
+                                "font-medium",
+                                darkMode ? "text-blue-300" : "text-blue-700"
+                              )}>Current retirement age:</span> {retirementStartAge}</li>
                             </div>
                           </div>
                         </>
                       ) : (
                         <>
-                          <span className="font-semibold text-amber-600 flex items-center">
+                          <span className={cx(
+                            "font-semibold flex items-center",
+                            darkMode ? "text-amber-400" : "text-amber-600"
+                          )}>
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                             Timing Adjustment Needed
                           </span>
-                          <ul className="mt-2 list-disc pl-4 text-xs space-y-1.5">
-                            <li>Without delay, your capital would be exhausted before target age <span className="font-medium text-orange-600">(around age {statistics.exhaustionAge || Math.floor(retirementStartAge + (capitalAtRetirement / (effectiveMonthlyWithdrawal * 12)))})</span></li>
-                            <li>Delaying adds <span className="font-semibold text-green-600">{formatDisplayValue(additionalCapital)}</span> to your retirement capital <span className="font-medium">({Math.ceil(additionalCapital / (effectiveMonthlyWithdrawal * 12))} additional years of safety)</span></li>
-                            <li>This addresses <span className="font-medium text-green-600">{formatPercentage(gapClosurePercentage)}</span> of your capital gap</li>
+                          <ul className={cx(
+                            "mt-2 list-disc pl-4 text-xs space-y-1.5",
+                            darkMode ? "text-gray-300" : "text-gray-700"
+                          )}>
+                            <li>Without delay, your capital would be exhausted before target age <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-orange-400" : "text-orange-600"
+                            )}>(around age {statistics.exhaustionAge || Math.floor(retirementStartAge + (capitalAtRetirement / (effectiveMonthlyWithdrawal * 12)))})</span></li>
+                            <li>Delaying adds <span className={cx(
+                              "font-semibold",
+                              darkMode ? "text-green-400" : "text-green-600"
+                            )}>{formatDisplayValue(additionalCapital)}</span> to your retirement capital <span className="font-medium">({Math.ceil(additionalCapital / (effectiveMonthlyWithdrawal * 12))} additional years of safety)</span></li>
+                            <li>This addresses <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-green-400" : "text-green-600"
+                            )}>{formatPercentage(gapClosurePercentage)}</span> of your capital gap</li>
                             <li>Extends capital longevity by <span className="font-medium">{yearsUntilExhaustionImprovement} years</span></li>
                           </ul>
-                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1.5 mt-2 rounded-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <div className={cx(
+                            "pl-3 py-1.5 mt-2 rounded-sm border-l-4",
+                            darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
+                          )}>
+                            <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                              "h-3.5 w-3.5 inline mr-1", 
+                              darkMode ? "text-blue-400" : "text-blue-700"
+                            )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span className="text-blue-800 font-medium">Recommended Action:</span> Consider consulting or part-time work during this period
-                            <div className="mt-1 text-xs">
-                              <span className="text-blue-700 font-medium">Capital impact:</span> {formatDisplayValue(additionalCapital)} added |
-                              <span className="text-blue-700 font-medium ml-1">Projected retirement age:</span> {retirementStartAge + optimalDelayYears}
+                            <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-blue-300" : "text-blue-800"
+                            )}>Recommended Action:</span>
+                            <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
+                              Consider consulting or part-time work during this period
+                            </span>
+                            <div className={cx(
+                              "mt-1 text-xs",
+                              darkMode ? "text-gray-300" : "text-gray-700"
+                            )}>
+                              <span className={cx(
+                                "font-medium",
+                                darkMode ? "text-blue-300" : "text-blue-700"
+                              )}>Capital impact:</span> {formatDisplayValue(additionalCapital)} added |
+                              <span className={cx(
+                                "font-medium ml-1",
+                                darkMode ? "text-blue-300" : "text-blue-700"
+                              )}>Projected retirement age:</span> {retirementStartAge + optimalDelayYears}
                             </div>
                           </div>
                         </>
@@ -798,62 +1129,140 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
                       {optimalDelayYears === 0 ? (
                         <>
                           {projectedFinalCapital > effectiveMonthlyWithdrawal * 12 * 5 ? (
-                            <span className="font-semibold text-green-600 flex items-center">
+                            <span className={cx(
+                              "font-semibold flex items-center",
+                              darkMode ? "text-green-400" : "text-green-600"
+                            )}>
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                               Your retirement plan is excellent - no delay needed
                             </span>
                           ) : (
-                            <span className="font-semibold text-orange-600 flex items-center">
+                            <span className={cx(
+                              "font-semibold flex items-center",
+                              darkMode ? "text-orange-400" : "text-orange-600"
+                            )}>
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                               </svg>
                               Your plan is on track, but consider enhancing your buffer
                             </span>
                           )}
-                          <ul className="mt-2 list-disc pl-4 text-xs space-y-1.5">
+                          <ul className={cx(
+                            "mt-2 list-disc pl-4 text-xs space-y-1.5",
+                            darkMode ? "text-gray-300" : "text-gray-700"
+                          )}>
                             <li>Your current capital <span className="font-medium">({formatDisplayValue(capitalAtRetirement)})</span> exceeds sustainability requirements</li>
-                            <li>Capital sufficiency ratio: <span className="font-semibold text-green-600">{Math.round((capitalAtRetirement / (totalNeededCapital || capitalAtRetirement)) * 100)}%</span> of target</li>
+                            <li>Capital sufficiency ratio: <span className={cx(
+                              "font-semibold",
+                              darkMode ? "text-green-400" : "text-green-600"
+                            )}>{Math.round((capitalAtRetirement / (totalNeededCapital || capitalAtRetirement)) * 100)}%</span> of target</li>
                             <li>Projected to maintain positive balance through age <span className="font-medium">{params.maxAge}</span></li>
-                            <li>Potential for legacy planning: <span className="font-medium text-green-600">{formatDisplayValue(Math.max(0, projectedFinalCapital))}</span> estimated at end of plan</li>
-                            <li>You have flexibility to increase withdrawals by up to <span className="font-medium text-green-600">{formatPercentage(Math.min(30, (projectedFinalCapital / capitalAtRetirement) * 10))}</span> if desired</li>
+                            <li>Potential for legacy planning: <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-green-400" : "text-green-600"
+                            )}>{formatDisplayValue(Math.max(0, projectedFinalCapital))}</span> estimated at end of plan</li>
+                            <li>You have flexibility to increase withdrawals by up to <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-green-400" : "text-green-600"
+                            )}>{formatPercentage(Math.min(30, (projectedFinalCapital / capitalAtRetirement) * 10))}</span> if desired</li>
                           </ul>
                           {projectedFinalCapital < effectiveMonthlyWithdrawal * 12 * 5 && (
-                            <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1.5 mt-2 rounded-sm">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className={cx(
+                              "pl-3 py-1.5 mt-2 rounded-sm border-l-4",
+                              darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
+                            )}>
+                              <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                                "h-3.5 w-3.5 inline mr-1", 
+                                darkMode ? "text-blue-400" : "text-blue-700"
+                              )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
-                              <span className="text-blue-800 font-medium">Optional Enhancement:</span> Consider a 1-year delay for an additional <span className="font-medium text-green-600">{formatDisplayValue(delayScenarios[0]?.capital - capitalAtRetirement)}</span> buffer ({Math.ceil((delayScenarios[0]?.capital - capitalAtRetirement) / (effectiveMonthlyWithdrawal * 12))} extra years of safety)
-                              <div className="mt-1 text-xs">
-                                <span className="text-blue-700 font-medium">Projected retirement age:</span> {retirementStartAge + 1} |
-                                <span className="text-blue-700 font-medium ml-1">Estimated final capital:</span> {formatDisplayValue(Math.max(0, projectedFinalCapital + (delayScenarios[0]?.capital - capitalAtRetirement)))}
+                              <span className={cx(
+                                "font-medium",
+                                darkMode ? "text-blue-300" : "text-blue-800"
+                              )}>Optional Enhancement:</span>
+                              <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
+                                Consider a 1-year delay for an additional <span className={cx(
+                                  "font-medium",
+                                  darkMode ? "text-green-400" : "text-green-600"
+                                )}>{formatDisplayValue(delayScenarios[0]?.capital - capitalAtRetirement)}</span> buffer ({Math.ceil((delayScenarios[0]?.capital - capitalAtRetirement) / (effectiveMonthlyWithdrawal * 12))} extra years of safety)
+                              </span>
+                              <div className={cx(
+                                "mt-1 text-xs",
+                                darkMode ? "text-gray-300" : "text-gray-700"
+                              )}>
+                                <span className={cx(
+                                  "font-medium",
+                                  darkMode ? "text-blue-300" : "text-blue-700"
+                                )}>Projected retirement age:</span> {retirementStartAge + 1} |
+                                <span className={cx(
+                                  "font-medium ml-1",
+                                  darkMode ? "text-blue-300" : "text-blue-700"
+                                )}>Estimated final capital:</span> {formatDisplayValue(Math.max(0, projectedFinalCapital + (delayScenarios[0]?.capital - capitalAtRetirement)))}
                               </div>
                             </div>
                           )}
                         </>
                       ) : (
                         <>
-                          <span className="font-semibold text-blue-600 flex items-center">
+                          <span className={cx(
+                            "font-semibold flex items-center",
+                            darkMode ? "text-blue-400" : "text-blue-600"
+                          )}>
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             Recommended: Delay retirement by {optimalDelayYears} {optimalDelayYears === 1 ? 'year' : 'years'}
                           </span>
-                          <ul className="mt-2 list-disc pl-4 text-xs space-y-1.5">
-                            <li>Without delay, your capital would be exhausted before target age <span className="font-medium text-orange-600">(around age {statistics.exhaustionAge || Math.floor(retirementStartAge + (capitalAtRetirement / (effectiveMonthlyWithdrawal * 12)))})</span></li>
-                            <li>Delaying adds <span className="font-semibold text-green-600">{formatDisplayValue(additionalCapital)}</span> to your retirement capital <span className="font-medium">({Math.ceil(additionalCapital / (effectiveMonthlyWithdrawal * 12))} additional years of safety)</span></li>
-                            <li>This addresses <span className="font-medium text-green-600">{formatPercentage(gapClosurePercentage)}</span> of your capital gap</li>
+                          <ul className={cx(
+                            "mt-2 list-disc pl-4 text-xs space-y-1.5",
+                            darkMode ? "text-gray-300" : "text-gray-700"
+                          )}>
+                            <li>Without delay, your capital would be exhausted before target age <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-orange-400" : "text-orange-600"
+                            )}>(around age {statistics.exhaustionAge || Math.floor(retirementStartAge + (capitalAtRetirement / (effectiveMonthlyWithdrawal * 12)))})</span></li>
+                            <li>Delaying adds <span className={cx(
+                              "font-semibold",
+                              darkMode ? "text-green-400" : "text-green-600"
+                            )}>{formatDisplayValue(additionalCapital)}</span> to your retirement capital <span className="font-medium">({Math.ceil(additionalCapital / (effectiveMonthlyWithdrawal * 12))} additional years of safety)</span></li>
+                            <li>This addresses <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-green-400" : "text-green-600"
+                            )}>{formatPercentage(gapClosurePercentage)}</span> of your capital gap</li>
                             <li>Extends capital longevity by <span className="font-medium">{yearsUntilExhaustionImprovement} years</span></li>
                           </ul>
-                          <div className="bg-blue-50 border-l-4 border-blue-500 pl-3 py-1.5 mt-2 rounded-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 inline mr-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <div className={cx(
+                            "pl-3 py-1.5 mt-2 rounded-sm border-l-4",
+                            darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
+                          )}>
+                            <svg xmlns="http://www.w3.org/2000/svg" className={cx(
+                              "h-3.5 w-3.5 inline mr-1", 
+                              darkMode ? "text-blue-400" : "text-blue-700"
+                            )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span className="text-blue-800 font-medium">Recommended Action:</span> Consider part-time work, consulting, or phased retirement
-                            <div className="mt-1 text-xs">
-                              <span className="text-blue-700 font-medium">Capital impact:</span> {formatDisplayValue(additionalCapital)} added |
-                              <span className="text-blue-700 font-medium ml-1">Projected retirement age:</span> {retirementStartAge + optimalDelayYears}
+                            <span className={cx(
+                              "font-medium",
+                              darkMode ? "text-blue-300" : "text-blue-800"
+                            )}>Recommended Action:</span>
+                            <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
+                              Consider part-time work, consulting, or phased retirement
+                            </span>
+                            <div className={cx(
+                              "mt-1 text-xs",
+                              darkMode ? "text-gray-300" : "text-gray-700"
+                            )}>
+                              <span className={cx(
+                                "font-medium",
+                                darkMode ? "text-blue-300" : "text-blue-700"
+                              )}>Capital impact:</span> {formatDisplayValue(additionalCapital)} added |
+                              <span className={cx(
+                                "font-medium ml-1",
+                                darkMode ? "text-blue-300" : "text-blue-700"
+                              )}>Projected retirement age:</span> {retirementStartAge + optimalDelayYears}
                             </div>
                           </div>
                         </>
