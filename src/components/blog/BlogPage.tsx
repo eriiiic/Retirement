@@ -1,11 +1,19 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { blogPosts, BlogPost, BlogTopic } from './blogData';
 import Footer from '../common/Footer'; // Import Footer component
+import { Helmet } from 'react-helmet';
+import { isSafari } from '../../utils/browserDetection';
 
 const BlogPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedTopics, setSelectedTopics] = useState<BlogTopic[]>([]);
+  const [isSafariBrowser, setIsSafariBrowser] = useState(false);
+  
+  // Detect Safari browser on component mount
+  useEffect(() => {
+    setIsSafariBrowser(isSafari());
+  }, []);
   
   // Extract all unique topics from blog posts
   const allTopics = useMemo(() => {
@@ -47,149 +55,164 @@ const BlogPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="mb-6 sm:mb-8 text-center">
-        <div className="inline-block mb-4 px-4 py-2 bg-gray-100/70 rounded-lg shadow-sm">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gradient">
-            Blog & Resources
-          </h1>
+    <>
+      <Helmet>
+        <title>FIRE Blog & Resources | Financial Independence Strategies</title>
+        <meta name="description" content="Expert insights on financial independence, retirement strategies, and wealth building for those pursuing FIRE (Financial Independence, Retire Early)." />
+        
+        {/* OpenGraph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://FIRECalculator.ai/blog" />
+        <meta property="og:title" content="FIRE Blog & Resources | Financial Independence Strategies" />
+        <meta property="og:description" content="Expert insights on financial independence, retirement strategies, and wealth building for those pursuing FIRE (Financial Independence, Retire Early)." />
+        <meta property="og:image" content="/blog-images/blog-og-image.png" />
+        <meta property="og:updated_time" content="2023-03-08" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" content="https://FIRECalculator.ai/blog" />
+        <meta name="twitter:title" content="FIRE Blog & Resources | Financial Independence Strategies" />
+        <meta name="twitter:description" content="Expert insights on financial independence, retirement strategies, and wealth building for those pursuing FIRE (Financial Independence, Retire Early)." />
+        <meta name="twitter:image" content="/blog-images/blog-twitter-card.png" />
+      </Helmet>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl mb-4">FIRE Blog & Resources</h1>
+          <p className="text-xl text-gray-500 max-w-3xl mx-auto">
+            Insights, strategies, and practical advice on your journey to Financial Independence and Early Retirement.
+          </p>
         </div>
-        <p className="text-gray-800 text-sm sm:text-base max-w-2xl mx-auto font-medium">
-          Practical advice, real-world case studies, and data-driven strategies from people who achieved financial independence.
-          Explore success stories, investment insights, and retirement planning approaches that work.
-        </p>
-      </div>
-      
-      {/* Search and filter section */}
-      <div className="mb-10 bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex flex-col lg:flex-row gap-4 mb-6">
-          <div className="relative flex-grow">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-gray-400">🔍</span>
+
+        {/* Search and filter section */}
+        <div className="mb-10 bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex flex-col lg:flex-row gap-4 mb-6">
+            <div className="relative flex-grow">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span className="text-gray-400">🔍</span>
+              </div>
+              <input
+                type="text"
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                placeholder="Search articles..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            <input
-              type="text"
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Search articles..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          </div>
+          
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Filter by Topic:</h3>
+            <div className="flex flex-wrap gap-2">
+              {allTopics.map(topic => (
+                <button
+                  key={topic}
+                  onClick={() => toggleTopic(topic)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                    selectedTopics.includes(topic)
+                      ? 'bg-indigo-100 text-indigo-800 border-indigo-300'
+                      : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                  } border`}
+                >
+                  {topic}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Filter by Topic:</h3>
-          <div className="flex flex-wrap gap-2">
-            {allTopics.map(topic => (
-              <button
-                key={topic}
-                onClick={() => toggleTopic(topic)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  selectedTopics.includes(topic)
-                    ? 'bg-indigo-100 text-indigo-800 border-indigo-300'
-                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
-                } border`}
+        {/* Blog posts grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          {filteredPosts.length > 0 ? (
+            filteredPosts.map((post: BlogPost) => (
+              <Link 
+                key={post.id}
+                to={`/blog/${post.id}`}
+                className="flex flex-col h-full"
               >
-                {topic}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-      
-      {/* Blog posts grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-        {filteredPosts.length > 0 ? (
-          filteredPosts.map((post: BlogPost) => (
-            <Link 
-              key={post.id}
-              to={`/blog/${post.id}`}
-              className="flex flex-col h-full"
-            >
-              <article className="flex flex-col bg-white rounded-lg shadow-md overflow-hidden h-full border border-gray-200 transition-transform hover:-translate-y-1 hover:shadow-lg">
-                {post.image && (
-                  <div className="relative h-48 overflow-hidden">
-                    <img 
-                      src={post.image} 
-                      alt={post.title} 
-                      className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                )}
-                <div className="p-6 flex-grow flex flex-col">
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {post.topics.map((topic: BlogTopic) => (
-                      <span 
-                        key={topic} 
-                        className="inline-flex items-center text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-1 rounded"
-                      >
-                        <span className="mr-1">🏷️</span> {topic}
-                      </span>
-                    ))}
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-2 hover:text-indigo-600">
-                    {post.title}
-                  </h2>
-                  <p className="text-gray-600 mb-4 flex-grow">
-                    {post.excerpt}
-                  </p>
-                  <div className="mt-auto pt-4 border-t border-gray-100">
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <span className="mr-1">📅</span>
-                        <span>{formatDate(post.date)}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="mr-1">⏱️</span>
-                        <span>{post.readTime} min read</span>
+                <article className="flex flex-col bg-white rounded-lg shadow-md overflow-hidden h-full border border-gray-200 transition-transform hover:-translate-y-1 hover:shadow-lg">
+                  {post.image && (
+                    <div className="relative h-48 overflow-hidden">
+                      <img 
+                        src={post.image} 
+                        alt={post.title} 
+                        className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                  )}
+                  <div className="p-6 flex-grow flex flex-col">
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {post.topics.map((topic: BlogTopic) => (
+                        <span 
+                          key={topic} 
+                          className="inline-flex items-center text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-1 rounded"
+                        >
+                          <span className="mr-1">🏷️</span> {topic}
+                        </span>
+                      ))}
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-2 hover:text-indigo-600">
+                      {post.title}
+                    </h2>
+                    <p className="text-gray-600 mb-4 flex-grow">
+                      {post.excerpt}
+                    </p>
+                    <div className="mt-auto pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <div className="flex items-center">
+                          <span className="mr-1">📅</span>
+                          <span>{formatDate(post.date)}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <span className="mr-1">⏱️</span>
+                          <span>{post.readTime} min read</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </article>
-            </Link>
-          ))
-        ) : (
-          <div className="col-span-full text-center py-12">
-            <h3 className="text-xl font-medium text-gray-700 mb-2">No articles found</h3>
-            <p className="text-gray-500">
-              Try adjusting your search or filter criteria to find what you're looking for.
+                </article>
+              </Link>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <h3 className="text-xl font-medium text-gray-700 mb-2">No articles found</h3>
+              <p className="text-gray-500">
+                Try adjusting your search or filter criteria to find what you're looking for.
+              </p>
+            </div>
+          )}
+        </div>
+        
+        {/* Add Footer Component */}
+        <Footer />
+
+        {/* Newsletter subscription - temporarily disabled */}
+        {/*
+        <div className="bg-indigo-50 rounded-lg p-8 border border-indigo-100">
+          <div className="text-center mb-6">
+            <h3 className="text-2xl font-bold text-indigo-900 mb-2">Subscribe to Our Newsletter</h3>
+            <p className="text-indigo-700">
+              Get the latest articles, tips, and strategies delivered straight to your inbox.
             </p>
           </div>
-        )}
-      </div>
-      
-            {/* Add Footer Component */}
-            <Footer />
-
-      {/* Newsletter subscription - temporarily disabled */}
-      {/*
-      <div className="bg-indigo-50 rounded-lg p-8 border border-indigo-100">
-        <div className="text-center mb-6">
-          <h3 className="text-2xl font-bold text-indigo-900 mb-2">Subscribe to Our Newsletter</h3>
-          <p className="text-indigo-700">
-            Get the latest articles, tips, and strategies delivered straight to your inbox.
-          </p>
+          <form className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto">
+            <input
+              type="email"
+              placeholder="Your email address"
+              className="flex-grow px-4 py-3 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+              required
+            />
+            <button
+              type="submit"
+              className="bg-indigo-600 text-white px-6 py-3 rounded-md font-medium hover:bg-indigo-700 transition-colors"
+            >
+              Subscribe
+            </button>
+          </form>
         </div>
-        <form className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto">
-          <input
-            type="email"
-            placeholder="Your email address"
-            className="flex-grow px-4 py-3 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-            required
-          />
-          <button
-            type="submit"
-            className="bg-indigo-600 text-white px-6 py-3 rounded-md font-medium hover:bg-indigo-700 transition-colors"
-          >
-            Subscribe
-          </button>
-        </form>
+        */}
       </div>
-      */}
-      
-      
-    </div>
+    </>
   );
 };
 

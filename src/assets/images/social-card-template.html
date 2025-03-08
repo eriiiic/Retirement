@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Card Template</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .card {
+            width: 1200px;
+            height: 630px;
+            background: linear-gradient(135deg, #1a365d 0%, #2a4365 100%);
+            color: white;
+            padding: 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            transform: translate(100px, -200px);
+        }
+        
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .logo span {
+            color: #4fd1c5;
+        }
+        
+        .title {
+            font-size: 64px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+        
+        .description {
+            font-size: 32px;
+            opacity: 0.9;
+            max-width: 800px;
+            line-height: 1.4;
+            margin-bottom: 40px;
+        }
+        
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 24px;
+            opacity: 0.8;
+        }
+        
+        .chart-illustration {
+            position: absolute;
+            bottom: 80px;
+            right: 60px;
+            width: 300px;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        
+        .bar {
+            background-color: #4fd1c5;
+            height: 30px;
+            margin: 3px;
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .bar:nth-child(1) { width: 40%; }
+        .bar:nth-child(2) { width: 55%; }
+        .bar:nth-child(3) { width: 70%; }
+        .bar:nth-child(4) { width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div>
+            <div class="logo">FIRE<span>Calculator.ai</span></div>
+            <h1 class="title">Advanced Retirement Planning Simulator</h1>
+            <p class="description">Visualize your financial journey through retirement with comprehensive simulations and interactive tools</p>
+        </div>
+        
+        <div class="chart-illustration">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+        
+        <div class="footer">
+            <div class="date">March 2023</div>
+            <div class="author">By FIRECalculator Team</div>
+        </div>
+    </div>
+</body>
+</html> 
