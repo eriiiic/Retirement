@@ -26,31 +26,13 @@ const Header = () => {
       // Remove animation class after it completes
       const cleanupTimer = setTimeout(() => {
         setShowMenuAnimation(false);
-      }, 3000); // Extended animation duration
+      }, 2000); // Animation duration
       
       return () => clearTimeout(cleanupTimer);
     }, 500);
     
     return () => clearTimeout(timer);
   }, []);
-  
-  // Apply animation periodically to draw attention to the menu
-  useEffect(() => {
-    // Skip this animation if menu is already open
-    if (isMenuOpen) return;
-    
-    // Show animation every 30 seconds
-    const intervalTimer = setInterval(() => {
-      setShowMenuAnimation(true);
-      
-      // Remove animation after it completes
-      setTimeout(() => {
-        setShowMenuAnimation(false);
-      }, 3000);
-    }, 30000); // 30 seconds interval
-    
-    return () => clearInterval(intervalTimer);
-  }, [isMenuOpen]);
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -131,36 +113,13 @@ const Header = () => {
                 New
               </span>
             </Link>
-            
-            <Link 
-              to="/fire"
-              className={`text-sm font-medium transition-all duration-200 px-4 py-2 rounded-md flex items-center relative ${
-                isActive('/fire') 
-                  ? 'text-white bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md transform scale-105' 
-                  : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 hover:scale-105'
-              }`}
-            >
-              <span className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                FIRE Movement
-              </span>
-              <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs px-1.5 rounded-full animate-pulse">
-                Hot
-              </span>
-            </Link>
           </nav>
           
           {/* Mobile menu button with initial attention animation */}
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className={`inline-flex items-center justify-center p-2 rounded-md transition-all duration-300 ${
-                isMenuOpen
-                ? 'text-white bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md scale-110'
-                : 'text-indigo-600 bg-gradient-to-r from-indigo-100 to-purple-100 border border-indigo-200 hover:from-indigo-200 hover:to-purple-200 hover:shadow-sm'
-              } ${
+              className={`inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none transition-all ${
                 showMenuAnimation ? 'animate-attention-pulse' : ''
               }`}
               aria-expanded={isMenuOpen}
@@ -259,28 +218,6 @@ const Header = () => {
               </span>
             </div>
           </Link>
-          
-          <Link
-            to="/fire"
-            className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors relative ${
-              isActive('/fire') 
-                ? 'text-white bg-gradient-to-r from-indigo-600 to-purple-600' 
-                : 'text-gray-700 hover:text-indigo-600 hover:bg-indigo-50'
-            }`}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                FIRE Movement
-              </div>
-              <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
-                Hot
-              </span>
-            </div>
-          </Link>
         </div>
       </div>
     </header>
@@ -301,20 +238,8 @@ styleElement.textContent = `
   }
   
   @keyframes attention-pulse {
-    0% {
-      transform: scale(0.95);
-      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
-    }
-    
-    70% {
-      transform: scale(1.1);
-      box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
-    }
-    
-    100% {
-      transform: scale(0.95);
-      box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
-    }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+    50% { box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.3); }
   }
   
   .animate-bounce-subtle {
@@ -326,8 +251,7 @@ styleElement.textContent = `
   }
   
   .animate-attention-pulse {
-    animation: attention-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) 3;
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7);
+    animation: attention-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) 2;
   }
 `;
 document.head.appendChild(styleElement);

@@ -741,7 +741,7 @@ const CapitalEvolutionChart: React.FC<CapitalEvolutionChartProps> = ({
                       selectedDelays.includes(delay)
                         ? isPositive
                           ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white border-transparent'
-                          : 'bg-gradient-to-r from-red-600 to-rose-600 text-white border-transparent'
+                          : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-transparent'
                         : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50',
                       index > 0 && selectedDelays.includes(delay) && selectedDelays.includes(delay - 1) && '-ml-[1px]'
                     )}
