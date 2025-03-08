@@ -253,9 +253,14 @@ async function generateBlogPostOgImage(browser, post) {
   }
 }
 
+// Parse command line arguments
+const args = process.argv.slice(2);
+const singlePostArg = args.find(arg => arg.startsWith('--single-post='));
+const singlePostId = singlePostArg ? singlePostArg.split('=')[1] : null;
+
 // Main function to generate all blog post OG images
 async function generateAllBlogPostOgImages() {
-  console.log('Generating OpenGraph images for all blog posts...');
+  console.log('Generating OpenGraph images for blog posts...');
   
   // Get blog posts data
   const blogPosts = getBlogPostsData();
@@ -264,18 +269,28 @@ async function generateAllBlogPostOgImages() {
     return;
   }
   
-  console.log(`Found ${blogPosts.length} blog posts.`);
+  // Filter posts if a specific post ID is provided
+  const postsToProcess = singlePostId 
+    ? blogPosts.filter(post => post.id === singlePostId)
+    : blogPosts;
+  
+  if (singlePostId && postsToProcess.length === 0) {
+    console.error(`Blog post with ID "${singlePostId}" not found.`);
+    return;
+  }
+  
+  console.log(`Found ${postsToProcess.length} blog post(s) to process.`);
   
   // Launch a headless browser
   const browser = await puppeteer.launch();
   
   try {
     // Process each blog post sequentially
-    for (const post of blogPosts) {
+    for (const post of postsToProcess) {
       await generateBlogPostOgImage(browser, post);
     }
     
-    console.log('All blog post OpenGraph images generated successfully!');
+    console.log('Blog post OpenGraph images generated successfully!');
   } catch (error) {
     console.error('Error generating blog post OpenGraph images:', error);
   } finally {
