@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
-import { FormatAmountFunction, WithdrawalMode } from '../types';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
+import { FormatAmountFunction, WithdrawalMode, Currency } from '../types';
 import { colors, typography, spacing, components, cx } from '../../../styles/styleGuide';
 import { SectionTitle, Card, PositiveMetric } from '../../common/StyledComponents';
-import { calculateYearsUntilExhaustion, calculateDelayedScenario, calculateDelayedRetirementImpact } from '../../../utils/financialCalculations';
+import { Metric } from '../../common/Metric';
+import { calculateYearsUntilExhaustion, calculateDelayedScenario, calculateDelayedRetirementImpact, calculateExhaustionAge, calculateDelayImpactOnLongevity, calculateEffectiveWithdrawalAmount } from '../../../utils/financialCalculations';
 import { formatPercentage } from '../../../utils/formatters';
 import { useTheme } from '../../../context/ThemeContext';
 
@@ -21,6 +22,21 @@ interface RetirementDelayCardProps {
   inflationAdjustedWithdrawal?: boolean;
   withdrawalMode?: WithdrawalMode;
   inflation?: number;
+  riskAssessment?: {
+    riskLevel: 'Low' | 'Moderate' | 'Significant' | 'High' | 'Critical';
+    riskScore: number;
+    factors: {
+      capitalRatio: number;
+      withdrawalRiskFactor: number;
+      longevityRiskFactor: number;
+      investmentShortfallFactor: number;
+      volatilityRiskFactor: number;
+    };
+    description: string;
+    recommendationPriority: 'Low' | 'Medium' | 'High' | 'Urgent' | 'Critical';
+    primaryRecommendation: string;
+    secondaryRecommendations: string[];
+  };
 }
 
 export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
@@ -37,7 +53,8 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
   currentAge,
   inflationAdjustedWithdrawal,
   withdrawalMode,
-  inflation
+  inflation,
+  riskAssessment
 }) => {
   const { darkMode } = useTheme();
   // State to track which section is being hovered
@@ -51,19 +68,17 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     setTooltipPosition({ x: e.clientX, y: e.clientY });
   };
 
-  // Get effective withdrawal amount considering inflation adjustment
-  const getEffectiveWithdrawalAmount = () => {
-    if (inflationAdjustedWithdrawal && withdrawalMode === "amount" && inflation !== undefined) {
-      // Calculate years until retirement
-      const yearsUntilRetirement = retirementStartAge - currentAge;
-      
-      // Calculate inflation-adjusted withdrawal
-      return monthlyRetirementWithdrawal * Math.pow(1 + inflation / 100, yearsUntilRetirement);
-    }
-    return monthlyRetirementWithdrawal;
-  };
-
-  const effectiveMonthlyWithdrawal = getEffectiveWithdrawalAmount();
+  // Calculate years until retirement
+  const yearsUntilRetirement = retirementStartAge - currentAge;
+  
+  // Use centralized function for effective withdrawal amount
+  const effectiveMonthlyWithdrawal = calculateEffectiveWithdrawalAmount(
+    monthlyRetirementWithdrawal,
+    inflationAdjustedWithdrawal,
+    withdrawalMode,
+    inflation,
+    yearsUntilRetirement
+  );
 
   // Calculate optimal delay years based on capital exhaustion at target age
   const calculateOptimalDelayYears = useMemo(() => {
@@ -505,76 +520,72 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
   const targetAge = 95;
 
   // Calculate ideal delay without 5-year limit
-  const calculateIdealDelay = useMemo(() => {
+  const idealDelayInfo = useMemo(() => {
     // Start with current retirement age and increment until we find a solution
     let idealDelay = 0;
     let maxIterations = 20; // Reasonable maximum to prevent infinite loops
     let found = false;
+    let delayedCapital = 0;
+    let delayCapitalIncrease = 0;
     
-    const simulateRetirementWithDelay = (delayYears: number) => {
-      const delayedRetirementAge = retirementStartAge + delayYears;
-      const result = calculateDelayedRetirementImpact(
+    // Use centralized function to evaluate each delay option
+    while (!found && idealDelay < maxIterations) {
+      const result = calculateDelayImpactOnLongevity(
         params.initialCapital,
         params.monthlyInvestment,
         effectiveMonthlyWithdrawal,
         statistics.calculatedRetirementStartYear,
-        delayYears,
+        idealDelay,
         annualReturnRate,
-        params.inflation
+        params.inflation,
+        retirementStartAge,
+        targetAge,
+        0.7 // Conservative multiplier
       );
       
-      // Calculate if this capital would last until target age
-      const yearsUntilExhaustion = calculateYearsUntilExhaustion(
-        result.delayedCapitalAtRetirement,
-        effectiveMonthlyWithdrawal * 12,
-        annualReturnRate * 0.7, // Conservative return estimate
-        1,
-        100
-      );
-      
-      const exhaustionAge = delayedRetirementAge + yearsUntilExhaustion;
-      return exhaustionAge >= targetAge;
-    };
-
-    // Find minimum delay needed to reach target age
-    while (!found && idealDelay < maxIterations) {
-      if (simulateRetirementWithDelay(idealDelay)) {
+      if (result.lastsUntilTargetAge) {
         found = true;
+        
+        // Calculate the capital impact for this delay
+        const capitalImpact = calculateDelayedRetirementImpact(
+          params.initialCapital,
+          params.monthlyInvestment,
+          effectiveMonthlyWithdrawal,
+          statistics.calculatedRetirementStartYear,
+          idealDelay,
+          annualReturnRate,
+          params.inflation
+        );
+        
+        delayedCapital = capitalImpact.delayedCapitalAtRetirement;
+        delayCapitalIncrease = capitalImpact.capitalIncrease;
       } else {
         idealDelay++;
       }
     }
-
-    // Calculate the capital impact of this delay
-    const idealImpact = calculateDelayedRetirementImpact(
-      params.initialCapital,
-      params.monthlyInvestment,
-      effectiveMonthlyWithdrawal,
-      statistics.calculatedRetirementStartYear,
-      idealDelay,
-      annualReturnRate,
-      params.inflation
-    );
-
+    
+    // Return complete information about the ideal delay
     return {
-      years: idealDelay,
-      newCapital: idealImpact.delayedCapitalAtRetirement,
-      capitalIncrease: idealImpact.capitalIncrease,
+      years: found ? idealDelay : maxIterations,
+      newCapital: delayedCapital,
+      capitalIncrease: delayCapitalIncrease,
       exhaustionAge: targetAge
     };
-  }, [retirementStartAge, params, effectiveMonthlyWithdrawal, statistics, annualReturnRate, targetAge]);
+  }, [params.initialCapital, params.monthlyInvestment, effectiveMonthlyWithdrawal, 
+      statistics.calculatedRetirementStartYear, annualReturnRate, params.inflation, 
+      retirementStartAge, targetAge]);
 
-  // Calculate current exhaustion age
-  const currentExhaustionAge = useMemo(() => {
-    const yearsUntilExhaustion = calculateYearsUntilExhaustion(
-      capitalAtRetirement,
-      effectiveMonthlyWithdrawal * 12,
-      annualReturnRate * 0.7,
-      1,
-      100
-    );
-    return retirementStartAge + yearsUntilExhaustion;
-  }, [capitalAtRetirement, effectiveMonthlyWithdrawal, annualReturnRate, retirementStartAge]);
+  // Calculate the exhaustion age for current plan
+  const inflationRate = inflation ?? 2; // Default to 2% if inflation is undefined
+  
+  const currentExhaustionAge = calculateExhaustionAge(
+    capitalAtRetirement,
+    effectiveMonthlyWithdrawal,
+    annualReturnRate,
+    inflationRate,
+    retirementStartAge,
+    0.7 // Conservative multiplier
+  );
 
   // Calculate exhaustion age for the recommended delay (optimalDelayYears)
   const recommendedExhaustionAge = useMemo(() => {
@@ -615,6 +626,55 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
     return recommendedExhaustionAge - currentExhaustionAge;
   }, [recommendedExhaustionAge, currentExhaustionAge, optimalDelayYears]);
 
+  // Map legacy risk levels to new standardized levels
+  const mapRiskLevel = (legacyRisk: 'High' | 'Medium' | 'Low'): 'Critical' | 'High' | 'Significant' | 'Moderate' | 'Low' => {
+    switch(legacyRisk) {
+      case 'High':
+        return 'Critical';
+      case 'Medium':
+        return 'Significant';
+      case 'Low':
+        return 'Low';
+    }
+  };
+
+  // Get risk level from assessment or map from legacy
+  const effectiveRiskLevel = riskAssessment?.riskLevel || mapRiskLevel(risk);
+
+  // Get risk color classes based on standardized risk level
+  const getRiskColorClasses = (level: string, isDark: boolean = false) => {
+    switch(level) {
+      case 'Critical':
+        return isDark ? "bg-red-900/50 border-red-700 text-red-300" : "bg-red-50 border-red-200 text-red-700";
+      case 'High':
+        return isDark ? "bg-red-900/40 border-red-700 text-red-300" : "bg-red-50 border-red-200 text-red-700";
+      case 'Significant':
+        return isDark ? "bg-yellow-900/50 border-yellow-700 text-yellow-300" : "bg-yellow-50 border-yellow-200 text-yellow-700";
+      case 'Moderate':
+        return isDark ? "bg-yellow-900/40 border-yellow-700 text-yellow-300" : "bg-yellow-50 border-yellow-200 text-yellow-700";
+      case 'Low':
+        return isDark ? "bg-green-900/50 border-green-700 text-green-300" : "bg-green-50 border-green-200 text-green-700";
+      default:
+        return isDark ? "bg-gray-900/50 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-700";
+    }
+  };
+
+  // Get priority label based on risk level
+  const getPriorityLabel = (level: string): string => {
+    switch(level) {
+      case 'Critical':
+      case 'High':
+        return 'Critical';
+      case 'Significant':
+      case 'Moderate':
+        return 'Recommended';
+      case 'Low':
+        return 'Optional';
+      default:
+        return 'Review';
+    }
+  };
+
   return (
     <>
       <Card className="overflow-hidden lg:col-span-2">
@@ -638,17 +698,9 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
           </div>
           <div className={cx(
             "text-xs font-medium px-1.5 py-0.5 rounded-full",
-            darkMode ? (
-              risk === 'High' ? "bg-red-900/70 text-red-300" : 
-              risk === 'Medium' ? "bg-yellow-900/70 text-yellow-300" : 
-              "bg-green-900/70 text-green-300"
-            ) : (
-              risk === 'High' ? "bg-red-100 text-red-700" : 
-              risk === 'Medium' ? "bg-yellow-100 text-yellow-700" : 
-              "bg-green-100 text-green-700"
-            )
+            getRiskColorClasses(effectiveRiskLevel, darkMode)
           )}>
-            {risk === 'High' ? 'Critical' : risk === 'Medium' ? 'Recommended' : 'Optional'}
+            {getPriorityLabel(effectiveRiskLevel)}
           </div>
         </div>
         <div className="p-2 sm:p-3">
@@ -760,19 +812,19 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
                 "text-sm font-semibold mt-1",
                 darkMode ? "text-blue-300" : "text-blue-800"
               )}>
-                {retirementStartAge + calculateIdealDelay.years} years
+                {retirementStartAge + idealDelayInfo.years} years
               </div>
               <div className={cx(
                 "text-[10px]",
                 darkMode ? "text-blue-300" : "text-blue-800"
               )}>
-                +{formatDisplayValue(calculateIdealDelay.capitalIncrease)} capital
+                +{formatDisplayValue(idealDelayInfo.capitalIncrease)} capital
               </div>
               <div className={cx(
                 "text-[10px] mt-1",
                 darkMode ? "text-blue-300" : "text-blue-800"
               )}>
-                Funds last until age <span className="font-semibold">{calculateIdealDelay.exhaustionAge}</span>
+                Funds last until age <span className="font-semibold">{idealDelayInfo.exhaustionAge}</span>
               </div>
             </div>
           </div>
@@ -857,20 +909,14 @@ export const RetirementDelayCard: React.FC<RetirementDelayCardProps> = ({
           <div className={cx(
             "rounded-lg p-2.5 border mb-2.5",
             darkMode 
-              ? risk === 'High' ? "bg-red-900/30 border-red-700" 
-                : risk === 'Medium' ? "bg-yellow-900/30 border-yellow-700" 
-                : "bg-blue-900/30 border-blue-700"
-              : risk === 'High' ? "bg-gradient-to-r from-blue-500/10 to-red-500/10 border-red-200" 
-                : risk === 'Medium' ? "bg-gradient-to-r from-blue-500/10 to-yellow-500/10 border-yellow-200" 
-                : "bg-gradient-to-r from-blue-500/10 to-blue-500/10 border-blue-200"
+              ? getRiskColorClasses(effectiveRiskLevel, darkMode)
+              : getRiskColorClasses(effectiveRiskLevel, false)
           )}>
             <div className="text-xs space-y-2">
               <div>
                 <div className={cx(
                   "text-xs font-medium mb-1 flex items-center",
-                  darkMode 
-                    ? risk === 'High' ? "text-red-300" : risk === 'Medium' ? "text-yellow-300" : "text-blue-300" 
-                    : risk === 'High' ? "text-red-700" : risk === 'Medium' ? "text-yellow-700" : "text-blue-700"
+                  darkMode ? "text-gray-300" : "text-gray-700"
                 )}>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />

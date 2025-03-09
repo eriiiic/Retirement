@@ -751,4 +751,915 @@ export const calculateRecommendedInvestment = (
       percentOfTarget: idealPercentOfTarget
     }
   };
+};
+
+/**
+ * Calculate inflation-adjusted monthly investment
+ * @param monthlyInvestment Monthly investment amount
+ * @param inflationRate Annual inflation rate (as percentage, e.g., 3 for 3%)
+ * @param years Number of years
+ * @returns Inflation-adjusted monthly investment amount
+ */
+export const calculateInflationAdjustedInvestment = (
+  monthlyInvestment: number,
+  inflationRate: number,
+  years: number
+): number => {
+  return calculateInflationAdjustedValue(
+    monthlyInvestment,
+    inflationRate,
+    years
+  );
+};
+
+/**
+ * Calculate inflation-adjusted capital
+ * @param capital Capital amount
+ * @param inflationRate Annual inflation rate (as percentage, e.g., 3 for 3%)
+ * @param years Number of years
+ * @returns Inflation-adjusted capital amount
+ */
+export const calculateInflationAdjustedCapital = (
+  capital: number,
+  inflationRate: number,
+  years: number
+): number => {
+  return calculateInflationAdjustedValue(
+    capital,
+    inflationRate,
+    years
+  );
+};
+
+/**
+ * Calculate the optimal withdrawal rate to make retirement funds last until a target age
+ * @param capitalAtRetirement Capital amount at retirement
+ * @param annualReturnRate Annual return rate (as percentage, e.g., 5 for 5%)
+ * @param retirementStartAge Age at retirement start
+ * @param targetAge Target age for funds to last until
+ * @param conservativeMultiplier Adjustment factor for conservative return estimate (default: 0.7)
+ * @returns Optimal annual withdrawal rate as a decimal (e.g., 0.04 for 4%)
+ */
+export const calculateOptimalWithdrawalRate = (
+  capitalAtRetirement: number,
+  annualReturnRate: number,
+  retirementStartAge: number,
+  targetAge: number = 95,
+  conservativeMultiplier: number = 0.7
+): number => {
+  // Start with a reasonable range
+  let low = 0.01; // 1% withdrawal rate
+  let high = 0.08; // 8% withdrawal rate
+  
+  // Binary search to find optimal rate
+  for (let i = 0; i < 10; i++) { // 10 iterations should be enough for precision
+    const mid = (low + high) / 2;
+    const optimalAnnualWithdrawal = capitalAtRetirement * mid;
+    
+    const yearsUntilExhaustion = calculateYearsUntilExhaustion(
+      capitalAtRetirement,
+      optimalAnnualWithdrawal,
+      annualReturnRate * conservativeMultiplier,
+      1,
+      100
+    );
+    
+    const exhaustionAge = retirementStartAge + yearsUntilExhaustion;
+    
+    if (Math.abs(exhaustionAge - targetAge) < 1) {
+      // Close enough to target
+      return mid;
+    }
+    
+    if (exhaustionAge < targetAge) {
+      // Exhaustion too early, need lower withdrawal rate
+      high = mid;
+    } else {
+      // Exhaustion too late, can increase withdrawal rate
+      low = mid;
+    }
+  }
+  
+  return (low + high) / 2; // Return the best approximation
+};
+
+/**
+ * Calculate the impact of improving the investment return rate
+ * @param monthlyInvestment Monthly investment amount
+ * @param yearsToRetirement Number of years until retirement
+ * @param currentReturnRate Current annual return rate (as percentage, e.g., 5 for 5%)
+ * @param improvedReturnRate Improved annual return rate (as percentage, e.g., 5.5 for 5.5%)
+ * @returns Object containing the benefit and new capital amount
+ */
+export const calculateReturnImprovementImpact = (
+  monthlyInvestment: number,
+  yearsToRetirement: number,
+  currentReturnRate: number,
+  improvedReturnRate: number = -1 // If not provided, default to current + 0.5%
+): {
+  improvementRate: number;
+  benefit: number;
+  futureValueCurrentRate: number;
+  futureValueImprovedRate: number;
+} => {
+  // If improved rate not provided, default to 0.5% improvement
+  if (improvedReturnRate === -1) {
+    improvedReturnRate = currentReturnRate + 0.5;
+  }
+  
+  const improvementRate = improvedReturnRate - currentReturnRate;
+  const months = yearsToRetirement * 12;
+  
+  // Calculate monthly rates
+  const currentMonthlyRate = currentReturnRate / 12 / 100;
+  const improvedMonthlyRate = improvedReturnRate / 12 / 100;
+  
+  // Calculate future values with current and improved returns
+  const futureValueCurrentRate = monthlyInvestment * 
+    ((Math.pow(1 + currentMonthlyRate, months) - 1) / currentMonthlyRate) * 
+    (1 + currentMonthlyRate);
+    
+  const futureValueImprovedRate = monthlyInvestment * 
+    ((Math.pow(1 + improvedMonthlyRate, months) - 1) / improvedMonthlyRate) * 
+    (1 + improvedMonthlyRate);
+  
+  // Calculate the benefit from improved returns
+  const benefit = futureValueImprovedRate - futureValueCurrentRate;
+  
+  return {
+    improvementRate,
+    benefit,
+    futureValueCurrentRate,
+    futureValueImprovedRate
+  };
+};
+
+/**
+ * Calculate the impact of increasing the monthly investment amount
+ * @param currentMonthlyInvestment Current monthly investment amount
+ * @param increaseRate Rate of increase (as decimal, e.g., 0.2 for 20%)
+ * @param yearsToRetirement Number of years until retirement
+ * @param annualReturnRate Annual return rate (as percentage, e.g., 5 for 5%)
+ * @returns Object containing the impact details
+ */
+export const calculateAdditionalInvestmentImpact = (
+  currentMonthlyInvestment: number,
+  increaseRate: number,
+  yearsToRetirement: number,
+  annualReturnRate: number
+): {
+  monthlyIncrease: number;
+  additionalContributions: number;
+  estimatedReturns: number;
+  totalBenefit: number;
+} => {
+  // Calculate the monthly increase amount
+  const monthlyIncrease = currentMonthlyInvestment * increaseRate;
+  
+  // Calculate total additional contributions without interest
+  const additionalContributions = monthlyIncrease * 12 * yearsToRetirement;
+  
+  // Calculate future value of additional monthly investments with compound interest
+  const monthlyRate = annualReturnRate / 12 / 100;
+  const months = yearsToRetirement * 12;
+  const futureValueOfAdditional = monthlyIncrease * 
+    ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate) * 
+    (1 + monthlyRate);
+  
+  // Calculate estimated returns (difference between future value and contributions)
+  const estimatedReturns = futureValueOfAdditional - additionalContributions;
+  
+  return {
+    monthlyIncrease,
+    additionalContributions,
+    estimatedReturns,
+    totalBenefit: futureValueOfAdditional
+  };
+};
+
+/**
+ * Calculate the exhaustion age with consideration for inflation
+ * @param startingCapital Starting capital amount
+ * @param monthlyWithdrawal Monthly withdrawal amount
+ * @param annualReturnRate Annual return rate (as percentage, e.g., 5 for 5%)
+ * @param inflation Annual inflation rate (as percentage, e.g., 2 for 2%)
+ * @param retirementStartAge Age at retirement start
+ * @param conservativeMultiplier Adjustment factor for conservative return estimate (default: 0.7)
+ * @returns Projected exhaustion age
+ */
+export const calculateExhaustionAge = (
+  startingCapital: number,
+  monthlyWithdrawal: number,
+  annualReturnRate: number,
+  inflation: number,
+  retirementStartAge: number,
+  conservativeMultiplier: number = 0.7
+): number => {
+  // Convert percentages to decimals
+  const inflationRate = inflation / 100;
+  
+  // Calculate real return rate (adjusted for inflation)
+  const realReturnRate = ((1 + annualReturnRate / 100) / (1 + inflationRate) - 1) * 100;
+  
+  // Use conservative real return rate
+  const conservativeRealReturnRate = realReturnRate * conservativeMultiplier;
+  
+  // Calculate years until exhaustion
+  const annualWithdrawal = monthlyWithdrawal * 12;
+  const yearsUntilExhaustion = calculateYearsUntilExhaustion(
+    startingCapital,
+    annualWithdrawal,
+    conservativeRealReturnRate,
+    1,
+    100
+  );
+  
+  // Calculate exhaustion age
+  return retirementStartAge + yearsUntilExhaustion;
+};
+
+/**
+ * Calculate additional years of retirement funding based on additional capital
+ * @param monthlyWithdrawal Monthly withdrawal amount
+ * @param additionalCapital Additional capital amount
+ * @returns Number of additional years of retirement funding
+ */
+export const calculateAdditionalYears = (
+  monthlyWithdrawal: number,
+  additionalCapital: number
+): number => {
+  // Simple estimation - how many additional years the extra capital would last
+  const annualWithdrawal = monthlyWithdrawal * 12;
+  
+  if (annualWithdrawal <= 0) return 0;
+  
+  return Math.round(additionalCapital / annualWithdrawal);
+};
+
+/**
+ * Calculate if delaying retirement would allow capital to last until target age
+ * @param initialCapital Initial capital amount
+ * @param monthlyInvestment Monthly investment amount
+ * @param monthlyWithdrawal Monthly withdrawal amount
+ * @param retirementYear Planned retirement year
+ * @param delayYears Years to delay retirement
+ * @param annualReturnRate Annual return rate (as percentage, e.g., 5 for 5%)
+ * @param inflation Annual inflation rate (as percentage, e.g., 2 for 2%)
+ * @param retirementStartAge Original retirement start age
+ * @param targetAge Target age for capital to last until (default: 95)
+ * @param conservativeMultiplier Adjustment factor for conservative return estimate (default: 0.7)
+ * @returns Object containing whether capital lasts until target age and the projected exhaustion age
+ */
+export const calculateDelayImpactOnLongevity = (
+  initialCapital: number,
+  monthlyInvestment: number,
+  monthlyWithdrawal: number,
+  retirementYear: number,
+  delayYears: number,
+  annualReturnRate: number,
+  inflation: number,
+  retirementStartAge: number,
+  targetAge: number = 95,
+  conservativeMultiplier: number = 0.7
+): {
+  lastsUntilTargetAge: boolean;
+  delayedRetirementAge: number;
+  exhaustionAge: number;
+} => {
+  // Calculate delayed retirement age
+  const delayedRetirementAge = retirementStartAge + delayYears;
+  
+  // Calculate impact of delay on capital
+  const result = calculateDelayedRetirementImpact(
+    initialCapital,
+    monthlyInvestment,
+    monthlyWithdrawal,
+    retirementYear,
+    delayYears,
+    annualReturnRate,
+    inflation
+  );
+  
+  // Calculate years until exhaustion
+  const yearsUntilExhaustion = calculateYearsUntilExhaustion(
+    result.delayedCapitalAtRetirement,
+    monthlyWithdrawal * 12,
+    annualReturnRate * conservativeMultiplier, // Conservative return estimate
+    1,
+    100
+  );
+  
+  // Calculate exhaustion age
+  const exhaustionAge = delayedRetirementAge + yearsUntilExhaustion;
+  
+  return {
+    lastsUntilTargetAge: exhaustionAge >= targetAge,
+    delayedRetirementAge,
+    exhaustionAge
+  };
+};
+
+/**
+ * Calculate effective withdrawal amount with inflation adjustment if needed
+ * @param monthlyRetirementWithdrawal Monthly withdrawal amount
+ * @param inflationAdjustedWithdrawal Whether withdrawal is adjusted for inflation
+ * @param withdrawalMode Withdrawal mode ('amount', 'rate', or 'age')
+ * @param inflation Annual inflation rate (percentage)
+ * @param yearsUntilRetirement Years until retirement
+ * @returns Effective monthly withdrawal amount
+ */
+export const calculateEffectiveWithdrawalAmount = (
+  monthlyRetirementWithdrawal: number,
+  inflationAdjustedWithdrawal: boolean = false,
+  withdrawalMode: string = 'amount',
+  inflation: number = 2,
+  yearsUntilRetirement: number = 0
+): number => {
+  if (inflationAdjustedWithdrawal && withdrawalMode === "amount" && inflation > 0) {
+    // Calculate inflation-adjusted withdrawal using compound interest formula
+    return monthlyRetirementWithdrawal * Math.pow(1 + inflation / 100, yearsUntilRetirement);
+  }
+  return monthlyRetirementWithdrawal;
+};
+
+/**
+ * Calculate recommended withdrawal reduction to make capital last until target age
+ * @param capitalAtRetirement Capital amount at retirement
+ * @param currentMonthlyWithdrawal Current monthly withdrawal amount
+ * @param annualReturnRate Annual return rate (percentage)
+ * @param retirementStartAge Age at retirement start
+ * @param targetAge Target age for funds to last until (default: 95)
+ * @param conservativeMultiplier Adjustment factor for conservative return estimate (default: 0.7)
+ * @returns Object with optimal monthly withdrawal and reduction details
+ */
+export const calculateWithdrawalReduction = (
+  capitalAtRetirement: number,
+  currentMonthlyWithdrawal: number,
+  annualReturnRate: number,
+  retirementStartAge: number,
+  targetAge: number = 95,
+  conservativeMultiplier: number = 0.7
+): {
+  optimalRate: number;
+  optimalMonthlyWithdrawal: number;
+  reductionAmount: number;
+  reductionPercentage: number;
+  reductionNeeded: boolean;
+} => {
+  // Calculate optimal withdrawal rate
+  const optimalRate = calculateOptimalWithdrawalRate(
+    capitalAtRetirement,
+    annualReturnRate,
+    retirementStartAge,
+    targetAge,
+    conservativeMultiplier
+  );
+
+  // Calculate optimal monthly withdrawal
+  const optimalAnnualWithdrawal = capitalAtRetirement * optimalRate;
+  const optimalMonthlyWithdrawal = optimalAnnualWithdrawal / 12;
+
+  // Calculate reduction details
+  const reductionNeeded = currentMonthlyWithdrawal > optimalMonthlyWithdrawal;
+  const reductionAmount = reductionNeeded 
+    ? Math.max(0, currentMonthlyWithdrawal - optimalMonthlyWithdrawal) 
+    : 0;
+  const reductionPercentage = reductionNeeded
+    ? Math.round((reductionAmount / currentMonthlyWithdrawal) * 100)
+    : 0;
+
+  return {
+    optimalRate,
+    optimalMonthlyWithdrawal: Math.round(optimalMonthlyWithdrawal),
+    reductionAmount: Math.round(reductionAmount),
+    reductionPercentage,
+    reductionNeeded
+  };
+};
+
+/**
+ * Calculate the optimal number of years to delay retirement to sustain capital until target age
+ * @param initialCapital Initial capital amount
+ * @param monthlyInvestment Monthly investment amount
+ * @param monthlyWithdrawal Monthly withdrawal amount
+ * @param retirementYear Planned retirement year
+ * @param annualReturnRate Annual return rate (percentage)
+ * @param inflation Annual inflation rate (percentage)
+ * @param currentAge Current age
+ * @param currentYear Current year (default: current year)
+ * @param withdrawalMode Withdrawal mode ('amount', 'rate', or 'age')
+ * @param maxAge Maximum age for planning (default: 95)
+ * @param riskLevel Risk level ('High', 'Medium', or 'Low')
+ * @returns Optimal number of years to delay retirement
+ */
+export const calculateOptimalDelayYears = (
+  initialCapital: number,
+  monthlyInvestment: number,
+  monthlyWithdrawal: number,
+  retirementYear: number,
+  annualReturnRate: number,
+  inflation: number,
+  currentAge: number,
+  currentYear: number = new Date().getFullYear(),
+  withdrawalMode: string = 'amount',
+  maxAge: number = 95,
+  riskLevel: 'High' | 'Medium' | 'Low' = 'Medium'
+): number => {
+  // Handle case when necessary data is missing
+  if (!initialCapital || !monthlyWithdrawal || !annualReturnRate) {
+    return riskLevel === 'High' ? 4 : riskLevel === 'Medium' ? 2 : 0;
+  }
+
+  const targetMaxAge = withdrawalMode === "age" ? maxAge : 95;
+  
+  // Calculate the year when user reaches target max age
+  const targetYear = currentYear + (targetMaxAge - currentAge);
+  
+  // Check if capital is already exhausted at target age with current plan
+  const capitalEvolution = [];
+  let scenario = {
+    capital: initialCapital,
+    investment: monthlyInvestment,
+    withdrawal: monthlyWithdrawal
+  };
+  
+  // Simulate from current year to target year with original retirement plan
+  for (let year = currentYear; year <= targetYear; year++) {
+    scenario = calculateDelayedScenario(
+      scenario.capital,
+      scenario.investment,
+      scenario.withdrawal,
+      retirementYear,
+      0, // No delay
+      year,
+      annualReturnRate,
+      inflation
+    );
+    
+    capitalEvolution.push({
+      year,
+      capital: scenario.capital
+    });
+  }
+  
+  // Check if capital is exhausted at target age
+  const finalCapital = capitalEvolution[capitalEvolution.length - 1].capital;
+  
+  // If capital isn't exhausted at target age, no need for delay
+  if (finalCapital > 0) {
+    return 0;
+  }
+  
+  // If capital gets exhausted, calculate various delay scenarios
+  for (let delayYears = 1; delayYears <= 5; delayYears++) {
+    // Initialize scenario for this delay option
+    scenario = {
+      capital: initialCapital,
+      investment: monthlyInvestment,
+      withdrawal: monthlyWithdrawal
+    };
+    
+    const delayedRetirementYear = retirementYear + delayYears;
+    const delayCapitalEvolution = [];
+    
+    // Simulate from current year to target year with delayed retirement
+    for (let year = currentYear; year <= targetYear; year++) {
+      scenario = calculateDelayedScenario(
+        scenario.capital,
+        scenario.investment,
+        scenario.withdrawal,
+        retirementYear,
+        delayYears,
+        year,
+        annualReturnRate,
+        inflation
+      );
+      
+      delayCapitalEvolution.push({
+        year,
+        capital: scenario.capital
+      });
+    }
+    
+    // Check if capital remains positive at target age with this delay
+    const delayFinalCapital = delayCapitalEvolution[delayCapitalEvolution.length - 1].capital;
+    
+    if (delayFinalCapital > 0) {
+      return delayYears;
+    }
+  }
+  
+  // If we reach here, even 5 years delay isn't enough, so recommend maximum
+  return 5;
+};
+
+/**
+ * Calculate suggested withdrawal rate and monthly withdrawal amount
+ * @param currentMonthlyWithdrawal Current monthly withdrawal amount
+ * @param currentWithdrawalRate Current withdrawal rate (percentage)
+ * @param safeWithdrawalRate Safe withdrawal rate (percentage)
+ * @returns Suggested withdrawal rate and monthly amount
+ */
+export const calculateSuggestedWithdrawal = (
+  currentMonthlyWithdrawal: number,
+  currentWithdrawalRate: number,
+  safeWithdrawalRate: number
+): {
+  suggestedWithdrawalRate: number;
+  suggestedMonthlyWithdrawal: number;
+} => {
+  const suggestedWithdrawalRate = Math.min(safeWithdrawalRate, currentWithdrawalRate * 0.85);
+  const suggestedMonthlyWithdrawal = currentMonthlyWithdrawal * (suggestedWithdrawalRate / currentWithdrawalRate);
+  
+  return {
+    suggestedWithdrawalRate,
+    suggestedMonthlyWithdrawal: Math.round(suggestedMonthlyWithdrawal)
+  };
+};
+
+/**
+ * Assess retirement age optimization opportunities
+ * @param retirementStartAge Retirement start age
+ * @param currentAge Current age
+ * @param capitalAtRetirement Capital amount at retirement
+ * @param totalNeededCapital Total capital needed for retirement
+ * @param effectiveMonthlyWithdrawal Effective monthly withdrawal amount
+ * @returns Assessment object with assessment type and message
+ */
+export const calculateOptimalAssessment = (
+  retirementStartAge: number,
+  currentAge: number,
+  capitalAtRetirement: number,
+  totalNeededCapital: number,
+  effectiveMonthlyWithdrawal: number
+): {
+  assessment: "risky" | "moderate" | "soon" | "solid";
+  message: string;
+} => {
+  const yearsToRetirement = retirementStartAge - currentAge;
+  const capitalRatio = capitalAtRetirement / totalNeededCapital;
+  
+  // Calculate withdrawal rate
+  const withdrawalRate = (effectiveMonthlyWithdrawal * 12 / capitalAtRetirement) * 100;
+  
+  if (capitalRatio < 0.9) {
+    return {
+      assessment: "risky",
+      message: "Your auto-calculated retirement age may be optimistic. Consider increasing savings or adjusting your withdrawal plans."
+    };
+  } else if (withdrawalRate > 4) {
+    return {
+      assessment: "moderate",
+      message: "The withdrawal rate is higher than the recommended 4%. This retirement age is financially possible but carries some long-term risk."
+    };
+  } else if (yearsToRetirement < 5) {
+    return {
+      assessment: "soon",
+      message: "Good news! Financial independence is within reach in the next few years."
+    };
+  } else {
+    return {
+      assessment: "solid",
+      message: "The calculated retirement age provides a solid financial foundation with a safe withdrawal rate."
+    };
+  }
+};
+
+/**
+ * Calculate detailed investment impact on retirement capital and funding duration
+ * @param monthlyInvestment Current monthly investment amount
+ * @param investmentIncrease Investment increase details with totalBenefit
+ * @param capitalAtRetirement Capital amount at retirement
+ * @param totalNeededCapital Total capital needed for retirement
+ * @param effectiveMonthlyWithdrawal Effective monthly withdrawal amount
+ * @param annualReturnRate Annual return rate (percentage)
+ * @param inflation Annual inflation rate (percentage)
+ * @param retirementStartAge Age at retirement start
+ * @returns Detailed impact of the investment increase
+ */
+export const calculateInvestmentImpact = (
+  monthlyInvestment: number,
+  investmentIncrease: {
+    monthlyIncrease: number;
+    totalBenefit: number;
+  },
+  capitalAtRetirement: number,
+  totalNeededCapital: number,
+  effectiveMonthlyWithdrawal: number,
+  annualReturnRate: number,
+  inflation: number,
+  retirementStartAge: number
+): {
+  improvedCapitalAtRetirement: number;
+  exhaustionAge: number;
+  improvedExhaustionAge: number;
+  yearsGained: number;
+  yearlyCapitalIncrease: number;
+  percentageIncrease: number;
+  capitalGap: number;
+  gapPercentage: number;
+  additionalYears: number;
+} => {
+  // Default inflation if not provided
+  const inflationRate = inflation ?? 2;
+  
+  // Calculate improved capital at retirement
+  const improvedCapitalAtRetirement = capitalAtRetirement + investmentIncrease.totalBenefit;
+  
+  // Calculate exhaustion ages using existing function
+  const exhaustionAge = calculateExhaustionAge(
+    capitalAtRetirement,
+    effectiveMonthlyWithdrawal,
+    annualReturnRate,
+    inflationRate,
+    retirementStartAge,
+    0.7 // Conservative multiplier
+  );
+  
+  const improvedExhaustionAge = calculateExhaustionAge(
+    improvedCapitalAtRetirement,
+    effectiveMonthlyWithdrawal,
+    annualReturnRate,
+    inflationRate,
+    retirementStartAge,
+    0.7 // Conservative multiplier
+  );
+  
+  // Calculate years gained
+  const yearsGained = improvedExhaustionAge - exhaustionAge;
+  
+  // Estimate the yearly capital increase from investing
+  const yearlyCapitalIncrease = monthlyInvestment * 12 * (1 + annualReturnRate / 100);
+  
+  // Calculate percentage increase in monthly investment
+  const percentageIncrease = (investmentIncrease.monthlyIncrease / monthlyInvestment) * 100;
+  
+  // Calculate capital gap
+  const capitalGap = totalNeededCapital - capitalAtRetirement;
+  const gapPercentage = (capitalGap / totalNeededCapital) * 100;
+  
+  // Calculate additional years of retirement funding
+  const additionalYears = calculateAdditionalYears(
+    effectiveMonthlyWithdrawal,
+    investmentIncrease.totalBenefit
+  );
+  
+  return {
+    improvedCapitalAtRetirement,
+    exhaustionAge,
+    improvedExhaustionAge,
+    yearsGained,
+    yearlyCapitalIncrease,
+    percentageIncrease,
+    capitalGap,
+    gapPercentage,
+    additionalYears
+  };
+};
+
+/**
+ * Calculate ideal withdrawal amount based on the safe withdrawal rate (4% rule)
+ * @param capitalAtRetirement Capital amount at retirement
+ * @param safeWithdrawalRatePercentage Safe withdrawal rate percentage (default: 4%)
+ * @returns Object with annual and monthly withdrawal amounts and the rate
+ */
+export const calculateIdealWithdrawal = (
+  capitalAtRetirement: number,
+  safeWithdrawalRatePercentage: number = 4
+): {
+  annualWithdrawal: number;
+  monthlyWithdrawal: number;
+  withdrawalRate: number;
+} => {
+  const withdrawalRate = safeWithdrawalRatePercentage / 100;
+  const annualWithdrawal = capitalAtRetirement * withdrawalRate;
+  const monthlyWithdrawal = annualWithdrawal / 12;
+  
+  return {
+    annualWithdrawal,
+    monthlyWithdrawal,
+    withdrawalRate
+  };
+};
+
+/**
+ * Calculate comprehensive retirement risk assessment based on multiple factors
+ * @param capitalAtRetirement Capital amount at retirement
+ * @param totalNeededCapital Total capital needed for retirement
+ * @param monthlyRetirementWithdrawal Monthly withdrawal amount during retirement
+ * @param annualReturnRate Annual return rate (percentage)
+ * @param inflation Annual inflation rate (percentage)
+ * @param retirementStartAge Age at retirement start
+ * @param currentAge Current age
+ * @param lifeExpectancy Expected life expectancy
+ * @param monthlyInvestment Current monthly investment
+ * @param targetAge Target age for capital to last (default: 95)
+ * @returns Detailed risk assessment with level and recommendations
+ */
+export const calculateRetirementRisk = (
+  capitalAtRetirement: number,
+  totalNeededCapital: number,
+  monthlyRetirementWithdrawal: number,
+  annualReturnRate: number,
+  inflation: number,
+  retirementStartAge: number,
+  currentAge: number,
+  lifeExpectancy: number,
+  monthlyInvestment: number,
+  targetAge: number = 95
+): {
+  riskLevel: 'Low' | 'Moderate' | 'Significant' | 'High' | 'Critical';
+  riskScore: number;
+  factors: {
+    capitalRatio: number;
+    withdrawalRiskFactor: number;
+    longevityRiskFactor: number;
+    investmentShortfallFactor: number;
+    volatilityRiskFactor: number;
+  };
+  description: string;
+  recommendationPriority: 'Low' | 'Medium' | 'High' | 'Urgent' | 'Critical';
+  primaryRecommendation: string;
+  secondaryRecommendations: string[];
+} => {
+  // Default inflation if not provided
+  const inflationRate = inflation || 2;
+  const yearsToRetirement = retirementStartAge - currentAge;
+  
+  // Calculate capital adequacy ratio (capital at retirement / needed capital)
+  const capitalRatio = capitalAtRetirement / totalNeededCapital;
+  
+  // Calculate effective withdrawal rate considering inflation
+  const effectiveMonthlyWithdrawal = calculateEffectiveWithdrawalAmount(
+    monthlyRetirementWithdrawal,
+    true, // Inflation-adjusted
+    'amount',
+    inflationRate,
+    yearsToRetirement
+  );
+  
+  // Calculate withdrawal rate as percentage of capital
+  const withdrawalRate = (effectiveMonthlyWithdrawal * 12 / capitalAtRetirement) * 100;
+  
+  // Calculate withdrawal risk factor (4% rule reference)
+  const withdrawalRiskFactor = withdrawalRate / 4;
+  
+  // Calculate longevity risk factor (risk of outliving money)
+  const longevityRiskFactor = targetAge > calculateExhaustionAge(
+    capitalAtRetirement,
+    effectiveMonthlyWithdrawal,
+    annualReturnRate,
+    inflationRate,
+    retirementStartAge,
+    0.7 // Conservative multiplier
+  ) ? 0 : 1;
+  
+  // Calculate optimal withdrawal reduction
+  const withdrawalReduction = calculateWithdrawalReduction(
+    capitalAtRetirement,
+    effectiveMonthlyWithdrawal,
+    annualReturnRate,
+    inflationRate,
+    retirementStartAge,
+    targetAge
+  );
+  
+  // Calculate recommended investment increase
+  const recommendedInvestment = calculateRecommendedInvestment(
+    monthlyInvestment,
+    capitalAtRetirement,
+    totalNeededCapital,
+    yearsToRetirement,
+    annualReturnRate,
+    monthlyRetirementWithdrawal,
+    targetAge,
+    currentAge,
+    retirementStartAge
+  );
+  
+  // Investment shortfall factor
+  const investmentShortfallFactor = recommendedInvestment.realistic.percentageIncrease / 100;
+  
+  // Volatility risk factor based on return rate vs. inflation (real return stability)
+  const realReturnRate = ((1 + annualReturnRate / 100) / (1 + inflationRate / 100) - 1) * 100;
+  const volatilityRiskFactor = realReturnRate < 2 ? 2 - realReturnRate : 0;
+  
+  // Calculate overall risk score (weighted sum of factors)
+  // First, normalize each factor to a 0-1 scale
+  
+  // 1. Capital Adequacy (0-1)
+  // - 0 means we have 150% or more of needed capital (very safe)
+  // - 1 means we have 50% or less of needed capital (very risky)
+  const normalizedCapitalRatio = Math.max(0, Math.min(1, (1.5 - capitalRatio) / 1));
+  
+  // 2. Withdrawal Risk (0-1)
+  // - 0 means withdrawal rate is 3% or less (very safe)
+  // - 1 means withdrawal rate is 7% or more (very risky)
+  const normalizedWithdrawalRisk = Math.max(0, Math.min(1, (withdrawalRate - 3) / 4));
+  
+  // 3. Longevity Risk (0-1)
+  // - 0 means funds last beyond target age
+  // - 1 means funds are depleted 10 or more years before target age
+  const normalizedLongevityRisk = Math.max(0, Math.min(1, longevityRiskFactor));
+  
+  // 4. Investment Shortfall (0-1)
+  // - 0 means no increase needed
+  // - 1 means 100% or more increase needed
+  const normalizedInvestmentShortfall = Math.max(0, Math.min(1, investmentShortfallFactor));
+  
+  // 5. Volatility Risk (0-1)
+  // - 0 means real return rate is 4% or higher
+  // - 1 means real return rate is 0% or lower
+  const normalizedVolatilityRisk = Math.max(0, Math.min(1, (4 - realReturnRate) / 4));
+  
+  // Calculate weighted risk score (0-10 scale)
+  const riskScore = (
+    (normalizedCapitalRatio * 0.35) +        // 35% weight - Capital adequacy is most important
+    (normalizedWithdrawalRisk * 0.25) +      // 25% weight - Withdrawal sustainability
+    (normalizedLongevityRisk * 0.20) +       // 20% weight - Risk of outliving money
+    (normalizedInvestmentShortfall * 0.15) + // 15% weight - Investment gap
+    (normalizedVolatilityRisk * 0.05)        // 5% weight - Market volatility impact
+  ) * 10; // Scale to 0-10
+  
+  // Determine risk level based on score with more appropriate thresholds
+  let riskLevel: 'Low' | 'Moderate' | 'Significant' | 'High' | 'Critical';
+  let description: string;
+  let recommendationPriority: 'Low' | 'Medium' | 'High' | 'Urgent' | 'Critical';
+  let primaryRecommendation: string;
+  let secondaryRecommendations: string[] = [];
+  
+  if (riskScore < 2.5) {
+    riskLevel = 'Low';
+    description = 'Your retirement plan is very secure. You have more than adequate capital, sustainable withdrawal rates, and a strong safety margin.';
+    recommendationPriority = 'Low';
+    primaryRecommendation = 'Maintain your current strategy while monitoring annually.';
+    secondaryRecommendations = [
+      'Consider more conservative investments to preserve wealth',
+      'Explore options for legacy planning or charitable giving',
+      'Review tax optimization strategies'
+    ];
+  } else if (riskScore < 4.5) {
+    riskLevel = 'Moderate';
+    description = 'Your retirement plan is generally sound but has room for optimization. Minor adjustments could further strengthen your position.';
+    recommendationPriority = 'Medium';
+    primaryRecommendation = capitalRatio < 1.2
+      ? `Consider increasing monthly investments by ${Math.round(recommendedInvestment.realistic.monthlyAmount - monthlyInvestment)} to build additional safety margin.`
+      : 'Review your investment allocation to ensure it aligns with your goals.';
+    secondaryRecommendations = [
+      'Consider small adjustments to planned withdrawal rates',
+      'Review investment diversification',
+      'Plan for unexpected expenses'
+    ];
+  } else if (riskScore < 6.5) {
+    riskLevel = 'Significant';
+    description = 'Your retirement plan shows some important areas needing attention. While not critical, addressing these could significantly improve your retirement security.';
+    recommendationPriority = 'High';
+    primaryRecommendation = withdrawalRate > 5
+      ? `Consider reducing your planned monthly withdrawal from ${monthlyRetirementWithdrawal} to ${withdrawalReduction.optimalMonthlyWithdrawal}.`
+      : `Increase your monthly investment by ${Math.round(recommendedInvestment.realistic.monthlyAmount - monthlyInvestment)} to strengthen your position.`;
+    secondaryRecommendations = [
+      'Review retirement expense assumptions',
+      'Consider part-time work in early retirement',
+      'Explore ways to increase investment returns safely'
+    ];
+  } else if (riskScore < 8.5) {
+    riskLevel = 'High';
+    description = 'Your retirement plan faces substantial risks that require attention. Without changes, you may face challenges maintaining your desired lifestyle in retirement.';
+    recommendationPriority = 'Urgent';
+    primaryRecommendation = capitalRatio < 0.8
+      ? `Increase your monthly investment by at least ${Math.round(recommendedInvestment.realistic.monthlyAmount - monthlyInvestment)} and consider delaying retirement.`
+      : `Reduce your planned monthly withdrawal to ${withdrawalReduction.optimalMonthlyWithdrawal} to ensure sustainability.`;
+    secondaryRecommendations = [
+      'Consider delaying retirement by 2-3 years',
+      'Review and reduce planned retirement expenses',
+      'Explore additional income sources'
+    ];
+  } else {
+    riskLevel = 'Critical';
+    description = 'Your retirement plan needs immediate attention. Current projections suggest significant shortfalls that require substantial changes to ensure retirement security.';
+    recommendationPriority = 'Critical';
+    primaryRecommendation = `Increase monthly investments to ${recommendedInvestment.ideal.monthlyAmount} and consider delaying retirement by ${Math.max(3, Math.ceil((riskScore - 8) * 2))} years.`;
+    secondaryRecommendations = [
+      'Significantly reduce planned retirement expenses',
+      'Consider major changes to retirement lifestyle expectations',
+      'Seek professional financial planning assistance',
+      'Explore additional income sources or part-time work'
+    ];
+  }
+  
+  return {
+    riskLevel,
+    riskScore,
+    factors: {
+      capitalRatio,
+      withdrawalRiskFactor: normalizedWithdrawalRisk,
+      longevityRiskFactor: normalizedLongevityRisk,
+      investmentShortfallFactor: normalizedInvestmentShortfall,
+      volatilityRiskFactor: normalizedVolatilityRisk
+    },
+    description,
+    recommendationPriority,
+    primaryRecommendation,
+    secondaryRecommendations
+  };
 }; 

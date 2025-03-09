@@ -1,8 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { FormatAmountFunction } from '../types';
+import { FormatAmountFunction, WithdrawalMode } from '../types';
 import { colors, typography, spacing, components, cx } from '../../../styles/styleGuide';
 import { SectionTitle, Card } from '../../common/StyledComponents';
-import { calculateDelayedScenario } from '../../../utils/financialCalculations';
+import { 
+  calculateDelayedScenario,
+  calculateOptimalDelayYears,
+  calculateSuggestedWithdrawal
+} from '../../../utils/financialCalculations';
 import { useTheme } from '../../../context/ThemeContext';
 import Modal from '../../common/Modal';
 
@@ -52,6 +56,21 @@ interface RecommendationPanelProps {
   };
   currentAge: number;
   risk: 'High' | 'Medium' | 'Low';
+  riskAssessment?: {
+    riskLevel: 'Low' | 'Moderate' | 'Significant' | 'High' | 'Critical';
+    riskScore: number;
+    factors: {
+      capitalRatio: number;
+      withdrawalRiskFactor: number;
+      longevityRiskFactor: number;
+      investmentShortfallFactor: number;
+      volatilityRiskFactor: number;
+    };
+    description: string;
+    recommendationPriority: 'Low' | 'Medium' | 'High' | 'Urgent' | 'Critical';
+    primaryRecommendation: string;
+    secondaryRecommendations: string[];
+  };
 }
 
 // Update Modal component to match RiskAssessmentCard tooltip style
@@ -297,110 +316,127 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
   params,
   statistics,
   currentAge,
-  risk
+  risk,
+  riskAssessment
 }) => {
   const { darkMode } = useTheme();
-  // Calculate optimalDelayYears using the same logic as RetirementDelayCard
-  const calculateOptimalDelayYears = useMemo(() => {
-    // Handle case when necessary data is missing
-    if (!capitalAtRetirement || !totalNeededCapital || !monthlyRetirementWithdrawal || !annualReturnRate) {
-      return risk === 'High' ? 4 : risk === 'Medium' ? 2 : 0;
-    }
-
-    const currentYear = new Date().getFullYear();
-    const retirementYear = statistics.calculatedRetirementStartYear;
-    const targetMaxAge = params.withdrawalMode === "age" ? params.maxAge : 95;
-    
-    // Calculate the year when user reaches target max age
-    const targetYear = currentYear + (targetMaxAge - currentAge);
-    
-    // Check if capital is already exhausted at target age with current plan
-    const capitalEvolution = [];
-    let scenario = {
-      capital: params.initialCapital,
-      investment: params.monthlyInvestment,
-      withdrawal: monthlyRetirementWithdrawal
-    };
-    
-    // Simulate from current year to target year with original retirement plan
-    for (let year = currentYear; year <= targetYear; year++) {
-      scenario = calculateDelayedScenario(
-        scenario.capital,
-        scenario.investment,
-        scenario.withdrawal,
-        retirementYear,
-        0, // No delay
-        year,
-        annualReturnRate,
-        params.inflation
-      );
-      
-      capitalEvolution.push({
-        year,
-        capital: scenario.capital
-      });
-    }
-    
-    // Check if capital is exhausted at target age
-    const finalCapital = capitalEvolution[capitalEvolution.length - 1].capital;
-    
-    // If capital isn't exhausted at target age, no need for delay
-    if (finalCapital > 0) {
-      return 0;
-    }
-    
-    // If capital gets exhausted, calculate various delay scenarios
-    for (let delayYears = 1; delayYears <= 5; delayYears++) {
-      // Initialize scenario for this delay option
-      scenario = {
-        capital: params.initialCapital,
-        investment: params.monthlyInvestment,
-        withdrawal: monthlyRetirementWithdrawal
-      };
-      
-      const delayedRetirementYear = retirementYear + delayYears;
-      const delayCapitalEvolution = [];
-      
-      // Simulate from current year to target year with delayed retirement
-      for (let year = currentYear; year <= targetYear; year++) {
-        scenario = calculateDelayedScenario(
-          scenario.capital,
-          scenario.investment,
-          scenario.withdrawal,
-          retirementYear,
-          delayYears,
-          year,
-          annualReturnRate,
-          params.inflation
-        );
-        
-        delayCapitalEvolution.push({
-          year,
-          capital: scenario.capital
-        });
-      }
-      
-      // Check if capital remains positive at target age with this delay
-      const delayFinalCapital = delayCapitalEvolution[delayCapitalEvolution.length - 1].capital;
-      
-      if (delayFinalCapital > 0) {
-        return delayYears;
-      }
-    }
-    
-    // If we reach here, even 5 years delay isn't enough, so recommend maximum
-    return 5;
-  }, [risk, capitalAtRetirement, totalNeededCapital, monthlyRetirementWithdrawal, annualReturnRate, params, statistics, currentAge]);
-
-  const optimalDelayYears = calculateOptimalDelayYears;
-
-  // Calculate suggested values
-  const suggestedWithdrawalRate = Math.min(withdrawalRate.safe, withdrawalRate.current * 0.85);
-  const suggestedMonthlyWithdrawal = monthlyRetirementWithdrawal * (suggestedWithdrawalRate / withdrawalRate.current);
   
+  // Use centralized function for optimal delay years calculation
+  const optimalDelayYears = useMemo(() => {
+    return calculateOptimalDelayYears(
+      params.initialCapital,
+      params.monthlyInvestment,
+      monthlyRetirementWithdrawal,
+      statistics.calculatedRetirementStartYear,
+      annualReturnRate,
+      params.inflation,
+      currentAge,
+      new Date().getFullYear(),
+      params.withdrawalMode,
+      params.maxAge,
+      risk
+    );
+  }, [
+    params.initialCapital,
+    params.monthlyInvestment,
+    monthlyRetirementWithdrawal,
+    statistics.calculatedRetirementStartYear,
+    annualReturnRate,
+    params.inflation,
+    currentAge,
+    params.withdrawalMode,
+    params.maxAge,
+    risk
+  ]);
+
+  // Use centralized function for suggested withdrawal calculation
+  const withdrawalSuggestion = useMemo(() => {
+    return calculateSuggestedWithdrawal(
+      monthlyRetirementWithdrawal,
+      withdrawalRate.current,
+      withdrawalRate.safe
+    );
+  }, [monthlyRetirementWithdrawal, withdrawalRate.current, withdrawalRate.safe]);
+
+  const suggestedWithdrawalRate = withdrawalSuggestion.suggestedWithdrawalRate;
+  const suggestedMonthlyWithdrawal = withdrawalSuggestion.suggestedMonthlyWithdrawal;
+
   // Check if withdrawal rate is high (greater than 6%)
   const isWithdrawalRateSafe = withdrawalRate.isSafe;
   const isWithdrawalRateHigh = withdrawalRate.current > 6;
+
+  // Map legacy risk levels to new standardized levels
+  const mapRiskLevel = (legacyRisk: 'High' | 'Medium' | 'Low'): 'Critical' | 'High' | 'Significant' | 'Moderate' | 'Low' => {
+    switch(legacyRisk) {
+      case 'High':
+        return 'Critical';
+      case 'Medium':
+        return 'Significant';
+      case 'Low':
+        return 'Low';
+    }
+  };
+
+  // Get risk level from assessment or map from legacy
+  const effectiveRiskLevel = riskAssessment?.riskLevel || mapRiskLevel(risk);
+
+  // Get risk color classes based on standardized risk level
+  const getRiskColorClasses = (level: string, isDark: boolean = false) => {
+    switch(level) {
+      case 'Critical':
+        return isDark ? "bg-red-900/50 border-red-700 text-red-300" : "bg-red-50 border-red-200 text-red-700";
+      case 'High':
+        return isDark ? "bg-red-900/40 border-red-700 text-red-300" : "bg-red-50 border-red-200 text-red-700";
+      case 'Significant':
+        return isDark ? "bg-yellow-900/50 border-yellow-700 text-yellow-300" : "bg-yellow-50 border-yellow-200 text-yellow-700";
+      case 'Moderate':
+        return isDark ? "bg-yellow-900/40 border-yellow-700 text-yellow-300" : "bg-yellow-50 border-yellow-200 text-yellow-700";
+      case 'Low':
+        return isDark ? "bg-green-900/50 border-green-700 text-green-300" : "bg-green-50 border-green-200 text-green-700";
+      default:
+        return isDark ? "bg-gray-900/50 border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-700";
+    }
+  };
+
+  // Get priority label based on risk level
+  const getPriorityLabel = (level: string): string => {
+    switch(level) {
+      case 'Critical':
+      case 'High':
+        return 'Critical';
+      case 'Significant':
+      case 'Moderate':
+        return 'Recommended';
+      case 'Low':
+        return 'Optional';
+      default:
+        return 'Review';
+    }
+  };
+
+  // Get recommendation priority based on risk level
+  const getRecommendationPriority = (level: string): 'High' | 'Medium' | 'Low' => {
+    switch(level) {
+      case 'Critical':
+      case 'High':
+        return 'High';
+      case 'Significant':
+      case 'Moderate':
+        return 'Medium';
+      case 'Low':
+        return 'Low';
+      default:
+        return 'Medium';
+    }
+  };
+
+  // Update recommendations based on risk level
+  const enhancedRecommendations = useMemo(() => {
+    return recommendations.map(rec => ({
+      ...rec,
+      priority: getRecommendationPriority(effectiveRiskLevel)
+    }));
+  }, [recommendations, effectiveRiskLevel]);
 
   return (
     <Card className="overflow-hidden lg:col-span-2">
@@ -430,9 +466,9 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
             "text-xs font-medium",
             darkMode ? "text-indigo-300" : "text-indigo-700"
           )}>
-            {withdrawalRate.current <= 4 ? 'Top Priorities' : 
-             withdrawalRate.current <= 6 ? 'Recommended Actions to Improve Security' : 
-             'Critical Actions Required'}
+            {effectiveRiskLevel === 'Critical' || effectiveRiskLevel === 'High' ? 'Critical Actions Required' :
+             effectiveRiskLevel === 'Significant' || effectiveRiskLevel === 'Moderate' ? 'Recommended Actions to Improve Security' :
+             'Top Priorities'}
           </div>
           <div className={cx(
             "text-xs font-medium flex items-center gap-1",
@@ -450,43 +486,20 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
         </div>
         
         {/* Show top 3 recommendations (highest priority first) */}
-        {recommendations
+        {enhancedRecommendations
           .slice()
           .sort((a, b) => {
             const priorityOrder = { 'High': 0, 'Medium': 1, 'Low': 2 };
             return priorityOrder[a.priority] - priorityOrder[b.priority];
           })
           .slice(0, 3)
-          .map((rec, index) => {
-            // Modify recommendation if it's about delaying retirement
-            if (rec.change.toLowerCase().includes('delay') && rec.change.toLowerCase().includes('retirement')) {
-              return (
-                <RecommendationItem 
-                  key={index} 
-                  recommendation={{
-                    ...rec,
-                    change: optimalDelayYears > 0 
-                      ? `Delay retirement by ${optimalDelayYears} ${optimalDelayYears === 1 ? 'year' : 'years'}`
-                      : rec.change,
-                    impact: optimalDelayYears > 0
-                      ? `This delay will significantly improve your retirement security`
-                      : rec.impact,
-                    impact_detail: optimalDelayYears > 0
-                      ? `Consider part-time work or consulting during this period to maintain income`
-                      : rec.impact_detail
-                  }}
-                  index={index}
-                />
-              );
-            }
-            return (
-              <RecommendationItem 
-                key={index} 
-                recommendation={rec} 
-                index={index}
-              />
-            );
-          })
+          .map((rec, index) => (
+            <RecommendationItem 
+              key={index} 
+              recommendation={rec} 
+              index={index}
+            />
+          ))
         }
 
         <div className={cx(

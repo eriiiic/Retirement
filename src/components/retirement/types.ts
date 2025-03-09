@@ -179,6 +179,7 @@ export interface StatusInfo {
   isOnTrack: boolean;
   statusText?: string;
   statusClass?: string;
+  message?: string;
 }
 
 /**
