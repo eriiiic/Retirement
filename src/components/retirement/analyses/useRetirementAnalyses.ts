@@ -11,7 +11,13 @@ import {
   calculateTimeToRetirement,
   calculateYearsUntilExhaustion,
   calculateDelayedScenario,
-  calculateDelayedRetirementImpact
+  calculateDelayedRetirementImpact,
+  calculateOptimalWithdrawalRate,
+  calculateReturnImprovementImpact,
+  calculateAdditionalInvestmentImpact,
+  calculateEffectiveWithdrawalAmount,
+  calculateWithdrawalReduction,
+  calculateOptimalAssessment
 } from '../../../utils/financialCalculations';
 
 export interface AnalysesResult {
@@ -31,6 +37,13 @@ export interface AnalysesResult {
     improvementRate: number;
     benefit: number;
     newCapital: number;
+  };
+  withdrawalReduction: {
+    optimalRate: number;
+    optimalMonthlyWithdrawal: number;
+    reductionAmount: number;
+    reductionPercentage: number;
+    reductionNeeded: boolean;
   };
   totalBenefitAtRetirement: number;
   newCapitalAtRetirement: number;
@@ -73,46 +86,18 @@ export const useRetirementAnalyses = (
   params: SimulatorParams,
   formatDisplayValue: (value: number) => string
 ): AnalysesResult => {
-  // Helper function to get effective withdrawal amount considering inflation adjustment
+  // Helper function that uses the centralized calculation
   const getEffectiveWithdrawalAmount = useCallback((yearsToRetirement: number) => {
-    // For display and calculation purposes in analyses, we should use the current value
-    // without future inflation, as that's what the user sees and inputs
-    return params.monthlyRetirementWithdrawal;
-  }, [params.monthlyRetirementWithdrawal]);
+    return calculateEffectiveWithdrawalAmount(
+      params.monthlyRetirementWithdrawal,
+      params.inflationAdjustedWithdrawal,
+      params.withdrawalMode,
+      params.inflation,
+      yearsToRetirement
+    );
+  }, [params.monthlyRetirementWithdrawal, params.inflationAdjustedWithdrawal, params.withdrawalMode, params.inflation]);
 
-  // Helper function to assess retirement age optimization opportunities
-  const calculateOptimalAssessment = useCallback((stats: Statistics, p: SimulatorParams) => {
-    const yearsToRetirement = stats.retirementStartAge - p.currentAge;
-    const capitalRatio = stats.capitalAtRetirement / stats.totalNeededCapital;
-    
-    // Use effective withdrawal amount for withdrawal rate calculation
-    const effectiveMonthlyWithdrawal = getEffectiveWithdrawalAmount(yearsToRetirement);
-    const withdrawalRate = (effectiveMonthlyWithdrawal * 12 / stats.capitalAtRetirement) * 100;
-    
-    if (capitalRatio < 0.9) {
-      return {
-        assessment: "risky",
-        message: "Your auto-calculated retirement age may be optimistic. Consider increasing savings or adjusting your withdrawal plans."
-      };
-    } else if (withdrawalRate > 4) {
-      return {
-        assessment: "moderate",
-        message: "The withdrawal rate is higher than the recommended 4%. This retirement age is financially possible but carries some long-term risk."
-      };
-    } else if (yearsToRetirement < 5) {
-      return {
-        assessment: "soon",
-        message: "Good news! Financial independence is within reach in the next few years."
-      };
-    } else {
-      return {
-        assessment: "solid",
-        message: "The calculated retirement age provides a solid financial foundation with a safe withdrawal rate."
-      };
-    }
-  }, [getEffectiveWithdrawalAmount]);
-
-  // Calculate potential improvements
+  // Use memoization for derived statistics
   return useMemo(() => {
     // Extract common variables to avoid recalculation
     const { 
@@ -136,10 +121,22 @@ export const useRetirementAnalyses = (
     } = params;
     
     const yearsToRetirement = retirementStartAge - currentAge;
-    const retirementDuration = lifeExpectancy - retirementStartAge;
     
     // Get effective withdrawal amount considering inflation
     const effectiveMonthlyWithdrawal = getEffectiveWithdrawalAmount(yearsToRetirement);
+    
+    // Use centralized function for optimal assessment
+    const optimalAssessment = calculateOptimalAssessment(
+      retirementStartAge,
+      currentAge,
+      capitalAtRetirement,
+      totalNeededCapital,
+      effectiveMonthlyWithdrawal
+    );
+    
+    const retirementDuration = lifeExpectancy - retirementStartAge;
+    
+    // Get effective withdrawal amount considering inflation
     const annualWithdrawal = effectiveMonthlyWithdrawal * 12;
     const currentWithdrawalRate = (annualWithdrawal / capitalAtRetirement) * 100;
     const safeWithdrawalRate = 4; // 4% is often considered safe
@@ -154,33 +151,26 @@ export const useRetirementAnalyses = (
                                   currentWithdrawalRate > 6 ? 0.2 :
                                   currentWithdrawalRate > 4 ? 0.15 : 0.1;
     
-    // 1. Investment increase analysis with compound interest
-    const investmentIncrease = monthlyInvestment * recommendedIncreaseRate;
-    const additionalMonthlyTotal = investmentIncrease * 12 * yearsToRetirement;
+    // Use centralized function for investment increase analysis
+    const investmentImpactResult = calculateAdditionalInvestmentImpact(
+      monthlyInvestment,
+      recommendedIncreaseRate,
+      yearsToRetirement,
+      annualReturnRate
+    );
+
+    // Use centralized function for return improvement calculation
+    const returnImprovementCalc = calculateReturnImprovementImpact(
+      monthlyInvestment,
+      yearsToRetirement,
+      annualReturnRate
+    );
     
-    // Calculate future value of additional monthly investments with compound interest
-    const monthlyRate = annualReturnRate / 12 / 100;
-    const months = yearsToRetirement * 12;
-    const futureValueOfAdditional = investmentIncrease * 
-      ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate) * (1 + monthlyRate);
-    
-    // 2. Return improvement impact (0.5% improvement)
-    const returnImprovement = 0.5;
-    const improvedMonthlyRate = (annualReturnRate + returnImprovement) / 12 / 100;
-    const currentMonthlyRate = annualReturnRate / 12 / 100;
-    
-    // Calculate future value with current and improved returns
-    const futureValueCurrentRate = monthlyInvestment * ((Math.pow(1 + currentMonthlyRate, months) - 1) / currentMonthlyRate) * (1 + currentMonthlyRate);
-    const futureValueImprovedRate = monthlyInvestment * ((Math.pow(1 + improvedMonthlyRate, months) - 1) / improvedMonthlyRate) * (1 + improvedMonthlyRate);
-    
-    // Calculate the benefit from improved returns
-    const returnBenefit = futureValueImprovedRate - futureValueCurrentRate;
-    
-    // Update return improvement object
+    // Create the returnImprovementResult with the correct structure
     const returnImprovementResult = {
-      improvementRate: returnImprovement,
-      benefit: returnBenefit,
-      newCapital: statistics.capitalAtRetirement + returnBenefit
+      improvementRate: returnImprovementCalc.improvementRate,
+      benefit: returnImprovementCalc.benefit,
+      newCapital: statistics.capitalAtRetirement + returnImprovementCalc.benefit
     };
     
     // 3. Delay retirement impact - Use shared calculation function for consistency
@@ -199,7 +189,7 @@ export const useRetirementAnalyses = (
     
     // Calculate total benefit from all recommendations
     const totalBenefitAtRetirement = 
-      futureValueOfAdditional + // Benefit from increased investments
+      investmentImpactResult.totalBenefit + // Benefit from increased investments
       returnImprovementResult.benefit + // Benefit from improved returns
       (recommendedDelay > 0 ? yearDelayImpact * recommendedDelay : 0); // Benefit from delay
     
@@ -294,8 +284,8 @@ export const useRetirementAnalyses = (
       
       recommendations.push({
         change: 'Optimize investment returns',
-        impact: `+${returnImprovement.toFixed(1)}% return rate`,
-        impact_detail: `→ ${formatDisplayValue(futureValueImprovedRate - capitalAtRetirement)} benefit`,
+        impact: `+${returnImprovementResult.improvementRate.toFixed(1)}% return rate`,
+        impact_detail: `→ ${formatDisplayValue(returnImprovementResult.benefit)} benefit`,
         priority: 'Medium'
       });
     }
@@ -308,58 +298,23 @@ export const useRetirementAnalyses = (
       priority: 'Low'
     });
     
+    // Calculate withdrawal reduction
+    const withdrawalReductionResult = calculateWithdrawalReduction(
+      capitalAtRetirement,
+      effectiveMonthlyWithdrawal,
+      annualReturnRate,
+      retirementStartAge,
+      95, // Target age
+      0.7 // Conservative multiplier
+    );
+
     // Withdrawal reduction recommendation
     if (currentWithdrawalRate > safeWithdrawalRate) {
-      // Calculate the optimal withdrawal rate to last exactly until target age
-      const calculateOptimalWithdrawalRate = () => {
-        // Start with a reasonable range
-        let low = 0.01; // 1% withdrawal rate
-        let high = 0.08; // 8% withdrawal rate
-        
-        // Binary search to find optimal rate
-        for (let i = 0; i < 10; i++) { // 10 iterations should be enough for precision
-          const mid = (low + high) / 2;
-          const optimalAnnualWithdrawal = capitalAtRetirement * mid;
-          
-          const yearsUntilExhaustion = calculateYearsUntilExhaustion(
-            capitalAtRetirement,
-            optimalAnnualWithdrawal,
-            annualReturnRate * 0.7, // Conservative return estimate
-            1,
-            100
-          );
-          
-          const exhaustionAge = retirementStartAge + yearsUntilExhaustion;
-          const targetAge = 95;
-          
-          if (Math.abs(exhaustionAge - targetAge) < 1) {
-            // Close enough to target
-            return mid;
-          }
-          
-          if (exhaustionAge < targetAge) {
-            // Exhaustion too early, need lower withdrawal rate
-            high = mid;
-          } else {
-            // Exhaustion too late, can increase withdrawal rate
-            low = mid;
-          }
-        }
-        
-        return (low + high) / 2; // Return the best approximation
-      };
-      
-      const optimalRate = calculateOptimalWithdrawalRate();
-      const optimalAnnualWithdrawal = capitalAtRetirement * optimalRate;
-      const optimalMonthlyWithdrawal = optimalAnnualWithdrawal / 12;
-      
-      const reductionAmount = Math.max(0, effectiveMonthlyWithdrawal - optimalMonthlyWithdrawal);
-      const reductionPercentage = Math.round((reductionAmount / effectiveMonthlyWithdrawal) * 100);
-      
-      if (reductionAmount > 0) {
+      // Use results from centralized calculation
+      if (withdrawalReductionResult.reductionNeeded) {
         recommendations.push({
           change: "Optimize withdrawal strategy",
-          impact: `-${formatDisplayValue(reductionAmount)}/month (${reductionPercentage}%)`,
+          impact: `-${formatDisplayValue(withdrawalReductionResult.reductionAmount)}/month (${withdrawalReductionResult.reductionPercentage}%)`,
           impact_detail: `Extends capital to age 95+`,
           priority: riskLevel === 'High' ? 'High' : 'Medium'
         });
@@ -408,7 +363,7 @@ export const useRetirementAnalyses = (
           additionalCapital: capitalIncreaseByDelaying,
           improvedSafety: safetyImprovement,
         },
-        optimalAssessment: calculateOptimalAssessment(statistics, params)
+        optimalAssessment: optimalAssessment
       };
     }
     
@@ -465,12 +420,7 @@ export const useRetirementAnalyses = (
 
     // Create the result object
     const result = {
-      investmentIncrease: {
-        monthlyIncrease: investmentIncrease,
-        additionalContributions: additionalMonthlyTotal,
-        estimatedReturns: futureValueOfAdditional - additionalMonthlyTotal,
-        totalBenefit: futureValueOfAdditional
-      },
+      investmentIncrease: investmentImpactResult,
       yearDelayImpact,
       delayRetirement: {
         years: recommendedDelay,
@@ -496,6 +446,7 @@ export const useRetirementAnalyses = (
       },
       withdrawalRateWidth,
       benefitRatio,
+      withdrawalReduction: withdrawalReductionResult,
       
       // Add the personalized insights
       personalizedInsights: {
@@ -506,7 +457,7 @@ export const useRetirementAnalyses = (
     };
     
     return result;
-  }, [statistics, params, formatDisplayValue, calculateOptimalAssessment]);
+  }, [statistics, params, formatDisplayValue, getEffectiveWithdrawalAmount, calculateOptimalAssessment]);
 };
 
 export default useRetirementAnalyses; 

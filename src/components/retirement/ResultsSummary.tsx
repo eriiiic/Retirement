@@ -1,10 +1,10 @@
-import { useReducer, useEffect, useState, useRef, useCallback } from 'react';
+import { useReducer, useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Statistics, SimulatorParams, FormatAmountFunction, TimelineWidths, CapitalComparison, StatusInfo, WithdrawalMode, GraphDataPoint, Currency } from './types';
 import { useWorker } from '../../hooks/useWorker';
 import { WorkerMessageType, WorkerResponse } from '../../types/worker';
 import { colors, typography, spacing, components, cx } from '../../styles/styleGuide';
 import FormulaModal from './FormulaModal';
-import { calculateInflationAdjustedValue, calculateTimeToRetirement } from '../../utils/financialCalculations';
+import { calculateInflationAdjustedValue, calculateTimeToRetirement, calculateEffectiveRetirementDuration, findRetirementStartIndex, calculateRetirementRisk } from '../../utils/financialCalculations';
 import { DynamicWidthContainer } from '../../components/common/StyledComponents';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -304,6 +304,60 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
     }
     return formatCurrencyValue(value, false);
   }, [formatCurrencyValue]);
+
+  // Calculate comprehensive risk assessment
+  const riskAssessment = useMemo(() => {
+    return calculateRetirementRisk(
+      statistics.capitalAtRetirement,
+      statistics.totalNeededCapital,
+      params.monthlyRetirementWithdrawal,
+      params.annualReturnRate,
+      params.inflation || 2,
+      statistics.retirementStartAge,
+      params.currentAge,
+      statistics.lifeExpectancy,
+      params.monthlyInvestment
+    );
+  }, [
+    statistics.capitalAtRetirement,
+    statistics.totalNeededCapital,
+    params.monthlyRetirementWithdrawal,
+    params.annualReturnRate,
+    params.inflation,
+    statistics.retirementStartAge,
+    params.currentAge,
+    statistics.lifeExpectancy,
+    params.monthlyInvestment
+  ]);
+  
+  // Transform riskLevel to match the expected 'High' | 'Medium' | 'Low' format
+  const legacyRiskLevel = useMemo(() => {
+    switch(riskAssessment.riskLevel) {
+      case 'Critical':
+      case 'High':
+        return 'High';
+      case 'Significant':
+      case 'Moderate':
+        return 'Medium';
+      case 'Low':
+        return 'Low';
+      default:
+        return 'Medium';
+    }
+  }, [riskAssessment.riskLevel]);
+  
+  // Update status info based on risk assessment
+  useEffect(() => {
+    dispatch({
+      type: 'UPDATE_STATUS',
+      payload: {
+        isOnTrack: legacyRiskLevel !== 'High',
+        statusText: legacyRiskLevel === 'High' ? 'At Risk' : legacyRiskLevel === 'Medium' ? 'On Track (with caution)' : 'On Track',
+        statusClass: legacyRiskLevel === 'High' ? 'at-risk' : legacyRiskLevel === 'Medium' ? 'caution' : 'on-track',
+        message: riskAssessment.description
+      }
+    });
+  }, [riskAssessment, legacyRiskLevel]);
 
   return (
     <>

@@ -13,7 +13,9 @@ import {
   calculateCapitalNeeded,
   calculateInflationAdjustedValue,
   calculateRateBasedWithdrawal,
-  calculateEffectiveRetirementDuration
+  calculateEffectiveRetirementDuration,
+  calculateInflationAdjustedInvestment,
+  calculateInflationAdjustedCapital
 } from '../utils/financialCalculations';
 import { colors, components, typography, spacing, cx } from '../styles/styleGuide';
 import { isSafari } from '../utils/browserDetection';
@@ -349,24 +351,6 @@ const RetirementSimulator = () => {
     setGraphData(calculatedData);
   }, [calculatedData]);
 
-  // Calculate inflation-adjusted investment
-  const calculateInflationAdjustedInvestment = useCallback((years: number): number => {
-    return calculateInflationAdjustedValue(
-      params.monthlyInvestment,
-      params.inflation,
-      years
-    );
-  }, [params.monthlyInvestment, params.inflation]);
-
-  // Calculate inflation-adjusted capital
-  const calculateInflationAdjustedCapital = useCallback((capital: number, years: number): number => {
-    return calculateInflationAdjustedValue(
-      capital,
-      params.inflation,
-      years
-    );
-  }, [params.inflation]);
-
   // Use memoization for derived statistics
   const statistics = useMemo(() => {
     const birthYear = getBirthYear();
@@ -419,13 +403,21 @@ const RetirementSimulator = () => {
     const totalNeededCapital = calculateNeededCapital();
     
     const retirementTimespan = calculatedRetirementStartYear - currentYear;
-    const inflationAdjustedInvestment = calculateInflationAdjustedInvestment(retirementTimespan);
+    const inflationAdjustedInvestment = calculateInflationAdjustedInvestment(
+      params.monthlyInvestment,
+      params.inflation,
+      retirementTimespan
+    );
     
     let inflationAdjustedCapital = 0;
     if (graphData.length > 0 && finalCapital > 0) {
       const finalYear = graphData[graphData.length - 1].year;
       const years = finalYear - currentYear;
-      inflationAdjustedCapital = calculateInflationAdjustedCapital(finalCapital, years);
+      inflationAdjustedCapital = calculateInflationAdjustedCapital(
+        finalCapital,
+        params.inflation,
+        years
+      );
     }
     
     const maxBarValue = Math.max(capitalAtRetirement, totalNeededCapital);
@@ -473,8 +465,6 @@ const RetirementSimulator = () => {
     currentYear,
     getBirthYear,
     getRetirementYear,
-    calculateInflationAdjustedInvestment,
-    calculateInflationAdjustedCapital,
     isCapitalExhausted,
     getPreRetirementData
   ]);
