@@ -758,13 +758,13 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
             <div className={cx(
               components.container.card,
               darkMode 
-                ? "!bg-transparent border-blue-800/60 shadow-lg shadow-blue-900/20 rounded-xl hover:border-blue-700/80 transition-all duration-300" 
+                ? "!bg-transparent border-blue-800/40 shadow-lg shadow-blue-900/20 rounded-xl hover:border-blue-700/50 transition-colors duration-200" 
                 : ""
             )}>
               <div className={cx(
                 "px-4 py-3 border-b rounded-t-xl",
                 darkMode 
-                  ? "bg-gradient-to-r from-blue-900/60 to-blue-800/30 border-blue-800/60" 
+                  ? "bg-gradient-to-r from-blue-900/40 to-blue-800/20 border-blue-800/30" 
                   : "bg-blue-50 border-gray-200"
               )}>
                 <h3 className={typography.style.sectionTitle}>
@@ -793,7 +793,7 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
                   <div className={cx(
                     "p-2 rounded-lg border text-center",
                     darkMode 
-                      ? "bg-blue-900/30 border-blue-700/50 shadow-sm" 
+                      ? "bg-blue-900/20 border-blue-800/40 shadow-sm hover:bg-blue-900/30 transition-colors duration-200" 
                       : "bg-white border-blue-100"
                   )}>
                     <div className={cx(
@@ -811,7 +811,7 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
                   <div className={cx(
                     "p-2 rounded-lg border text-center",
                     darkMode 
-                      ? "bg-blue-900/30 border-blue-700/50 shadow-sm" 
+                      ? "bg-blue-900/20 border-blue-800/40 shadow-sm hover:bg-blue-900/30 transition-colors duration-200" 
                       : "bg-white border-blue-100"
                   )}>
                     <div className={cx(
@@ -838,7 +838,7 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
                   
                   <div className={cx(
                     "h-8 w-full rounded-lg overflow-hidden flex mb-2",
-                    darkMode ? "bg-gray-700" : "bg-gray-100"
+                    darkMode ? "bg-gray-800/50" : "bg-gray-100"
                   )}>
                     {/* Initial capital */}
                     <div 
@@ -904,7 +904,7 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({
                 <div className={cx(
                   "rounded-lg p-2 border mt-2",
                   darkMode 
-                    ? "bg-blue-900/30 border-blue-800/70" 
+                    ? "bg-blue-900/20 border-blue-800/40 hover:bg-blue-900/30 transition-colors duration-200" 
                     : "bg-blue-50 border-blue-100"
                 )}>
                   <div className="flex justify-between items-center">
