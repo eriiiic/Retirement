@@ -7,9 +7,9 @@ import ScheduleDetails from './retirement/ScheduleDetails';
 import CapitalEvolutionChart from './retirement/CapitalEvolutionChart';
 import Footer from './common/Footer';
 import { SectionContainer } from './common/StyledComponents';
-import { 
-  calculateFutureValue, 
-  calculateWithdrawalAmount, 
+import {
+  calculateFutureValue,
+  calculateWithdrawalAmount,
   calculateCapitalNeeded,
   calculateInflationAdjustedValue,
   calculateRateBasedWithdrawal,
@@ -20,35 +20,41 @@ import {
 import { colors, components, typography, spacing, cx } from '../styles/styleGuide';
 import { isSafari } from '../utils/browserDetection';
 import { useTheme } from '../context/ThemeContext';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+
+// Default parameters for new users
+const DEFAULT_PARAMS: SimulatorParams = {
+  initialCapital: 250000,
+  monthlyInvestment: 500,
+  annualReturnRate: 7,
+  inflation: 2,
+  monthlyRetirementWithdrawal: 3000,
+  currentAge: 46,
+  retirementInput: "60",
+  currency: "USD",
+  withdrawalMode: "amount",
+  maxAge: 95,
+  compoundFrequency: 'monthly',
+  autoCalculateRetirementAge: false,
+  inflationAdjustedWithdrawal: false,
+};
+
+const STORAGE_KEY = 'retirement-simulator-params';
 
 const RetirementSimulator = () => {
-  // Initialize simulator parameters
-  const [params, setParams] = useState<SimulatorParams>({
-    initialCapital: 250000,
-    monthlyInvestment: 500,
-    annualReturnRate: 7,
-    inflation: 2,
-    monthlyRetirementWithdrawal: 3000,
-    currentAge: 46,
-    retirementInput: "60",
-    currency: "USD",
-    withdrawalMode: "amount",
-    maxAge: 95,
-    compoundFrequency: 'monthly',
-    autoCalculateRetirementAge: false,
-    inflationAdjustedWithdrawal: false,
-  });
+  // Initialize simulator parameters with localStorage persistence
+  const [params, setParams] = useLocalStorage<SimulatorParams>(STORAGE_KEY, DEFAULT_PARAMS);
 
   // State for chart data
   const [graphData, setGraphData] = useState<GraphDataPoint[]>([]);
-  
+
   // Memoize currentYear to avoid multiple Date instantiations
   const currentYear = useMemo(() => new Date().getFullYear(), []);
 
   // State for Safari detection
   const [isSafariBrowser, setIsSafariBrowser] = useState(false);
   const { darkMode } = useTheme();
-  
+
   // Detect Safari browser on component mount
   useEffect(() => {
     setIsSafariBrowser(isSafari());
@@ -70,8 +76,8 @@ const RetirementSimulator = () => {
 
   const isRetirementInputAnAge = useCallback((): boolean => {
     const input = Number(params.retirementInput);
-    return (input > 0 && input < 120 && params.retirementInput.length <= 2) || 
-           !(params.retirementInput.length === 4 && params.retirementInput.startsWith('20'));
+    return (input > 0 && input < 120 && params.retirementInput.length <= 2) ||
+      !(params.retirementInput.length === 4 && params.retirementInput.startsWith('20'));
   }, [params.retirementInput]);
 
   const getRetirementYear = useCallback((): number => {
@@ -84,13 +90,13 @@ const RetirementSimulator = () => {
 
   // Memoize common rate calculations
   const monthlyReturn = useMemo(() => {
-    return Math.pow(1 + params.annualReturnRate / 100, 1/12) - 1;
+    return Math.pow(1 + params.annualReturnRate / 100, 1 / 12) - 1;
   }, [params.annualReturnRate]);
 
   const monthlyInflation = useMemo(() => {
-    return Math.pow(1 + params.inflation / 100, 1/12) - 1;
+    return Math.pow(1 + params.inflation / 100, 1 / 12) - 1;
   }, [params.inflation]);
-  
+
   // Utility to check capital exhaustion
   const isCapitalExhausted = useCallback((dataPoints: GraphDataPoint[]): boolean => {
     return dataPoints.length > 0 && dataPoints[dataPoints.length - 1].capital <= 0;
@@ -141,12 +147,12 @@ const RetirementSimulator = () => {
     const retirementDuration = targetMaxAge - retirementStartAge;
     const retirementStartIndex = calculatedRetirementStartYear - currentYear;
     const simulationDuration = targetMaxAge - params.currentAge;
-    
+
     const data: GraphDataPoint[] = [];
-    
+
     // Calculate capital at retirement using financial utility with compound frequency
     let capitalAtRetirement = calculateCapitalAtRetirement(retirementStartIndex);
-    
+
     // Main simulation
     let capital = params.initialCapital;
     let principalOnly = params.initialCapital;
@@ -154,7 +160,7 @@ const RetirementSimulator = () => {
     let totalInvested = params.initialCapital;
     let totalWithdrawn = 0;
     let isCapitalDepleted = false;
-    
+
     // Calculate base withdrawal amount at retirement
     let baseMonthlyWithdrawal;
     if (params.withdrawalMode === "age") {
@@ -183,7 +189,7 @@ const RetirementSimulator = () => {
       const simulatedYear = currentYear + year;
       const age = params.currentAge + year;
       const inRetirementPhase = simulatedYear >= calculatedRetirementStartYear;
-      
+
       if (capital <= 0) {
         isCapitalDepleted = true;
         data.push({
@@ -205,15 +211,15 @@ const RetirementSimulator = () => {
         });
         continue;
       }
-      
+
       // Handle transition to retirement year
       const isTransitionYear = simulatedYear === calculatedRetirementStartYear;
-      
+
       let capitalAtStart = capital;
       let annualInvestment = 0;
       let annualWithdrawal = 0;
       let annualInterest = 0;
-      
+
       // Monthly calculations for the year
       if (params.compoundFrequency === 'monthly') {
         for (let month = 0; month < 12; month++) {
@@ -223,12 +229,12 @@ const RetirementSimulator = () => {
             isCapitalDepleted = true;
             break;
           }
-          
+
           // Calculate interest for the month (compound interest)
           const interest = capital * monthlyReturn;
           annualInterest += interest;
           capital += interest;
-          
+
           if (isTransitionYear || inRetirementPhase) {
             // Apply withdrawal
             capital -= currentMonthlyWithdrawal;
@@ -240,7 +246,7 @@ const RetirementSimulator = () => {
             annualInvestment += currentMonthlyInvestment;
             totalInvested += currentMonthlyInvestment;
           }
-          
+
           if (capital < 0) capital = 0;
         }
       } else {
@@ -277,32 +283,32 @@ const RetirementSimulator = () => {
             annualWithdrawal = yearlyWithdrawal;
             totalWithdrawn += yearlyWithdrawal;
           }
-          
+
           // Calculate annual interest all at once
           const interest = Math.max(0, capital) * (params.annualReturnRate / 100);
           annualInterest = interest;
           capital += interest;
         }
-        
+
         if (capital < 0) capital = 0;
       }
-      
+
       // Apply inflation adjustments at the end of each year
       if (!inRetirementPhase || isTransitionYear) {
         // Adjust monthly investment for inflation (annually)
         currentMonthlyInvestment *= (1 + params.inflation / 100);
       }
-      
+
       if (inRetirementPhase || isTransitionYear) {
         // Always adjust withdrawal for inflation during retirement
         currentMonthlyWithdrawal *= (1 + params.inflation / 100);
       }
-      
+
       principalOnly = Math.max(0, totalInvested - totalWithdrawn);
-      
+
       const capitalVariation = capital - capitalAtStart;
       const netVariationExcludingInterest = inRetirementPhase ? -annualWithdrawal : annualInvestment;
-      
+
       data.push({
         year: simulatedYear,
         age: age,
@@ -321,13 +327,13 @@ const RetirementSimulator = () => {
         targetAge: age === targetMaxAge
       });
     }
-    
+
     return data;
   }, [
-    params.initialCapital, 
-    params.monthlyInvestment, 
-    params.annualReturnRate, 
-    params.inflation, 
+    params.initialCapital,
+    params.monthlyInvestment,
+    params.annualReturnRate,
+    params.inflation,
     params.currentAge,
     params.withdrawalMode,
     params.withdrawalMode === "amount" ? params.monthlyRetirementWithdrawal : null,
@@ -358,39 +364,39 @@ const RetirementSimulator = () => {
     const retirementStartAge = calculatedRetirementStartYear - birthYear;
     const lifeExpectancy = params.withdrawalMode === "age" ? params.maxAge : 95;
     const retirementDuration = lifeExpectancy - retirementStartAge;
-    
+
     const finalCapital = graphData.length > 0 ? graphData[graphData.length - 1].capital : 0;
     const capitalExhausted = isCapitalExhausted(graphData);
-    
+
     // Find the first year when capital reaches zero (if it does)
-    const firstExhaustionPoint = capitalExhausted 
-      ? graphData.find(point => point.capital <= 0) 
+    const firstExhaustionPoint = capitalExhausted
+      ? graphData.find(point => point.capital <= 0)
       : null;
-    const exhaustionYear = capitalExhausted && firstExhaustionPoint 
-      ? firstExhaustionPoint.year 
+    const exhaustionYear = capitalExhausted && firstExhaustionPoint
+      ? firstExhaustionPoint.year
       : "Not exhausted";
-    const exhaustionAge = capitalExhausted && firstExhaustionPoint 
-      ? firstExhaustionPoint.age 
+    const exhaustionAge = capitalExhausted && firstExhaustionPoint
+      ? firstExhaustionPoint.age
       : retirementStartAge;
-    
+
     const totalInvestedAmount = params.initialCapital + (params.monthlyInvestment * 12 * (calculatedRetirementStartYear - currentYear));
-    
+
     const capitalAtRetirementIndex = graphData.findIndex(item => item.year >= calculatedRetirementStartYear);
-    const capitalAtRetirement = capitalAtRetirementIndex !== -1 
-      ? graphData[capitalAtRetirementIndex].capital 
+    const capitalAtRetirement = capitalAtRetirementIndex !== -1
+      ? graphData[capitalAtRetirementIndex].capital
       : 0;
-    
+
     // Calculate needed capital
     const calculateNeededCapital = () => {
       let effectiveRetirementDuration = retirementDuration;
-      
+
       if (params.withdrawalMode === "amount" && capitalExhausted) {
         effectiveRetirementDuration = calculateEffectiveRetirementDuration(
-          graphData, 
+          graphData,
           retirementDuration
         );
       }
-      
+
       return calculateCapitalNeeded(
         params.monthlyRetirementWithdrawal,
         params.annualReturnRate,
@@ -399,16 +405,16 @@ const RetirementSimulator = () => {
         params.compoundFrequency
       );
     };
-    
+
     const totalNeededCapital = calculateNeededCapital();
-    
+
     const retirementTimespan = calculatedRetirementStartYear - currentYear;
     const inflationAdjustedInvestment = calculateInflationAdjustedInvestment(
       params.monthlyInvestment,
       params.inflation,
       retirementTimespan
     );
-    
+
     let inflationAdjustedCapital = 0;
     if (graphData.length > 0 && finalCapital > 0) {
       const finalYear = graphData[graphData.length - 1].year;
@@ -419,16 +425,16 @@ const RetirementSimulator = () => {
         years
       );
     }
-    
+
     const maxBarValue = Math.max(capitalAtRetirement, totalNeededCapital);
     const haveBarHeight = maxBarValue > 0 ? (capitalAtRetirement / maxBarValue) * 100 : 0;
     const needBarHeight = maxBarValue > 0 ? (totalNeededCapital / maxBarValue) * 100 : 0;
-    
+
     const finalMonthlyInvestment = graphData.length > 0 ? getPreRetirementData(calculatedRetirementStartYear) : params.monthlyInvestment;
-    const finalMonthlyWithdrawalValue = graphData.length > 0 
-      ? graphData[graphData.length - 1].finalMonthlyWithdrawal 
+    const finalMonthlyWithdrawalValue = graphData.length > 0
+      ? graphData[graphData.length - 1].finalMonthlyWithdrawal
       : params.monthlyRetirementWithdrawal;
-    
+
     return {
       birthYear,
       calculatedRetirementStartYear,
@@ -452,9 +458,9 @@ const RetirementSimulator = () => {
       effectiveRetirementDuration: retirementDuration
     } as Statistics;
   }, [
-    graphData, 
-    params.initialCapital, 
-    params.monthlyInvestment, 
+    graphData,
+    params.initialCapital,
+    params.monthlyInvestment,
     params.inflation,
     params.monthlyRetirementWithdrawal,
     params.withdrawalMode,
@@ -482,7 +488,7 @@ const RetirementSimulator = () => {
     const retirementStartAge = calculatedRetirementStartYear - birthYear;
     const retirementDuration = targetMaxAge - retirementStartAge;
     const retirementStartIndex = calculatedRetirementStartYear - currentYear;
-    
+
     // Only update withdrawal amount when in age mode
     if (params.withdrawalMode === "age") {
       // Calculate capital at retirement
@@ -493,7 +499,7 @@ const RetirementSimulator = () => {
         params.monthlyInvestment,
         params.compoundFrequency
       );
-      
+
       // Calculate sustainable withdrawal amount
       const calculatedWithdrawal = calculateWithdrawalAmount(
         estimatedCapital,
@@ -502,10 +508,10 @@ const RetirementSimulator = () => {
         params.inflation,
         params.compoundFrequency
       );
-      
+
       // Update withdrawal amount if it's different from current value
-      if (!isNaN(calculatedWithdrawal) && isFinite(calculatedWithdrawal) && 
-          Math.abs(calculatedWithdrawal - params.monthlyRetirementWithdrawal) > 1) {
+      if (!isNaN(calculatedWithdrawal) && isFinite(calculatedWithdrawal) &&
+        Math.abs(calculatedWithdrawal - params.monthlyRetirementWithdrawal) > 1) {
         setParams(prev => ({ ...prev, monthlyRetirementWithdrawal: Math.round(calculatedWithdrawal) }));
       }
     }
@@ -519,30 +525,30 @@ const RetirementSimulator = () => {
         params.monthlyInvestment,
         params.compoundFrequency
       );
-      
+
       // Calculate monthly withdrawal based on rate
       const calculatedWithdrawal = calculateRateBasedWithdrawal(estimatedCapital, params.withdrawalRate);
-      
+
       // Update withdrawal amount if it's different from current value
-      if (!isNaN(calculatedWithdrawal) && isFinite(calculatedWithdrawal) && 
-          Math.abs(calculatedWithdrawal - params.monthlyRetirementWithdrawal) > 1) {
+      if (!isNaN(calculatedWithdrawal) && isFinite(calculatedWithdrawal) &&
+        Math.abs(calculatedWithdrawal - params.monthlyRetirementWithdrawal) > 1) {
         setParams(prev => ({ ...prev, monthlyRetirementWithdrawal: Math.round(calculatedWithdrawal) }));
       }
     }
   }, [
-    params.withdrawalMode, 
-    params.maxAge, 
-    params.annualReturnRate, 
-    params.inflation, 
-    params.currentAge, 
-    params.retirementInput, 
-    params.initialCapital, 
-    params.monthlyInvestment, 
-    params.withdrawalRate, 
+    params.withdrawalMode,
+    params.maxAge,
+    params.annualReturnRate,
+    params.inflation,
+    params.currentAge,
+    params.retirementInput,
+    params.initialCapital,
+    params.monthlyInvestment,
+    params.withdrawalRate,
     params.compoundFrequency,
     params.monthlyRetirementWithdrawal,
     currentYear,
-    getBirthYear, 
+    getBirthYear,
     getRetirementYear
   ]);
 
@@ -550,20 +556,18 @@ const RetirementSimulator = () => {
     <div className={`max-w-6xl mx-auto ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
       {/* Page Header with Gradient Background */}
       <div className="mt-6 mb-6 rounded-xl overflow-hidden shadow-lg">
-        <div className={`py-8 px-6 ${
-          isSafariBrowser 
-            ? darkMode ? 'bg-indigo-800' : 'bg-indigo-600' 
-            : darkMode 
-              ? 'bg-gradient-to-r from-indigo-800 to-purple-800' 
-              : 'bg-gradient-to-r from-indigo-600 to-purple-600'
-        } relative`}>
+        <div className={`py-8 px-6 ${isSafariBrowser
+          ? darkMode ? 'bg-indigo-800' : 'bg-indigo-600'
+          : darkMode
+            ? 'bg-gradient-to-r from-indigo-800 to-purple-800'
+            : 'bg-gradient-to-r from-indigo-600 to-purple-600'
+          } relative`}>
           {/* Safari-specific overlay gradient using background-image */}
           {isSafariBrowser && (
-            <div className={`absolute inset-0 ${
-              darkMode 
-                ? 'bg-[linear-gradient(to_right,#3730a3,#6b21a8)]' 
-                : 'bg-[linear-gradient(to_right,#4f46e5,#9333ea)]'
-            } opacity-90`}></div>
+            <div className={`absolute inset-0 ${darkMode
+              ? 'bg-[linear-gradient(to_right,#3730a3,#6b21a8)]'
+              : 'bg-[linear-gradient(to_right,#4f46e5,#9333ea)]'
+              } opacity-90`}></div>
           )}
           <div className="mb-4 sm:mb-5 text-center relative z-10">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
@@ -575,9 +579,9 @@ const RetirementSimulator = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="mb-6">
-        <ParametersSection 
+        <ParametersSection
           params={params}
           statistics={statistics}
           formatAmount={formatAmount}
@@ -594,7 +598,7 @@ const RetirementSimulator = () => {
           currency={params.currency}
         />
       </div>
-      
+
       {/* Capital Evolution Chart */}
       {graphData.length > 0 && statistics && (
         <div className="mb-6">
@@ -609,7 +613,7 @@ const RetirementSimulator = () => {
           />
         </div>
       )}
-    
+
       {/* Retirement Analyses */}
       {statistics && (
         <div className="mb-6">
@@ -621,7 +625,7 @@ const RetirementSimulator = () => {
           />
         </div>
       )}
-      
+
       {/* Year-by-Year Schedule */}
       {graphData.length > 0 && (
         <div className="mb-6">
@@ -632,7 +636,7 @@ const RetirementSimulator = () => {
           />
         </div>
       )}
-      
+
       <Footer />
     </div>
   );
