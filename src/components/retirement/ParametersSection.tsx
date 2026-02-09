@@ -6,100 +6,6 @@ import { colors, typography, spacing, components, cx } from '../../styles/styleG
 import { calculateInflationAdjustedValue } from '../../utils/financialCalculations';
 import { useTheme } from '../../context/ThemeContext';
 
-// Define the customStyles variable before the component
-const customStyles = `
-  .custom-input-width .text-input {
-    min-width: 160px !important;
-    width: 100% !important;
-  }
-
-  /* Desktop styles for monthly withdrawal (single line layout) */
-  .monthly-withdrawal-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-  }
-
-  /* Button positioning for desktop */
-  .inflation-button-desktop {
-    flex-shrink: 0;
-    height: 32px;
-    z-index: 5;
-  }
-
-  /* Slider container styles - match proportions of other sliders */
-  .withdrawal-slider-wrapper {
-    flex: 2;
-    min-width: 120px;
-    max-width: calc(67% - 95px); /* 2/3 width minus button width */
-  }
-
-  /* Input form container styles */
-  .withdrawal-input-wrapper {
-    flex: 1;
-    min-width: 120px;
-    max-width: 33%; /* 1/3 width to match other inputs */
-  }
-
-  /* Special mobile styles for monthly withdrawal header */
-  @media (max-width: 639px) {
-    /* Make the header with title and button on one line */
-    .monthly-withdrawal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      margin-bottom: 8px;
-    }
-    
-    .monthly-withdrawal-title {
-      width: 45%;
-    }
-    
-    .inflation-button-mobile {
-      width: 50%;
-      justify-content: center;
-    }
-    
-    /* Hide desktop button on mobile */
-    .inflation-button-desktop {
-      display: none;
-    }
-    
-    /* Mobile specific styles for slider and input - side by side */
-    .monthly-withdrawal-row {
-      flex-direction: row; /* Keep as row on mobile for slider and input */
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .withdrawal-slider-wrapper {
-      width: 48%;
-      max-width: 48%;
-      flex: 1;
-      margin-top: 0;
-    }
-    
-    .withdrawal-input-wrapper {
-      width: 48%;
-      max-width: 48%;
-      flex: 1;
-      margin-top: 0;
-    }
-  }
-  
-  /* Hide mobile button on desktop */
-  @media (min-width: 640px) {
-    .inflation-button-mobile {
-      display: none;
-    }
-    
-    .monthly-withdrawal-header {
-      margin-bottom: 8px;
-    }
-  }
-`;
 
 interface ParametersSectionProps {
   params: SimulatorParams;
@@ -130,21 +36,21 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     inflation: params.inflation.toString(),
     withdrawalRate: params.withdrawalRate?.toString() || "4",
   });
-  
+
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  
+
   // References to input elements for maintaining focus
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  
+
   // References to slider elements for drag handling
   const sliderRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  
+
   // Reference for the custom retirement slider track
   const retirementSliderRef = useRef<HTMLDivElement | null>(null);
-  
+
   // State to track current slider being dragged
   const [draggingSlider, setDraggingSlider] = useState<string | null>(null);
-  
+
   // State to track slider container dimensions for calculations
   const sliderContainerRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -168,34 +74,34 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   // Common function to update slider value based on position
   const updateSliderValue = useCallback((id: keyof SimulatorParams, clientX: number, container: HTMLDivElement) => {
     const rect = container.getBoundingClientRect();
-    
+
     // Calculate position as percentage of container width
     let percent = (clientX - rect.left) / rect.width;
     // Clamp between 0 and 1
     percent = Math.max(0, Math.min(1, percent));
-    
+
     // Get min/max/step values
     const slider = sliderRefs.current[id as string];
     if (slider) {
       const min = parseFloat(slider.min);
       const max = parseFloat(slider.max);
       const step = parseFloat(slider.step) || 1;
-      
+
       // Calculate new value based on percentage and step
       let newValue = min + percent * (max - min);
       // Round to nearest step
       newValue = Math.round(newValue / step) * step;
       // Ensure value is within bounds
       newValue = Math.max(min, Math.min(max, newValue));
-      
+
       // For annual return rate and inflation, limit to one decimal place
       if (id === 'annualReturnRate' || id === 'inflation') {
         newValue = Math.round(newValue * 10) / 10;
       }
-      
+
       // Update UI and state
       slider.value = newValue.toString();
-      
+
       // Update state with the new value
       onParamChange(id, newValue);
       setInputValues(prev => ({ ...prev, [id]: newValue.toString() }));
@@ -206,16 +112,16 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   useEffect(() => {
     setInputValues(prev => {
       const newValues = { ...prev };
-      
+
       Object.keys(params).forEach(key => {
         const paramKey = key as keyof SimulatorParams;
         const inputKey = paramKey as keyof typeof prev;
-        
+
         // Only update fields that are not currently being edited
         if (key !== focusedField) {
           if (typeof newValues[inputKey] !== 'undefined') {
-            if (paramKey === 'initialCapital' || paramKey === 'monthlyInvestment' || 
-                paramKey === 'monthlyRetirementWithdrawal') {
+            if (paramKey === 'initialCapital' || paramKey === 'monthlyInvestment' ||
+              paramKey === 'monthlyRetirementWithdrawal') {
               // For monetary values, format appropriately
               newValues[inputKey] = params[paramKey].toString();
             } else {
@@ -225,7 +131,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
           }
         }
       });
-      
+
       return newValues;
     });
   }, [params, focusedField]);
@@ -239,28 +145,28 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         updateSliderValue(id, e.clientX, container);
       }
     };
-    
+
     const handleTouchMove = (e: TouchEvent) => {
       if (draggingSlider && sliderRefs.current[draggingSlider] && sliderContainerRefs.current[draggingSlider]) {
         const id = draggingSlider as keyof SimulatorParams;
         // Prevent scrolling while dragging
         e.preventDefault();
-        
+
         // Get the touch position
         const touch = e.touches[0];
         const container = sliderContainerRefs.current[draggingSlider] as HTMLDivElement;
         updateSliderValue(id, touch.clientX, container);
       }
     };
-    
+
     const handleMouseUp = () => {
       setDraggingSlider(null);
     };
-    
+
     const handleTouchEnd = () => {
       setDraggingSlider(null);
     };
-    
+
     if (draggingSlider) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
@@ -268,7 +174,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
       document.addEventListener('touchend', handleTouchEnd);
       document.addEventListener('touchcancel', handleTouchEnd);
     }
-    
+
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -289,10 +195,10 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   useEffect(() => {
     // Check if this is the initial load (all values are at defaults)
     const isInitialLoad = params.initialCapital === 0 &&
-                          params.currentAge === 0 &&
-                          params.monthlyInvestment === 0 &&
-                          String(params.retirementInput) === '0' &&
-                          params.maxAge === 0;
+      params.currentAge === 0 &&
+      params.monthlyInvestment === 0 &&
+      String(params.retirementInput) === '0' &&
+      params.maxAge === 0;
 
     // If it's the initial load, set all default values
     if (isInitialLoad) {
@@ -353,7 +259,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
 
   // Get currency symbol based on currency code
   const getCurrencySymbol = useCallback((currency: string): string => {
-    switch(currency) {
+    switch (currency) {
       case 'USD': return '$';
       case 'EUR': return '€';
       case 'GBP': return '£';
@@ -371,36 +277,36 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   // Format number according to regional currency settings
   const formatNumberForCurrency = useCallback((value: string | number, currency: string) => {
     if (value === '' || value === '0' || value === 0) return '';
-    
+
     const numValue = typeof value === 'string' ? parseFloat(value.replace(/[^\d.-]/g, '')) : value;
     if (isNaN(numValue)) return '';
-    
+
     // Format based on currency
-    switch(currency) {
+    switch (currency) {
       case 'USD':
-        return new Intl.NumberFormat('en-US', { 
+        return new Intl.NumberFormat('en-US', {
           minimumFractionDigits: 0,
-          maximumFractionDigits: 0 
+          maximumFractionDigits: 0
         }).format(numValue);
-      
+
       case 'EUR':
-        return new Intl.NumberFormat('fr-FR', { 
+        return new Intl.NumberFormat('fr-FR', {
           minimumFractionDigits: 0,
           maximumFractionDigits: 0
         }).format(numValue);
-      
+
       case 'GBP':
-        return new Intl.NumberFormat('en-GB', { 
+        return new Intl.NumberFormat('en-GB', {
           minimumFractionDigits: 0,
           maximumFractionDigits: 0
         }).format(numValue);
-      
+
       case 'JPY':
-        return new Intl.NumberFormat('ja-JP', { 
+        return new Intl.NumberFormat('ja-JP', {
           minimumFractionDigits: 0,
           maximumFractionDigits: 0
         }).format(numValue);
-      
+
       default:
         return value.toString();
     }
@@ -409,11 +315,11 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   const handleInputChange = useCallback((key: keyof SimulatorParams, value: string) => {
     // Set the focused field to maintain focus
     setFocusedField(key as string);
-    
+
     // Common validation and state update logic
     const updateInput = (validatedValue: string) => {
       setInputValues(prev => ({ ...prev, [key]: validatedValue }));
-      
+
       if (validatedValue !== '') {
         const numericValue = parseFloat(validatedValue);
         if (!isNaN(numericValue)) {
@@ -421,7 +327,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         }
       }
     };
-    
+
     // For monetary inputs, only allow numbers, commas, dots, and spaces
     if (key === 'initialCapital' || key === 'monthlyInvestment' || key === 'monthlyRetirementWithdrawal') {
       // Remove non-numeric characters except commas, dots, and spaces
@@ -429,15 +335,15 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
       // Store the raw value without separators
       const cleanValue = removeThousandSeparators(validatedValue);
       updateInput(cleanValue);
-    } 
+    }
     // For percentage inputs, only allow numbers and dots
     else if (key === 'annualReturnRate' || key === 'inflation' || key === 'withdrawalRate') {
       // Remove non-numeric characters except dots
       const validatedValue = value.replace(/[^\d.]/g, '');
       // Ensure at most one decimal point
       const parts = validatedValue.split('.');
-      const formattedValue = parts.length > 1 
-        ? `${parts[0]}.${parts.slice(1).join('')}` 
+      const formattedValue = parts.length > 1
+        ? `${parts[0]}.${parts.slice(1).join('')}`
         : validatedValue;
       updateInput(formattedValue);
     }
@@ -455,21 +361,21 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   const handleInputBlur = useCallback((key: keyof SimulatorParams, value: string) => {
     // Clear the focused field when input loses focus
     setFocusedField(null);
-    
+
     // Remove thousand separators before parsing
     const cleanValue = removeThousandSeparators(value);
     let parsedValue: number;
-    
+
     // Handle special cases based on parameter type
     if (key in paramConstraints) {
       const constraint = paramConstraints[key as keyof typeof paramConstraints];
-      parsedValue = key === 'retirementInput' 
+      parsedValue = key === 'retirementInput'
         ? parseInt(cleanValue) || constraint.default
         : parseFloat(cleanValue) || constraint.default;
-      
+
       // Apply bounds
       parsedValue = Math.max(constraint.min, Math.min(constraint.max, parsedValue));
-      
+
       // Round to one decimal place for percentage values
       if (key === 'annualReturnRate' || key === 'inflation' || key === 'withdrawalRate') {
         parsedValue = Math.round(parsedValue * 10) / 10;
@@ -480,9 +386,9 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
       // Apply minimum of 0 to all monetary values
       parsedValue = Math.max(0, parsedValue);
     }
-    
+
     onParamChange(key, parsedValue);
-    
+
     // Update the input value to reflect the validated value
     setInputValues(prev => ({ ...prev, [key]: parsedValue.toString() }));
   }, [onParamChange, paramConstraints, removeThousandSeparators]);
@@ -498,10 +404,10 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   // Format number inputs with proper formatting
   const formatNumberInput = useCallback((value: string, addSeparators: boolean = false) => {
     if (!value) return '';
-    
+
     // Remove existing separators for processing
     const cleanValue = removeThousandSeparators(value);
-    
+
     // Handle decimal input
     let num: number;
     try {
@@ -514,12 +420,12 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
       console.error('Error parsing number:', e);
       num = 0;
     }
-    
+
     // Use our currency formatter for consistency
     if (addSeparators) {
       return formatNumberForCurrency(num, params.currency);
     }
-    
+
     // Otherwise just return the number
     return num.toString();
   }, [removeThousandSeparators, formatNumberForCurrency, params.currency]);
@@ -527,19 +433,19 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   // Get displayed value for monetary inputs (with regional number formatting)
   const getDisplayValue = useCallback((key: keyof SimulatorParams, value: string) => {
     if (value === '0') return '';
-    
+
     if (key === 'initialCapital' || key === 'monthlyInvestment' || key === 'monthlyRetirementWithdrawal') {
       return formatNumberForCurrency(value, params.currency);
     }
-    
+
     return value;
   }, [formatNumberForCurrency, params.currency]);
 
   // Helper to determine if retirement input is an age or a year
   const isRetirementInputAnAge = useCallback((): boolean => {
     const input = Number(params.retirementInput);
-    return (input > 0 && input < 120 && params.retirementInput.length <= 2) || 
-           !(params.retirementInput.length === 4 && params.retirementInput.startsWith('20'));
+    return (input > 0 && input < 120 && params.retirementInput.length <= 2) ||
+      !(params.retirementInput.length === 4 && params.retirementInput.startsWith('20'));
   }, [params.retirementInput]);
 
   // Get slider min/max/step values based on parameter type
@@ -554,10 +460,10 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         // Set fixed maximum value to 10000 as requested
         return { min: 0, max: 10000, step: 100 };
       case 'retirementInput':
-        return { 
-          min: params.currentAge + 1, 
-          max: isRetirementInputAnAge() ? 100 : new Date().getFullYear() + 50, 
-          step: 1 
+        return {
+          min: params.currentAge + 1,
+          max: isRetirementInputAnAge() ? 100 : new Date().getFullYear() + 50,
+          step: 1
         };
       case 'monthlyRetirementWithdrawal':
         // Set fixed maximum value to 20000 as requested
@@ -580,7 +486,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   // Handle slider mousedown for enhanced drag behavior
   const handleSliderMouseDown = useCallback((id: keyof SimulatorParams, e: React.MouseEvent) => {
     setDraggingSlider(id as string);
-    
+
     // Immediately update slider position based on initial click
     if (sliderContainerRefs.current[id as string]) {
       const container = sliderContainerRefs.current[id as string] as HTMLDivElement;
@@ -591,7 +497,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   // Handle touch start for mobile devices
   const handleSliderTouchStart = useCallback((id: keyof SimulatorParams, e: React.TouchEvent) => {
     setDraggingSlider(id as string);
-    
+
     // Immediately update slider position based on initial touch
     if (sliderContainerRefs.current[id as string]) {
       const touch = e.touches[0];
@@ -611,12 +517,12 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   const handleGeneratePDF = useCallback(async () => {
     setIsPdfGenerating(true);
     setShowPdfSuccess(false);
-    
+
     console.log('PDF generation started in ParametersSection');
     console.log('Params:', params);
     console.log('Statistics:', statistics);
     console.log('GraphData length:', graphData?.length);
-    
+
     try {
       console.log('Calling generateModernRetirementReport with:', {
         paramsProvided: !!params,
@@ -625,7 +531,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         graphDataProvided: !!graphData && graphData.length > 0,
         formatAmountTest: formatAmount(1000) // Test formatting function
       });
-      
+
       // Generate the full report (removed test PDF generation)
       await generateModernRetirementReport({
         params,
@@ -637,10 +543,10 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         graphData,
         chartRef
       });
-      
+
       console.log('PDF generation completed successfully in ParametersSection');
       setShowPdfSuccess(true);
-      
+
       // Auto-hide success message after 5 seconds
       setTimeout(() => {
         setShowPdfSuccess(false);
@@ -658,7 +564,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     // Start with current age as baseline
     let testAge = params.currentAge; // Start from exact current age, not +1
     const maxTestAge = params.maxAge - 5; // Leave at least 5 years of retirement
-    
+
     // Financial parameters
     const monthlyInvestment = Number(params.monthlyInvestment);
     const initialCapital = Number(params.initialCapital);
@@ -666,24 +572,24 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     const inflation = Number(params.inflation) / 100;
     const monthlyWithdrawal = Number(params.monthlyRetirementWithdrawal);
     const adjustedRate = annualReturnRate - inflation;
-    
+
     // Keep testing ages until we find one where the accumulated capital
     // is sufficient for the planned retirement duration
     while (testAge <= maxTestAge) {
       // Years until retirement
       const yearsToRetirement = testAge - params.currentAge;
-      
+
       // Calculate future value of current investments
-      const futureValue = initialCapital * Math.pow(1 + annualReturnRate, yearsToRetirement) + 
-                          monthlyInvestment * 12 * ((Math.pow(1 + annualReturnRate, yearsToRetirement) - 1) / annualReturnRate);
-      
+      const futureValue = initialCapital * Math.pow(1 + annualReturnRate, yearsToRetirement) +
+        monthlyInvestment * 12 * ((Math.pow(1 + annualReturnRate, yearsToRetirement) - 1) / annualReturnRate);
+
       // Calculate years in retirement
       const yearsInRetirement = params.maxAge - testAge;
-      
+
       // Calculate needed capital for retirement
       const annualWithdrawal = monthlyWithdrawal * 12;
       let neededCapital;
-      
+
       if (adjustedRate > 0) {
         // Using the present value of an annuity formula
         neededCapital = annualWithdrawal * (1 - Math.pow(1 + adjustedRate, -yearsInRetirement)) / adjustedRate;
@@ -691,17 +597,17 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
         // Simple multiplication if adjusted rate is zero or negative
         neededCapital = annualWithdrawal * yearsInRetirement;
       }
-      
+
       // If we have enough capital, this is our optimal retirement age
       if (futureValue >= neededCapital) {
         // We've found the earliest possible retirement age
         return testAge;
       }
-      
+
       // Try the next age
       testAge++;
     }
-    
+
     // If we couldn't find an optimal age, return a reasonable default
     return Math.min(65, params.maxAge - 5);
   }, [params]);
@@ -710,7 +616,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   const toggleAutoRetirementCalculation = useCallback(() => {
     const newValue = !autoCalculateRetirementAge;
     setAutoCalculateRetirementAge(newValue);
-    
+
     if (newValue) {
       // Calculate the optimal retirement age using financial data
       const optimalAge = calculateOptimalRetirementAge();
@@ -724,12 +630,12 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   // Function to calculate slider progress for the retirement age slider
   const calculateProgress = useCallback((id: keyof SimulatorParams) => {
     if (id !== 'retirementInput') return 0;
-    
+
     const value = parseFloat(inputValues[id] || '0');
     const config = getSliderConfig(id);
     const min = config.min || 0;
     const max = config.max || 100;
-    
+
     // Calculate percentage
     return Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
   }, [inputValues, getSliderConfig]);
@@ -747,7 +653,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
   ) => {
     // Parse value to number for slider - ensure we have a clean number
     let numericValue: number;
-    
+
     // Special handling for monetary values with thousand separators
     if (currency && (id === 'initialCapital' || id === 'monthlyInvestment' || id === 'monthlyRetirementWithdrawal')) {
       // Use the actual param value directly rather than the formatted input value
@@ -755,22 +661,22 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
     } else {
       numericValue = parseFloat(value) || 0;
     }
-    
+
     // Get slider configuration
     const { min, max, step } = getSliderConfig(id);
 
     // Check if this input should be disabled (for retirement age when auto-calc is enabled)
     const isDisabled = id === 'retirementInput' && autoCalculateRetirementAge;
-    
+
     return (
       <div className={cx("flex flex-col gap-1")}>
         <label htmlFor={id} className={cx(typography.style.label, "flex justify-between")}>
           <span>{label}</span>
         </label>
-        
+
         <div className={cx("flex items-center", spacing.gap.sm)}>
           {includeSlider && (
-            <div 
+            <div
               ref={el => sliderContainerRefs.current[id as string] = el}
               className={cx(
                 "w-full sm:w-2/3 md:w-2/3 relative",
@@ -779,29 +685,29 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               onMouseDown={(e) => !isDisabled && handleSliderMouseDown(id, e)}
               onTouchStart={(e) => !isDisabled && handleSliderTouchStart(id, e)}
             >
-              <div 
+              <div
                 className={cx(
                   "absolute inset-0 w-full h-2 rounded-lg cursor-pointer",
-                  isDisabled 
-                    ? darkMode ? 'bg-gray-700' : 'bg-gray-300' 
+                  isDisabled
+                    ? darkMode ? 'bg-gray-700' : 'bg-gray-300'
                     : darkMode ? 'bg-gray-700' : 'bg-gray-200'
                 )}
                 style={{ top: '50%', transform: 'translateY(-50%)' }}
               ></div>
-              <div 
+              <div
                 className={cx(
                   "absolute h-2 rounded-lg",
-                  isDisabled 
-                    ? darkMode ? 'bg-gray-600' : 'bg-gray-400' 
+                  isDisabled
+                    ? darkMode ? 'bg-gray-600' : 'bg-gray-400'
                     : darkMode
                       ? id === 'annualReturnRate' || id === 'inflation'
-                          ? 'bg-gradient-to-r from-green-700 to-green-700/70'
-                          : 'bg-gradient-to-r from-purple-700 to-indigo-700' 
+                        ? 'bg-gradient-to-r from-green-700 to-green-700/70'
+                        : 'bg-gradient-to-r from-purple-700 to-indigo-700'
                       : id === 'annualReturnRate' || id === 'inflation'
-                          ? 'bg-gradient-to-r from-green-500 to-green-500/70'
-                          : 'bg-gradient-to-r from-purple-500 to-indigo-500'
+                        ? 'bg-gradient-to-r from-green-500 to-green-500/70'
+                        : 'bg-gradient-to-r from-purple-500 to-indigo-500'
                 )}
-                style={{ 
+                style={{
                   width: `${((numericValue - min) / (max - min)) * 100}%`,
                   top: '50%',
                   transform: 'translateY(-50%)'
@@ -819,14 +725,14 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   if (isDisabled) return;
                   const newValue = e.target.value;
                   let numericNewValue = parseFloat(newValue);
-                  
+
                   // For annual return rate and inflation, limit to one decimal place
                   if (id === 'annualReturnRate' || id === 'inflation') {
                     numericNewValue = Math.round(numericNewValue * 10) / 10;
                   }
-                  
+
                   onParamChange(id, numericNewValue);
-                  
+
                   // For monetary values, ensure we're updating with the correct value format
                   if (currency && (id === 'initialCapital' || id === 'monthlyInvestment' || id === 'monthlyRetirementWithdrawal')) {
                     setInputValues(prev => ({ ...prev, [id]: numericNewValue.toString() }));
@@ -840,30 +746,30 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 )}
                 style={{ top: '50%', transform: 'translateY(-50%)' }}
               />
-              <div 
+              <div
                 className={cx(
                   "absolute w-4 h-4 rounded-full shadow transition-all",
-                  darkMode 
+                  darkMode
                     ? id === 'annualReturnRate' || id === 'inflation'
-                        ? "bg-gray-200 border-green-500"
-                        : "bg-gray-200 border-gray-300" 
+                      ? "bg-gray-200 border-green-500"
+                      : "bg-gray-200 border-gray-300"
                     : id === 'annualReturnRate' || id === 'inflation'
-                        ? "bg-white border-green-500"
-                        : "bg-white border",
-                  isDisabled 
-                    ? darkMode ? 'border-gray-600' : 'border-gray-400' 
+                      ? "bg-white border-green-500"
+                      : "bg-white border",
+                  isDisabled
+                    ? darkMode ? 'border-gray-600' : 'border-gray-400'
                     : darkMode
-                        ? id === 'annualReturnRate' || id === 'inflation'
-                            ? 'border-green-400'
-                            : 'border-indigo-400'
-                        : id === 'annualReturnRate' || id === 'inflation'
-                            ? 'border-green-500'
-                            : 'border-indigo-500',
-                  draggingSlider === id 
-                    ? 'w-5 h-5 scale-110 shadow-md' 
+                      ? id === 'annualReturnRate' || id === 'inflation'
+                        ? 'border-green-400'
+                        : 'border-indigo-400'
+                      : id === 'annualReturnRate' || id === 'inflation'
+                        ? 'border-green-500'
+                        : 'border-indigo-500',
+                  draggingSlider === id
+                    ? 'w-5 h-5 scale-110 shadow-md'
                     : ''
                 )}
-                style={{ 
+                style={{
                   left: `${((numericValue - min) / (max - min)) * 100}%`,
                   top: '50%',
                   transform: 'translate(-50%, -50%)',
@@ -872,7 +778,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               ></div>
             </div>
           )}
-          
+
           {/* Input field with appropriate styling based on type */}
           {id === 'currentAge' ? (
             <div className="relative w-full sm:w-1/3 flex items-center justify-end">
@@ -890,7 +796,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   placeholder="0"
                   className={cx(
                     "w-full px-3 py-2 rounded-md shadow-sm text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
-                    darkMode 
+                    darkMode
                       ? "bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500"
                       : "bg-white border-gray-300 text-gray-900 placeholder-gray-400",
                     isDisabled ? darkMode ? 'bg-gray-700 text-gray-500' : 'bg-gray-100 text-gray-400' : ''
@@ -919,7 +825,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   placeholder="65"
                   className={cx(
                     "w-full px-3 py-2 rounded-md shadow-sm text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
-                    darkMode 
+                    darkMode
                       ? "bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500"
                       : "bg-white border-gray-300 text-gray-900 placeholder-gray-400",
                     isDisabled ? darkMode ? 'bg-gray-700 text-gray-500' : 'bg-gray-100 text-gray-400' : ''
@@ -965,7 +871,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                     placeholder={placeholder}
                     className={cx(
                       "w-full pl-7 pr-3 py-2 rounded-md shadow-sm text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
-                      darkMode 
+                      darkMode
                         ? "bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500"
                         : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
                     )}
@@ -989,7 +895,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   placeholder="95"
                   className={cx(
                     "w-full px-3 py-2 rounded-md shadow-sm text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
-                    darkMode 
+                    darkMode
                       ? "bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500"
                       : "bg-white border-gray-300 text-gray-900 placeholder-gray-400",
                     isDisabled ? darkMode ? 'bg-gray-700 text-gray-500' : 'bg-gray-100 text-gray-400' : ''
@@ -1005,8 +911,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
           ) : (
             <div className={cx(
               "relative flex items-center",
-              includeSlider 
-                ? (percentage ? 'w-full sm:w-1/4' : 'w-full sm:w-1/3') 
+              includeSlider
+                ? (percentage ? 'w-full sm:w-1/4' : 'w-full sm:w-1/3')
                 : 'w-full'
             )}>
               <input
@@ -1014,8 +920,8 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 id={id as string}
                 type="text"
                 inputMode={percentage || currency ? "decimal" : "numeric"}
-                value={currency 
-                  ? `${getCurrencySymbol(params.currency)} ${value === '0' ? '' : value}` 
+                value={currency
+                  ? `${getCurrencySymbol(params.currency)} ${value === '0' ? '' : value}`
                   : (value === '0' ? '' : value)}
                 onChange={(e) => {
                   if (currency) {
@@ -1036,34 +942,34 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   }
                 }}
                 onFocus={() => handleInputFocus(id as string)}
-                placeholder={currency 
-                  ? `${getCurrencySymbol(params.currency)} ${placeholder}` 
+                placeholder={currency
+                  ? `${getCurrencySymbol(params.currency)} ${placeholder}`
                   : placeholder}
                 className={cx(
                   "w-full px-3 py-2 rounded-md shadow-sm text-sm",
-                  darkMode 
+                  darkMode
                     ? "bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500"
                     : "bg-white border-gray-300 text-gray-900 placeholder-gray-400",
                   id === 'annualReturnRate' || id === 'inflation'
-                    ? darkMode 
-                        ? "focus:ring-2 focus:ring-green-500 focus:border-green-500" 
-                        : "focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    ? darkMode
+                      ? "focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      : "focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     : darkMode
-                        ? "focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                        : "focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      ? "focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      : "focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 )}
                 aria-label={`${label} input`}
               />
               {percentage && (
                 <span className={cx(
                   "ml-1.5 text-xs",
-                  darkMode 
+                  darkMode
                     ? id === 'annualReturnRate' || id === 'inflation'
-                        ? "text-green-400" 
-                        : "text-gray-400"
+                      ? "text-green-400"
+                      : "text-gray-400"
                     : id === 'annualReturnRate' || id === 'inflation'
-                        ? "text-green-600"
-                        : "text-gray-600"
+                      ? "text-green-600"
+                      : "text-gray-600"
                 )}>
                   %
                 </span>
@@ -1082,44 +988,33 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
       </div>
     );
   }, [
-    params, 
-    autoCalculateRetirementAge, 
-    draggingSlider, 
-    getSliderConfig, 
-    handleInputBlur, 
-    handleInputChange, 
-    handleInputFocus, 
-    handleSliderMouseDown, 
-    handleSliderTouchStart, 
-    isRetirementInputAnAge, 
+    params,
+    autoCalculateRetirementAge,
+    draggingSlider,
+    getSliderConfig,
+    handleInputBlur,
+    handleInputChange,
+    handleInputFocus,
+    handleSliderMouseDown,
+    handleSliderTouchStart,
+    isRetirementInputAnAge,
     onParamChange
   ]);
 
-  useEffect(() => {
-    // Create a style element
-    const styleEl = document.createElement('style');
-    styleEl.innerHTML = customStyles;
-    document.head.appendChild(styleEl);
-    
-    // Clean up function
-    return () => {
-      document.head.removeChild(styleEl);
-    };
-  }, []);
 
   return (
     <div className={cx(
       "rounded-2xl border shadow-sm overflow-hidden p-4",
-      darkMode 
-        ? "bg-gray-900 border-gray-700 shadow-lg" 
+      darkMode
+        ? "bg-gray-900 border-gray-700 shadow-lg"
         : "bg-gray-50 border-gray-200"
     )}>
       {/* Header with Title */}
       <div className={cx("flex flex-col sm:flex-row justify-between items-start sm:items-center pb-2")}>
         <div>
           <h2 className={cx(
-            typography.weight.semibold, 
-            "text-xl mb-1 sm:mb-0", 
+            typography.weight.semibold,
+            "text-xl mb-1 sm:mb-0",
             components.header.withIcon,
             darkMode ? "text-gradient-dark" : typography.style.gradient
           )}>
@@ -1137,7 +1032,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
             darkMode ? "text-gray-400" : typography.style.subtitle
           )}>Tailor your personal path to financial freedom</p>
         </div>
-          
+
         <div className="flex flex-row items-center justify-end w-full sm:w-auto gap-2 mt-3 sm:mt-0">
           {/* PDF button */}
           <button
@@ -1145,11 +1040,11 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
             disabled={isPdfGenerating}
             className={cx(
               "px-4 py-1.5 text-xs font-medium rounded-lg flex items-center shadow-sm transition-colors duration-200",
-              isPdfGenerating 
-                ? (darkMode ? 'bg-gray-600' : 'bg-gray-400') 
-                : (darkMode 
-                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white'
-                    : 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white')
+              isPdfGenerating
+                ? (darkMode ? 'bg-gray-600' : 'bg-gray-400')
+                : (darkMode
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white'
+                  : 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white')
             )}
             aria-label="Generate PDF Report"
           >
@@ -1170,7 +1065,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               </>
             )}
           </button>
-          
+
           {/* Success message */}
           {showPdfSuccess && (
             <div className={cx(
@@ -1189,64 +1084,64 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               "flex rounded-lg overflow-hidden shadow-sm border",
               darkMode ? "border-gray-700" : "border-gray-200"
             )}>
-              <button 
+              <button
                 className={cx(
                   "px-2.5 py-1.5 text-xs font-medium transition-all min-w-[2rem]",
                   params.currency === 'USD'
-                    ? darkMode 
-                        ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white'
-                        : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                    ? darkMode
+                      ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white'
+                      : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
                     : darkMode
-                        ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
                 )}
                 onClick={() => handleCurrencyChange('USD')}
                 aria-label="Switch to US Dollar"
               >
                 $
               </button>
-              <button 
+              <button
                 className={cx(
                   "px-2.5 py-1.5 text-xs font-medium transition-all min-w-[2rem]",
                   params.currency === 'EUR'
-                    ? darkMode 
-                        ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white'
-                        : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                    ? darkMode
+                      ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white'
+                      : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
                     : darkMode
-                        ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
                 )}
                 onClick={() => handleCurrencyChange('EUR')}
                 aria-label="Switch to Euro"
               >
                 €
               </button>
-              <button 
+              <button
                 className={cx(
                   "px-2.5 py-1.5 text-xs font-medium transition-all min-w-[2rem]",
                   params.currency === 'GBP'
-                    ? darkMode 
-                        ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white'
-                        : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                    ? darkMode
+                      ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white'
+                      : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
                     : darkMode
-                        ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
                 )}
                 onClick={() => handleCurrencyChange('GBP')}
                 aria-label="Switch to British Pound"
               >
                 £
               </button>
-              <button 
+              <button
                 className={cx(
                   "px-2.5 py-1.5 text-xs font-medium transition-all min-w-[2rem]",
                   params.currency === 'JPY'
-                    ? darkMode 
-                        ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white'
-                        : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
+                    ? darkMode
+                      ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white'
+                      : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white'
                     : darkMode
-                        ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
                 )}
                 onClick={() => handleCurrencyChange('JPY')}
                 aria-label="Switch to Japanese Yen"
@@ -1298,17 +1193,17 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 Initial Capital
               </h4>
               {renderParameterInput(
-                "", 
-                "initialCapital", 
-                getDisplayValue('initialCapital', inputValues.initialCapital), 
-                "150,000", 
+                "",
+                "initialCapital",
+                getDisplayValue('initialCapital', inputValues.initialCapital),
+                "150,000",
                 true,
                 false,
                 undefined,
                 true
               )}
             </div>
-            
+
             <div className="p-1">
               <h4 className={cx(
                 "text-xs font-medium flex items-center mb-0.5",
@@ -1323,19 +1218,19 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 Current Age
               </h4>
               {renderParameterInput(
-                "", 
-                "currentAge", 
-                inputValues.currentAge, 
-                "46", 
-                false, 
-                false, 
+                "",
+                "currentAge",
+                inputValues.currentAge,
+                "46",
+                false,
+                false,
                 "",
                 true
               )}
             </div>
-            
 
-            
+
+
             <div className="p-1">
               <h4 className={cx(
                 "text-xs font-medium flex items-center mb-0.5",
@@ -1350,10 +1245,10 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 Monthly Investment
               </h4>
               {renderParameterInput(
-                "", 
-                "monthlyInvestment", 
-                getDisplayValue('monthlyInvestment', inputValues.monthlyInvestment), 
-                "500", 
+                "",
+                "monthlyInvestment",
+                getDisplayValue('monthlyInvestment', inputValues.monthlyInvestment),
+                "500",
                 true,
                 false,
                 undefined,
@@ -1406,7 +1301,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   )}
                 </h4>
               </div>
-              
+
               {/* Second row - auto-calculate button and slider */}
               <div className="flex items-center">
                 {/* Auto-calculate button - now wider with explicit text */}
@@ -1414,10 +1309,10 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   onClick={toggleAutoRetirementCalculation}
                   className={cx(
                     "flex-shrink-0 mr-2 p-1.5 px-3 rounded-lg transition-all flex items-center w-32 sm:w-36",
-                    autoCalculateRetirementAge 
-                      ? (darkMode 
-                        ? 'bg-purple-800 text-white ring-1 ring-purple-700' 
-                        : 'bg-purple-600 text-white ring-1 ring-purple-300') 
+                    autoCalculateRetirementAge
+                      ? (darkMode
+                        ? 'bg-purple-800 text-white ring-1 ring-purple-700'
+                        : 'bg-purple-600 text-white ring-1 ring-purple-300')
                       : (darkMode
                         ? 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-purple-900/50'
                         : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50')
@@ -1431,21 +1326,21 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                     {autoCalculateRetirementAge ? "Auto-calc" : "Auto-calc"}
                   </span>
                 </button>
-                
+
                 {/* Standard parameter input with reduced width */}
                 <div className={cx(
                   "flex-1",
-                  autoCalculateRetirementAge 
-                    ? "opacity-70 pointer-events-none" 
+                  autoCalculateRetirementAge
+                    ? "opacity-70 pointer-events-none"
                     : ""
                 )}>
                   {renderParameterInput(
                     "", // Empty label since we've added it manually above
-                    "retirementInput", 
-                    inputValues.retirementInput, 
-                    "65", 
-                    false, 
-                    false, 
+                    "retirementInput",
+                    inputValues.retirementInput,
+                    "65",
+                    false,
+                    false,
                     "",
                     true // Include slider
                   )}
@@ -1478,7 +1373,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   "flex w-full sm:w-auto rounded-lg overflow-hidden shadow-sm border",
                   darkMode ? "border-purple-800/50" : "border-purple-200"
                 )}>
-                  <button 
+                  <button
                     className={cx(
                       "flex-1 px-3 py-1.5 text-xs font-medium transition-all",
                       params.withdrawalMode === 'amount'
@@ -1493,7 +1388,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   >
                     Amount
                   </button>
-                  <button 
+                  <button
                     className={cx(
                       "flex-1 px-3 py-1.5 text-xs font-medium transition-all",
                       params.withdrawalMode === 'age'
@@ -1508,7 +1403,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   >
                     Target Age
                   </button>
-                  <button 
+                  <button
                     className={cx(
                       "flex-1 px-3 py-1.5 text-xs font-medium transition-all",
                       params.withdrawalMode === 'rate'
@@ -1536,15 +1431,15 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                     </svg>
                     Monthly Withdrawal
                   </h4>
-                  
+
                   {/* Mobile-only Inflation Adjusted Button */}
                   <button
                     onClick={() => onParamChange('inflationAdjustedWithdrawal', !params.inflationAdjustedWithdrawal)}
                     className={cx(
                       "inflation-button-mobile p-1.5 px-2 rounded-lg transition-all flex items-center",
-                      params.inflationAdjustedWithdrawal 
+                      params.inflationAdjustedWithdrawal
                         ? darkMode
-                          ? 'bg-purple-800 text-white ring-1 ring-purple-700' 
+                          ? 'bg-purple-800 text-white ring-1 ring-purple-700'
                           : 'bg-purple-600 text-white ring-1 ring-purple-300'
                         : darkMode
                           ? 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-purple-900/50'
@@ -1560,10 +1455,10 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                     </span>
                   </button>
                 </div>
-                
+
                 {params.inflationAdjustedWithdrawal && (
                   <p className="text-xs text-purple-600 italic mb-2">
-                    Amount will be adjusted for inflation from today until retirement. 
+                    Amount will be adjusted for inflation from today until retirement.
                     {statistics.calculatedRetirementStartYear && (
                       <span className="font-medium">
                         {" "}Future value at retirement: {formatAmount(
@@ -1577,16 +1472,16 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                     )}
                   </p>
                 )}
-                
+
                 <div className="monthly-withdrawal-row">
                   {/* Desktop-only Inflation Adjusted Button */}
                   <button
                     onClick={() => onParamChange('inflationAdjustedWithdrawal', !params.inflationAdjustedWithdrawal)}
                     className={cx(
                       "inflation-button-desktop p-1.5 px-2 rounded-lg transition-all flex items-center justify-center",
-                      params.inflationAdjustedWithdrawal 
+                      params.inflationAdjustedWithdrawal
                         ? darkMode
-                          ? 'bg-purple-800 text-white ring-1 ring-purple-700' 
+                          ? 'bg-purple-800 text-white ring-1 ring-purple-700'
                           : 'bg-purple-600 text-white ring-1 ring-purple-300'
                         : darkMode
                           ? 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-purple-900/50'
@@ -1601,28 +1496,28 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                       Inflation Adjusted
                     </span>
                   </button>
-                  
+
                   {/* Custom Slider Container - now always full width on mobile */}
                   <div className="withdrawal-slider-wrapper">
-                    <div 
+                    <div
                       ref={el => sliderContainerRefs.current["monthlyRetirementWithdrawal"] = el}
                       className="relative h-8"
                       onMouseDown={(e) => handleSliderMouseDown("monthlyRetirementWithdrawal", e)}
                       onTouchStart={(e) => handleSliderTouchStart("monthlyRetirementWithdrawal", e)}
                     >
-                      <div 
+                      <div
                         className={cx(
                           darkMode ? "bg-gray-700" : "bg-gray-200",
                           "h-2 rounded-full"
                         )}
                         style={{ top: '50%', transform: 'translateY(-50%)', position: 'absolute', height: '8px', width: '100%', borderRadius: '8px' }}
                       ></div>
-                      <div 
+                      <div
                         className={cx(
                           "absolute h-2 rounded-lg",
                           darkMode ? "bg-gradient-to-r from-purple-700 to-indigo-700" : "bg-gradient-to-r from-purple-500 to-indigo-500"
                         )}
-                        style={{ 
+                        style={{
                           top: '50%',
                           transform: 'translateY(-50%)',
                           left: '0',
@@ -1645,12 +1540,12 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                         className="w-full h-2 appearance-none bg-transparent absolute z-10 cursor-pointer opacity-0"
                         style={{ top: '50%', transform: 'translateY(-50%)' }}
                       />
-                      <div 
+                      <div
                         className={cx(
                           "absolute w-4 h-4 rounded-full shadow transition-all",
                           darkMode ? "bg-gray-200 border-gray-300" : "bg-white border"
                         )}
-                        style={{ 
+                        style={{
                           left: `${((params.monthlyRetirementWithdrawal - getSliderConfig("monthlyRetirementWithdrawal").min) / (getSliderConfig("monthlyRetirementWithdrawal").max - getSliderConfig("monthlyRetirementWithdrawal").min)) * 100}%`,
                           top: '50%',
                           transform: 'translate(-50%, -50%)',
@@ -1659,7 +1554,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                       ></div>
                     </div>
                   </div>
-                  
+
                   {/* Custom Input Field */}
                   <div className="withdrawal-input-wrapper">
                     <div className="relative w-full">
@@ -1688,7 +1583,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                         placeholder="0"
                         className={cx(
                           "w-full pl-7 pr-3 py-2 rounded-md shadow-sm text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500",
-                          darkMode 
+                          darkMode
                             ? "bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500"
                             : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
                         )}
@@ -1713,12 +1608,12 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   Target Age
                 </h4>
                 {renderParameterInput(
-                  "", 
-                  "maxAge", 
-                  inputValues.maxAge, 
-                  "95", 
-                  false, 
-                  false, 
+                  "",
+                  "maxAge",
+                  inputValues.maxAge,
+                  "95",
+                  false,
+                  false,
                   "",
                   true
                 )}
@@ -1738,11 +1633,11 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                   Withdrawal Rate
                 </h4>
                 {renderParameterInput(
-                  "", 
-                  "withdrawalRate", 
-                  inputValues.withdrawalRate, 
-                  "4", 
-                  false, 
+                  "",
+                  "withdrawalRate",
+                  inputValues.withdrawalRate,
+                  "4",
+                  false,
                   true,
                   undefined,
                   true
@@ -1798,17 +1693,17 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               Annual Return
             </h4>
             {renderParameterInput(
-              "Expected return on investments", 
-              "annualReturnRate", 
-              inputValues.annualReturnRate, 
-              "5", 
-              false, 
+              "Expected return on investments",
+              "annualReturnRate",
+              inputValues.annualReturnRate,
+              "5",
+              false,
               true,
               undefined,
               true // Include slider
             )}
           </div>
-          
+
           {/* Inflation Rate */}
           <div className={cx(
             "rounded-lg border shadow-sm p-1",
@@ -1827,17 +1722,17 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
               Inflation
             </h4>
             {renderParameterInput(
-              "Annual inflation rate", 
-              "inflation", 
-              inputValues.inflation, 
-              "2", 
-              false, 
+              "Annual inflation rate",
+              "inflation",
+              inputValues.inflation,
+              "2",
+              false,
               true,
               undefined,
               true // Include slider
             )}
           </div>
-          
+
           {/* Compound Frequency */}
           <div className={cx(
             "rounded-lg border shadow-sm p-1",
@@ -1868,32 +1763,32 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                 "flex rounded-lg overflow-hidden shadow-sm mt-2 border",
                 darkMode ? "border-green-800/50" : "border-green-200"
               )}>
-                <button 
+                <button
                   className={cx(
                     "px-3 py-1 text-xs font-medium transition-all flex-1",
                     params.compoundFrequency === 'monthly'
                       ? darkMode
-                          ? 'bg-green-800 text-white'
-                          : 'bg-green-600 text-white'
+                        ? 'bg-green-800 text-white'
+                        : 'bg-green-600 text-white'
                       : darkMode
-                          ? 'bg-gray-800 text-gray-300 hover:bg-green-900/50'
-                          : 'bg-white text-gray-700 hover:bg-green-50'
+                        ? 'bg-gray-800 text-gray-300 hover:bg-green-900/50'
+                        : 'bg-white text-gray-700 hover:bg-green-50'
                   )}
                   onClick={() => onParamChange('compoundFrequency', 'monthly')}
                   aria-label="Set monthly compounding"
                 >
                   Monthly
                 </button>
-                <button 
+                <button
                   className={cx(
                     "px-3 py-1 text-xs font-medium transition-all flex-1",
                     params.compoundFrequency === 'annual'
                       ? darkMode
-                          ? 'bg-green-800 text-white'
-                          : 'bg-green-600 text-white'
+                        ? 'bg-green-800 text-white'
+                        : 'bg-green-600 text-white'
                       : darkMode
-                          ? 'bg-gray-800 text-gray-300 hover:bg-green-900/50'
-                          : 'bg-white text-gray-700 hover:bg-green-50'
+                        ? 'bg-gray-800 text-gray-300 hover:bg-green-900/50'
+                        : 'bg-white text-gray-700 hover:bg-green-50'
                   )}
                   onClick={() => onParamChange('compoundFrequency', 'annual')}
                   aria-label="Set annual compounding"
