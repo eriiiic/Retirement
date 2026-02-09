@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { blogPosts, BlogPost, BlogTopic } from './blogData';
 import Footer from '../common/Footer'; // Import Footer component
-import { Helmet } from 'react-helmet';
+import SEO from '../common/SEO';
 import { isSafari } from '../../utils/browserDetection';
 import { useTheme } from '../../context/ThemeContext';
 import { cx } from '../../styles/styleGuide';
@@ -12,12 +12,12 @@ const BlogPage: React.FC = () => {
   const [selectedTopics, setSelectedTopics] = useState<BlogTopic[]>([]);
   const [isSafariBrowser, setIsSafariBrowser] = useState(false);
   const { darkMode } = useTheme();
-  
+
   // Detect Safari browser on component mount
   useEffect(() => {
     setIsSafariBrowser(isSafari());
   }, []);
-  
+
   // Extract all unique topics from blog posts
   const allTopics = useMemo(() => {
     const topics = new Set<BlogTopic>();
@@ -26,31 +26,31 @@ const BlogPage: React.FC = () => {
     });
     return Array.from(topics).sort();
   }, []);
-  
+
   // Filter posts based on search query and selected topics
   const filteredPosts = useMemo(() => {
     return blogPosts.filter((post: BlogPost) => {
       // Filter by search query
-      const matchesSearch = searchQuery === '' || 
+      const matchesSearch = searchQuery === '' ||
         post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       // Filter by selected topics
-      const matchesTopics = selectedTopics.length === 0 || 
+      const matchesTopics = selectedTopics.length === 0 ||
         selectedTopics.some(topic => post.topics.includes(topic));
-      
+
       return matchesSearch && matchesTopics;
     }).sort((a: BlogPost, b: BlogPost) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [searchQuery, selectedTopics]);
-  
+
   const toggleTopic = (topic: BlogTopic) => {
-    setSelectedTopics(prev => 
-      prev.includes(topic) 
-        ? prev.filter(t => t !== topic) 
+    setSelectedTopics(prev =>
+      prev.includes(topic)
+        ? prev.filter(t => t !== topic)
         : [...prev, topic]
     );
   };
-  
+
   // Format date to readable string
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -59,44 +59,28 @@ const BlogPage: React.FC = () => {
 
   return (
     <div className={`max-w-6xl mx-auto px-4 py-8 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <Helmet>
-        <title>Blog & Resources | FIRE Retirement Planning</title>
-        <meta name="description" content="Explore practical advice, real-world case studies, and data-driven strategies from people who achieved financial independence." />
-        
-        {/* Open Graph / Facebook */}
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content="Blog & Resources | FIRE Retirement Planning" />
-        <meta property="og:description" content="Explore financial independence strategies, investment approaches, and retirement planning insights from those who've achieved FIRE." />
-        <meta property="og:image" content="https://FIRECalculator.ai/blog-images/blog-og-image.png" />
-        <meta property="og:url" content="https://FIRECalculator.ai/blog" />
-        <meta property="og:site_name" content="FIRECalculator.ai" />
-        
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Blog & Resources | FIRE Retirement Planning" />
-        <meta name="twitter:description" content="Explore financial independence strategies, investment approaches, and retirement planning insights from those who've achieved FIRE." />
-        <meta name="twitter:image" content="https://FIRECalculator.ai/blog-images/blog-twitter-card.png" />
-        
-        {/* Canonical URL */}
-        <link rel="canonical" href="https://FIRECalculator.ai/blog" />
-      </Helmet>
+      <SEO
+        title="Blog & Resources | FIRE Retirement Planning"
+        description="Explore practical advice, real-world case studies, and data-driven strategies from people who achieved financial independence."
+        canonicalUrl="/blog"
+        ogType="website"
+        ogImage="/blog-images/blog-og-image.png"
+      />
 
       {/* Page Header with Gradient Background */}
       <div className="mb-6 rounded-xl overflow-hidden shadow-lg">
-        <div className={`py-8 px-6 ${
-          isSafariBrowser 
-            ? darkMode ? 'bg-indigo-800' : 'bg-indigo-600' 
-            : darkMode 
-              ? 'bg-gradient-to-r from-indigo-800 to-purple-800' 
+        <div className={`py-8 px-6 ${isSafariBrowser
+            ? darkMode ? 'bg-indigo-800' : 'bg-indigo-600'
+            : darkMode
+              ? 'bg-gradient-to-r from-indigo-800 to-purple-800'
               : 'bg-gradient-to-r from-indigo-600 to-purple-600'
-        } relative`}>
+          } relative`}>
           {/* Safari-specific overlay gradient using background-image */}
           {isSafariBrowser && (
-            <div className={`absolute inset-0 ${
-              darkMode 
-                ? 'bg-[linear-gradient(to_right,#3730a3,#6b21a8)]' 
+            <div className={`absolute inset-0 ${darkMode
+                ? 'bg-[linear-gradient(to_right,#3730a3,#6b21a8)]'
                 : 'bg-[linear-gradient(to_right,#4f46e5,#9333ea)]'
-            } opacity-90`}></div>
+              } opacity-90`}></div>
           )}
           <div className="mb-4 sm:mb-5 text-center relative z-10">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3">
@@ -109,12 +93,12 @@ const BlogPage: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Search and filter section - Compact version */}
       <div className={cx(
         "mb-8 rounded-xl shadow-sm",
-        darkMode 
-          ? "bg-gray-900/70" 
+        darkMode
+          ? "bg-gray-900/70"
           : "bg-white"
       )}>
         {/* Card content */}
@@ -136,8 +120,8 @@ const BlogPage: React.FC = () => {
                 placeholder="Search for articles..."
                 className={cx(
                   "w-full pl-10 pr-4 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus:ring-2",
-                  darkMode 
-                    ? "bg-gray-800 border-transparent text-gray-200 placeholder-gray-400 focus:ring-indigo-600" 
+                  darkMode
+                    ? "bg-gray-800 border-transparent text-gray-200 placeholder-gray-400 focus:ring-indigo-600"
                     : "bg-gray-50 border-transparent text-gray-900 placeholder-gray-500 focus:ring-indigo-500"
                 )}
                 value={searchQuery}
@@ -145,7 +129,7 @@ const BlogPage: React.FC = () => {
               />
             </div>
           </div>
-          
+
           {/* Topic filters with compact styling */}
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className={cx(
@@ -154,7 +138,7 @@ const BlogPage: React.FC = () => {
             )}>
               Topics:
             </span>
-            
+
             {allTopics.map((topic) => (
               <button
                 key={topic}
@@ -162,21 +146,21 @@ const BlogPage: React.FC = () => {
                 className={cx(
                   "px-2.5 py-1 rounded-md text-xs transition-all",
                   selectedTopics.includes(topic)
-                    ? darkMode 
-                        ? "bg-indigo-700 text-white" 
-                        : "bg-indigo-600 text-white"
-                    : darkMode 
-                        ? "bg-gray-800 text-gray-300 hover:bg-gray-700" 
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? darkMode
+                      ? "bg-indigo-700 text-white"
+                      : "bg-indigo-600 text-white"
+                    : darkMode
+                      ? "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 )}
               >
                 {topic}
               </button>
             ))}
-            
+
             {/* Clear button when filters are applied */}
             {(searchQuery || selectedTopics.length > 0) && (
-              <button 
+              <button
                 onClick={() => {
                   setSearchQuery('');
                   setSelectedTopics([]);
@@ -195,28 +179,28 @@ const BlogPage: React.FC = () => {
               </button>
             )}
           </div>
-          
+
           {/* Results count */}
           <p className={cx(
             "text-xs",
             darkMode ? "text-gray-500" : "text-gray-500"
           )}>
-            
+
           </p>
         </div>
       </div>
-      
+
       {/* Blog posts grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         {filteredPosts.length > 0 ? (
           filteredPosts.map((post: BlogPost) => (
-            <Link 
-              to={`/blog/${post.id}`} 
+            <Link
+              to={`/blog/${post.id}`}
               key={post.id}
               className={cx(
                 "rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border",
-                darkMode 
-                  ? "bg-gray-800 border-gray-700" 
+                darkMode
+                  ? "bg-gray-800 border-gray-700"
                   : "bg-white border-gray-200"
               )}
             >
@@ -237,8 +221,8 @@ const BlogPage: React.FC = () => {
                   )}>{formatDate(post.date)}</span>
                   <span className={cx(
                     "text-xs px-2 py-1 rounded-full",
-                    darkMode 
-                      ? "bg-indigo-900/50 text-indigo-200" 
+                    darkMode
+                      ? "bg-indigo-900/50 text-indigo-200"
                       : "bg-indigo-100 text-indigo-800"
                   )}>
                     {post.readTime} min read
@@ -246,12 +230,12 @@ const BlogPage: React.FC = () => {
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1">
                   {post.topics.slice(0, 3).map((topic, index) => (
-                    <span 
-                      key={`${post.id}-topic-${index}`} 
+                    <span
+                      key={`${post.id}-topic-${index}`}
                       className={cx(
                         "text-xs px-2 py-0.5 rounded-full",
-                        darkMode 
-                          ? "bg-gray-700 text-gray-300" 
+                        darkMode
+                          ? "bg-gray-700 text-gray-300"
                           : "bg-gray-100 text-gray-600"
                       )}
                     >
@@ -267,21 +251,21 @@ const BlogPage: React.FC = () => {
             "col-span-full p-10 rounded-xl shadow-md text-center",
             darkMode ? "bg-gray-800/70 border border-gray-700" : "bg-gray-50 border border-gray-200"
           )}>
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
               className={cx(
                 "h-16 w-16 mx-auto mb-4",
                 darkMode ? "text-gray-600" : "text-gray-400"
               )}
-              fill="none" 
-              viewBox="0 0 24 24" 
+              fill="none"
+              viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={1.5} 
-                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
             <h3 className={cx(
@@ -294,7 +278,7 @@ const BlogPage: React.FC = () => {
             )}>
               We couldn't find any articles matching your search criteria. Try adjusting your search terms or removing some filters.
             </p>
-            <button 
+            <button
               onClick={() => {
                 setSearchQuery('');
                 setSelectedTopics([]);
@@ -311,7 +295,7 @@ const BlogPage: React.FC = () => {
           </div>
         )}
       </div>
-      
+
       {/* Call to Action */}
       <div className={cx(
         "mb-10 rounded-xl overflow-hidden shadow-lg",
@@ -333,16 +317,16 @@ const BlogPage: React.FC = () => {
             "max-w-2xl mx-auto mb-8",
             darkMode ? "text-indigo-200/90" : "text-indigo-100"
           )}>
-            Use our retirement calculator to see how your savings can grow over time and build a personalized 
+            Use our retirement calculator to see how your savings can grow over time and build a personalized
             plan for your financial future.
           </p>
           <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 justify-center items-center">
-            <a 
-              href="/" 
+            <a
+              href="/"
               className={cx(
                 "w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border text-base font-medium rounded-md shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
-                darkMode 
-                  ? "bg-indigo-100 text-indigo-900 border-transparent hover:bg-white" 
+                darkMode
+                  ? "bg-indigo-100 text-indigo-900 border-transparent hover:bg-white"
                   : "bg-white text-indigo-700 border-transparent hover:bg-indigo-50"
               )}
             >
@@ -351,12 +335,12 @@ const BlogPage: React.FC = () => {
               </svg>
               Try Our Retirement Calculator
             </a>
-            <a 
-              href="/fire" 
+            <a
+              href="/fire"
               className={cx(
                 "w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border text-base font-medium rounded-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
-                darkMode 
-                  ? "border-indigo-400/50 text-indigo-100 hover:bg-indigo-800/50" 
+                darkMode
+                  ? "border-indigo-400/50 text-indigo-100 hover:bg-indigo-800/50"
                   : "border-indigo-200 text-white hover:bg-white/10"
               )}
             >
@@ -368,7 +352,7 @@ const BlogPage: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Add Footer Component */}
       <Footer />
 
@@ -397,7 +381,7 @@ const BlogPage: React.FC = () => {
         </form>
       </div>
       */}
-      
+
     </div>
   );
 };

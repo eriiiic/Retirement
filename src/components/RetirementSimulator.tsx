@@ -21,6 +21,7 @@ import { colors, components, typography, spacing, cx } from '../styles/styleGuid
 import { isSafari } from '../utils/browserDetection';
 import { useTheme } from '../context/ThemeContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+import SEO from './common/SEO';
 
 // Default parameters for new users
 const DEFAULT_PARAMS: SimulatorParams = {
@@ -554,6 +555,13 @@ const RetirementSimulator = () => {
 
   return (
     <div className={`max-w-6xl mx-auto ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+      <SEO
+        title="AI-Powered Retirement Calculator | Plan Your Financial Freedom"
+        description="Visualize your retirement journey with our advanced AI-powered simulator. Calculate capital needs, withdrawal strategies, and compound interest growth."
+        keywords="retirement calculator, FIRE calculator, financial independence, retirement planning, compound interest, investment simulator"
+        canonicalUrl="/"
+      />
+
       {/* Page Header with Gradient Background */}
       <div className="mt-6 mb-6 rounded-xl overflow-hidden shadow-lg">
         <div className={`py-8 px-6 ${isSafariBrowser

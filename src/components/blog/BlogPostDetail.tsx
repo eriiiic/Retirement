@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
+import SEO from '../common/SEO';
 import { blogPosts, BlogPost } from './blogData';
 import { getBlogPostContent, hasBlogPostContent } from './blogContentLoader';
 import { useTheme } from '../../context/ThemeContext';
@@ -256,7 +256,7 @@ const processMarkdownHeadings = (content: string): string => {
 const processMarkdownLinks = (content: string): string => {
   // Handle specific "Back to Blog" link at the end
   return content.replace(
-    /\[Back to Blog\]\(\/blog\)/g, 
+    /\[Back to Blog\]\(\/blog\)/g,
     '<a href="/blog" class="back-to-blog-link">Back to Blog</a>'
   );
 };
@@ -268,11 +268,11 @@ const processMarkdownLinks = (content: string): string => {
  */
 const processContent = (content: string): string => {
   if (!content) return '';
-  
+
   let processedContent = content;
   processedContent = processMarkdownHeadings(processedContent);
   processedContent = processMarkdownLinks(processedContent);
-  
+
   return processedContent;
 };
 
@@ -282,7 +282,7 @@ const BlogPostDetail: React.FC = () => {
   const [content, setContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { darkMode } = useTheme();
-  
+
   useEffect(() => {
     const loadContent = async () => {
       if (id) {
@@ -306,10 +306,10 @@ const BlogPostDetail: React.FC = () => {
         }
       }
     };
-    
+
     loadContent();
   }, [id]);
-  
+
   useEffect(() => {
     // Set dark mode class on document for CSS variables
     if (darkMode) {
@@ -318,15 +318,15 @@ const BlogPostDetail: React.FC = () => {
       document.documentElement.removeAttribute('data-theme');
     }
   }, [darkMode]);
-  
+
   if (!post) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12">
         <div className="text-center">
           <h1 className={cx("text-2xl font-bold mb-4", darkMode ? "text-gray-100" : "text-gray-800")}>Blog Post Not Found</h1>
           <p className={cx("mb-6", darkMode ? "text-gray-300" : "text-gray-600")}>The article you're looking for doesn't seem to exist.</p>
-          <Link 
-            to="/blog" 
+          <Link
+            to="/blog"
             className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
           >
             &larr; Back to Blog
@@ -335,72 +335,83 @@ const BlogPostDetail: React.FC = () => {
       </div>
     );
   }
-  
+
   // Format date to readable string
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
-  
+
   // Create the website URL from the blog post ID
   const siteUrl = "https://FIRECalculator.ai";
   const postUrl = `${siteUrl}/blog/${post.id}`;
-  
+
   // Get the paths for the OG and Twitter card images
   const ogImagePath = `/blog-images/${post.id}-og-image.png`;
   const twitterImagePath = `/blog-images/${post.id}-twitter-card.png`;
-  
+
+  // Structured Data for SEO
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": post.title,
+    "description": post.excerpt,
+    "image": `${siteUrl}${ogImagePath}`,
+    "datePublished": post.date,
+    "author": {
+      "@type": "Person",
+      "name": post.author
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "FIRECalculator.ai",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://FIRECalculator.ai/logo.png"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": postUrl
+    }
+  };
+
   return (
     <div className={cx("max-w-4xl mx-auto px-4 py-8", darkMode ? "bg-gray-900" : "bg-gray-50")}>
-      <Helmet>
-        <title>{post.title} | FIRECalculator.ai</title>
-        <meta name="description" content={post.excerpt} />
-        
-        {/* Open Graph meta tags */}
-        <meta property="og:type" content="article" />
-        <meta property="og:title" content={post.title} />
-        <meta property="og:description" content={post.excerpt} />
-        <meta property="og:image" content={`${siteUrl}${ogImagePath}`} />
-        <meta property="og:url" content={postUrl} />
-        <meta property="og:site_name" content="FIRECalculator.ai" />
-        <meta property="article:published_time" content={post.date} />
-        
-        {/* Twitter Card meta tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={post.title} />
-        <meta name="twitter:description" content={post.excerpt} />
-        <meta name="twitter:image" content={`${siteUrl}${twitterImagePath}`} />
-        <meta name="twitter:url" content={postUrl} />
-        
-        {/* LinkedIn meta tags */}
-        <meta property="linkedin:title" content={post.title} />
-        <meta property="linkedin:description" content={post.excerpt} />
-        <meta property="linkedin:image" content={`${siteUrl}${ogImagePath}`} />
-      </Helmet>
-      
+      <SEO
+        title={`${post.title} | FIRECalculator.ai`}
+        description={post.excerpt}
+        canonicalUrl={`/blog/${post.id}`}
+        ogType="article"
+        ogImage={ogImagePath}
+        keywords={post.topics.join(', ')}
+        structuredData={structuredData}
+      />
+
       {/* Add custom styles for blog content */}
       <style dangerouslySetInnerHTML={{ __html: blogStyles }} />
 
-      <Link 
-        to="/blog" 
+      <Link
+        to="/blog"
         className={cx("inline-flex items-center hover:text-indigo-700 mb-6", darkMode ? "text-indigo-400" : "text-indigo-600")}
       >
         &larr; Back to Blog
       </Link>
-      
+
       {post.image && (
         <div className="relative h-72 md:h-96 mb-8 rounded-lg overflow-hidden shadow-md">
-          <img 
-            src={post.image} 
-            alt={post.title} 
+          <img
+            src={post.image}
+            alt={post.title}
             className="w-full h-full object-cover"
+            loading="lazy"
           />
         </div>
       )}
-      
+
       <div className="mb-6">
         <h1 className={cx("text-3xl md:text-4xl font-bold mb-4", darkMode ? "text-gray-100" : "text-gray-900")}>{post.title}</h1>
-        
+
         <div className={cx("flex flex-wrap items-center text-sm mb-4", darkMode ? "text-gray-400" : "text-gray-600")}>
           <div className="flex items-center mr-6 mb-2">
             <span className="mr-1">📅</span>
@@ -414,14 +425,14 @@ const BlogPostDetail: React.FC = () => {
             <span>By {post.author}</span>
           </div>
         </div>
-        
+
         <div className="flex flex-wrap gap-2 mb-6">
           {post.topics.map(topic => (
-            <span 
-              key={topic} 
+            <span
+              key={topic}
               className={cx(
                 "inline-flex items-center text-xs font-medium px-2 py-1 rounded",
-                darkMode 
+                darkMode
                   ? "bg-indigo-900/50 text-indigo-300"
                   : "bg-indigo-50 text-indigo-700"
               )}
@@ -431,7 +442,7 @@ const BlogPostDetail: React.FC = () => {
           ))}
         </div>
       </div>
-      
+
       <div className={cx("prose prose-lg max-w-none blog-content", darkMode ? "prose-invert" : "")}>
         {isLoading ? (
           <LoadingPlaceholder />
@@ -442,8 +453,8 @@ const BlogPostDetail: React.FC = () => {
             <p className={cx("mb-4", darkMode ? "text-gray-300" : "text-gray-700")}>{post.excerpt}</p>
             <div className={cx(
               "border-l-4 p-4 mb-6",
-              darkMode 
-                ? "bg-yellow-900/30 border-yellow-700 text-yellow-200" 
+              darkMode
+                ? "bg-yellow-900/30 border-yellow-700 text-yellow-200"
                 : "bg-yellow-50 border-yellow-400 text-yellow-700"
             )}>
               <p>

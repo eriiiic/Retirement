@@ -16,7 +16,7 @@ import {
   BarChart,
   Bar
 } from 'recharts';
-import { Helmet } from 'react-helmet';
+import SEO from '../common/SEO';
 import RangeInput from '../common/RangeInput';
 import NumberInput from '../common/NumberInput';
 import { isSafari } from '../../utils/browserDetection'; // Import isSafari utility
@@ -52,8 +52,8 @@ const FAQItem: React.FC<FAQItemProps> = ({ question, answer }) => {
         <span className={cx(
           "ml-6 flex-shrink-0 p-1.5 rounded-full transition-all",
           isOpen ? "transform rotate-180" : "",
-          darkMode 
-            ? "bg-gray-700 group-hover:bg-indigo-900/50" 
+          darkMode
+            ? "bg-gray-700 group-hover:bg-indigo-900/50"
             : "bg-gray-100 group-hover:bg-indigo-100"
         )}>
           <svg className="h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -64,9 +64,9 @@ const FAQItem: React.FC<FAQItemProps> = ({ question, answer }) => {
       {isOpen && (
         <div className="mt-4">
           <div className={cx(
-            "text-base p-5 rounded-lg border",
-            darkMode 
-              ? "bg-gray-800 border-gray-700 text-gray-300" 
+            "p-5 rounded-lg border prose prose-base max-w-none",
+            darkMode
+              ? "bg-gray-800 border-gray-700 prose-invert prose-p:text-gray-300 prose-strong:text-white prose-ul:text-gray-300 prose-ol:text-gray-300 prose-li:text-gray-300"
               : "bg-gray-50 border-indigo-100 text-gray-700"
           )}>
             {answer}
@@ -87,7 +87,7 @@ interface SectionHeaderProps {
 
 const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, className = '' }) => {
   const { darkMode } = useTheme();
-  
+
   return (
     <h2 id={id} className={cx(
       "text-2xl font-bold mb-4 flex items-center",
@@ -110,7 +110,7 @@ const FIREPage: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState(0);
   // State for Safari detection
   const [isSafariBrowser, setIsSafariBrowser] = useState(false);
-  
+
   // Detect Safari browser on component mount
   useEffect(() => {
     setIsSafariBrowser(isSafari()); // Use imported isSafari function
@@ -124,24 +124,24 @@ const FIREPage: React.FC = () => {
   const [savingsRate, setSavingsRate] = useState(50);
   const [annualReturn, setAnnualReturn] = useState(7);
   const [withdrawalRate, setWithdrawalRate] = useState(4);
-  
+
   // Calculate FIRE numbers - Memoized
   const fireNumbers = useMemo(() => {
     const yearsToRetirement = retirementAge - currentAge;
     const annualSavings = annualIncome * (savingsRate / 100);
-    
+
     // Calculate future value of current savings
     const futureValueCurrentSavings = currentSavings * Math.pow(1 + annualReturn / 100, yearsToRetirement);
-    
+
     // Calculate future value of annual contributions
     let totalSavings = futureValueCurrentSavings;
     for (let i = 0; i < yearsToRetirement; i++) {
       totalSavings += annualSavings * Math.pow(1 + annualReturn / 100, yearsToRetirement - i);
     }
-    
+
     const annualExpenses = annualIncome * (1 - savingsRate / 100);
     const targetNetWorth = (annualExpenses * 100) / withdrawalRate;
-    
+
     return {
       targetNetWorth: Math.round(targetNetWorth),
       projectedNetWorth: Math.round(totalSavings),
@@ -156,16 +156,16 @@ const FIREPage: React.FC = () => {
     const years = retirementAge - currentAge;
     const annualSavings = annualIncome * (savingsRate / 100);
     const data = [];
-    
+
     let savings = currentSavings;
     let contributions = currentSavings;
-    
+
     for (let year = 0; year <= years; year++) {
       if (year > 0) {
         contributions += annualSavings;
         savings = savings * (1 + annualReturn / 100) + annualSavings;
       }
-      
+
       data.push({
         year: currentAge + year,
         savings: Math.round(savings),
@@ -173,14 +173,14 @@ const FIREPage: React.FC = () => {
         returns: Math.round(savings - contributions)
       });
     }
-    
+
     return data;
   }, [currentAge, retirementAge, currentSavings, annualIncome, savingsRate, annualReturn]);
 
   // Generate retirement lifestyle data for pie chart - Memoized
   const retirementBudgetData = useMemo(() => {
     const annualSpending = fireNumbers.annualRetirementIncome;
-    
+
     return [
       { name: 'Housing', value: Math.round(annualSpending * 0.30) },
       { name: 'Food', value: Math.round(annualSpending * 0.15) },
@@ -194,7 +194,7 @@ const FIREPage: React.FC = () => {
 
   // Colors for pie chart
   const COLORS = useMemo(() => ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'], []);
-  
+
   // FIRE types data for the comparison section
   const fireTypes = useMemo(() => [
     {
@@ -249,47 +249,29 @@ const FIREPage: React.FC = () => {
       "max-w-6xl mx-auto px-4 py-8",
       darkMode ? "bg-gray-900" : "bg-gray-50"
     )}>
-      <Helmet>
-        <title>FIRE: Financial Independence, Retire Early | Retirement Planning Guide</title>
-        <meta name="description" content="Learn about the FIRE movement (Financial Independence, Retire Early) and how to achieve financial freedom through smart investing and intentional spending." />
-        
-        {/* Open Graph / Facebook */}
-        <meta property="og:type" content="article" />
-        <meta property="og:title" content="FIRE: Financial Independence, Retire Early | Ultimate Guide" />
-        <meta property="og:description" content="Learn how to achieve financial independence and retire decades earlier with FIRE strategies, calculators, and step-by-step guidance." />
-        <meta property="og:image" content="https://yourdomain.com/images/fire-social-card.jpg" />
-        <meta property="og:url" content="https://yourdomain.com/fire" />
-        <meta property="og:site_name" content="Retirement Planner" />
-        
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="FIRE: Financial Independence, Retire Early | Ultimate Guide" />
-        <meta name="twitter:description" content="Learn how to achieve financial independence and retire decades earlier with FIRE strategies, calculators, and step-by-step guidance." />
-        <meta name="twitter:image" content="https://yourdomain.com/images/fire-social-card.jpg" />
-        
-        {/* LinkedIn */}
-        <meta property="linkedin:title" content="FIRE: Financial Independence, Retire Early | Ultimate Guide" />
-        <meta property="linkedin:description" content="Learn how to achieve financial independence and retire decades earlier with FIRE strategies, calculators, and step-by-step guidance." />
-        <meta property="linkedin:image" content="https://yourdomain.com/images/fire-social-card.jpg" />
-        
-        {/* Canonical URL */}
-        <link rel="canonical" href="https://yourdomain.com/fire" />
-      </Helmet>
+      <SEO
+        title="FIRE: Financial Independence, Retire Early | Retirement Planning Guide"
+        description="Learn about the FIRE movement (Financial Independence, Retire Early) and how to achieve financial freedom through smart investing and intentional spending."
+        canonicalUrl="/fire"
+        ogType="article"
+        ogImage="/blog-images/fire-og-image.png"
+        keywords="FIRE movement, financial independence, retire early, investing, savings rate, financial freedom"
+      />
 
       {/* Page Header with Gradient Background */}
       <div className="mb-6 rounded-xl overflow-hidden shadow-lg">
         <div className={cx(
           "py-8 px-6 relative",
-          isSafariBrowser 
-            ? darkMode ? "bg-indigo-800" : "bg-indigo-600" 
+          isSafariBrowser
+            ? darkMode ? "bg-indigo-800" : "bg-indigo-600"
             : "bg-gradient-to-r from-indigo-600 to-purple-600"
         )}>
           {/* Safari-specific overlay gradient using background-image */}
           {isSafariBrowser && (
             <div className={cx(
               "absolute inset-0 opacity-90",
-              darkMode 
-                ? "bg-[linear-gradient(to_right,#3730a3,#6b21a8)]" 
+              darkMode
+                ? "bg-[linear-gradient(to_right,#3730a3,#6b21a8)]"
                 : "bg-[linear-gradient(to_right,#4f46e5,#9333ea)]"
             )}></div>
           )}
@@ -318,9 +300,9 @@ const FIREPage: React.FC = () => {
 
       {/* What is FIRE Section */}
       <Section className={cx(
-        "mb-10", 
-        darkMode 
-          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+        "mb-10",
+        darkMode
+          ? "bg-gradient-to-br from-gray-900 to-gray-800"
           : "bg-gradient-to-br from-white to-indigo-50"
       )}>
         <div className={cx(
@@ -329,9 +311,9 @@ const FIREPage: React.FC = () => {
             ? "prose-invert prose-headings:text-gray-100 prose-p:text-gray-300 prose-strong:text-white prose-a:text-indigo-400"
             : ""
         )}>
-          <SectionHeader 
-            id="what-is-fire" 
-            title="What is FIRE?" 
+          <SectionHeader
+            id="what-is-fire"
+            title="What is FIRE?"
             className="mb-6"
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -339,7 +321,7 @@ const FIREPage: React.FC = () => {
               </svg>
             }
           />
-          
+
           <div className="space-y-6">
             <p className={cx(
               "text-lg leading-relaxed",
@@ -350,11 +332,11 @@ const FIREPage: React.FC = () => {
                 darkMode ? "text-indigo-400" : "text-indigo-600"
               )}>FIRE</span> stands for <span className="font-semibold">Financial Independence, Retire Early</span>. It's a movement focused on extreme savings and investments that allow people to retire much earlier than traditional budgets and retirement plans would allow.
             </p>
-            
+
             <div className={cx(
               "p-6 rounded-lg border",
-              darkMode 
-                ? "bg-gradient-to-r from-indigo-900/30 to-purple-900/30 border-indigo-800/50" 
+              darkMode
+                ? "bg-gradient-to-r from-indigo-900/30 to-purple-900/30 border-indigo-800/50"
                 : "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-100"
             )}>
               <p className={cx(
@@ -374,8 +356,8 @@ const FIREPage: React.FC = () => {
 
             <div className={cx(
               "p-4 rounded-lg border",
-              darkMode 
-                ? "bg-blue-900/30 border-blue-800 text-blue-100" 
+              darkMode
+                ? "bg-blue-900/30 border-blue-800 text-blue-100"
                 : "bg-blue-50 border-blue-100 text-blue-800"
             )}>
               <h3 className={cx(
@@ -400,7 +382,7 @@ const FIREPage: React.FC = () => {
                   <p className={cx(
                     darkMode ? "text-gray-300" : "text-gray-700"
                   )}>
-                    Having sufficient personal wealth to live without needing to work actively 
+                    Having sufficient personal wealth to live without needing to work actively
                     for basic necessities. Your assets generate enough passive income to cover your living expenses.
                   </p>
                 </div>
@@ -421,17 +403,17 @@ const FIREPage: React.FC = () => {
                   <p className={cx(
                     darkMode ? "text-gray-300" : "text-gray-700"
                   )}>
-                    Leveraging financial independence to leave traditional work decades before the conventional 
+                    Leveraging financial independence to leave traditional work decades before the conventional
                     retirement age of 65+, creating freedom to pursue your true interests.
                   </p>
                 </div>
               </div>
             </div>
-            
+
             <div className={cx(
               "p-6 rounded-xl border mb-8 transform hover:scale-[1.02] transition-transform duration-300",
-              darkMode 
-                ? "bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border-indigo-800/50" 
+              darkMode
+                ? "bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border-indigo-800/50"
                 : "bg-gradient-to-br from-indigo-100 to-purple-100 border-indigo-200"
             )}>
               <div className="flex flex-col md:flex-row items-center">
@@ -451,19 +433,19 @@ const FIREPage: React.FC = () => {
                   </h3>
                   <p className={cx(
                     "italic border-l-4 pl-4 text-lg",
-                    darkMode 
-                      ? "text-indigo-300 border-indigo-700" 
+                    darkMode
+                      ? "text-indigo-300 border-indigo-700"
                       : "text-indigo-900 border-indigo-300"
                   )}>
-                    "Financial Independence is having enough income (from investments, passive businesses, or 
-                    other sources) to pay for your living expenses for the rest of your life without having to 
+                    "Financial Independence is having enough income (from investments, passive businesses, or
+                    other sources) to pay for your living expenses for the rest of your life without having to
                     work for money."
                   </p>
                   <p className={cx(
                     "mt-2",
                     darkMode ? "text-gray-300" : "text-gray-700"
                   )}>
-                    The FIRE movement grew from the 1992 bestseller "Your Money or Your Life" by Vicki Robin 
+                    The FIRE movement grew from the 1992 bestseller "Your Money or Your Life" by Vicki Robin
                     and Joe Dominguez, later popularized by bloggers like Mr. Money Mustache who retired at 30.
                   </p>
                 </div>
@@ -480,7 +462,7 @@ const FIREPage: React.FC = () => {
                   darkMode ? "text-gray-100" : "text-gray-900"
                 )}>Why FIRE is Growing</h4>
                 <ul className={cx(
-                  "space-y-2", 
+                  "space-y-2",
                   darkMode ? "text-gray-300" : "text-gray-700"
                 )}>
                   <li>• Dissatisfaction with 9-5 work</li>
@@ -533,12 +515,12 @@ const FIREPage: React.FC = () => {
       {/* FIRE Formula Section */}
       <Card className={cx(
         "mb-10 p-8",
-        darkMode 
-          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+        darkMode
+          ? "bg-gradient-to-br from-gray-900 to-gray-800"
           : "bg-gradient-to-br from-white to-blue-50"
       )}>
-        <SectionHeader 
-          title="The FIRE Formula: How It Works" 
+        <SectionHeader
+          title="The FIRE Formula: How It Works"
           icon={
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -546,7 +528,7 @@ const FIREPage: React.FC = () => {
           }
         />
         <div id="fire-formula"></div>
-        
+
         <div className="space-y-8">
           {/* FIRE Formula */}
           <div className={cx(
@@ -556,8 +538,8 @@ const FIREPage: React.FC = () => {
             <div className="text-center mb-6">
               <div className={cx(
                 "p-4 rounded-lg inline-block",
-                darkMode 
-                  ? "bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-800/50" 
+                darkMode
+                  ? "bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-800/50"
                   : "bg-gradient-to-r from-blue-50 to-indigo-50"
               )}>
                 <p className={cx(
@@ -574,7 +556,7 @@ const FIREPage: React.FC = () => {
                 darkMode ? "text-gray-400" : "text-gray-600"
               )}>Based on the 4% Safe Withdrawal Rate</p>
             </div>
-            
+
             {/* Formula Explained */}
             <div className={cx(
               "prose prose-lg max-w-none",
@@ -586,15 +568,15 @@ const FIREPage: React.FC = () => {
                 darkMode ? "text-gray-100" : "text-gray-900"
               )}>The 4% Rule Explained</h3>
               <p>
-                The foundation of FIRE planning is the <strong>4% rule</strong> (or Safe Withdrawal Rate), 
-                originated from the 1998 Trinity Study. It suggests that if you withdraw 4% of your portfolio 
-                in your first year of retirement, then adjust that amount for inflation each subsequent year, 
+                The foundation of FIRE planning is the <strong>4% rule</strong> (or Safe Withdrawal Rate),
+                originated from the 1998 Trinity Study. It suggests that if you withdraw 4% of your portfolio
+                in your first year of retirement, then adjust that amount for inflation each subsequent year,
                 your money has a high probability of lasting 30+ years.
               </p>
               <p>
                 This means that to achieve financial independence, you need to save approximately <strong>25 times your annual expenses</strong> (since 4% is 1/25th of your portfolio).
               </p>
-              
+
               <div className={cx(
                 "not-prose grid grid-cols-1 md:grid-cols-2 gap-6 mt-6",
                 darkMode ? "text-gray-300" : "text-gray-700"
@@ -618,7 +600,7 @@ const FIREPage: React.FC = () => {
                     This is your target FIRE number - the amount you need invested to generate enough passive income to cover your expenses indefinitely.
                   </p>
                 </div>
-                
+
                 <div className={cx(
                   "p-4 rounded-lg",
                   darkMode ? "bg-gray-750 border border-gray-700" : "bg-gray-50"
@@ -643,8 +625,8 @@ const FIREPage: React.FC = () => {
           {/* Savings Rate and Time to FIRE */}
           <div className={cx(
             "p-6 rounded-xl border",
-            darkMode 
-              ? "bg-gray-800 border-gray-700" 
+            darkMode
+              ? "bg-gray-800 border-gray-700"
               : "bg-white shadow-md border-blue-100"
           )}>
             <h4 className={cx(
@@ -667,7 +649,7 @@ const FIREPage: React.FC = () => {
             )}>
               Your savings rate is the single most important factor determining how quickly you can achieve FIRE.
             </p>
-            
+
             <div className="overflow-x-auto">
               <table className={cx(
                 "min-w-full rounded-lg overflow-hidden",
@@ -768,7 +750,7 @@ const FIREPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
-            
+
             <p className={cx(
               "text-sm mt-4",
               darkMode ? "text-gray-400" : "text-gray-600"
@@ -781,8 +763,8 @@ const FIREPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className={cx(
               "p-6 rounded-xl border",
-              darkMode 
-                ? "bg-gradient-to-b from-green-900/40 to-green-800/40 border-green-800" 
+              darkMode
+                ? "bg-gradient-to-b from-green-900/40 to-green-800/40 border-green-800"
                 : "bg-gradient-to-b from-green-50 to-green-100 border-green-200"
             )}>
               <h4 className={cx(
@@ -800,15 +782,15 @@ const FIREPage: React.FC = () => {
                 "text-sm",
                 darkMode ? "text-gray-300" : "text-gray-700"
               )}>
-                Increase your earning potential through skills development, side hustles, and career advancement 
+                Increase your earning potential through skills development, side hustles, and career advancement
                 to accelerate your journey to FIRE.
               </p>
             </div>
-            
+
             <div className={cx(
               "p-6 rounded-xl border",
-              darkMode 
-                ? "bg-gradient-to-b from-blue-900/40 to-blue-800/40 border-blue-800" 
+              darkMode
+                ? "bg-gradient-to-b from-blue-900/40 to-blue-800/40 border-blue-800"
                 : "bg-gradient-to-b from-blue-50 to-blue-100 border-blue-200"
             )}>
               <h4 className={cx(
@@ -827,15 +809,15 @@ const FIREPage: React.FC = () => {
                 "text-sm",
                 darkMode ? "text-gray-300" : "text-gray-700"
               )}>
-                Cut costs on the things that bring little value while spending intentionally on what truly 
+                Cut costs on the things that bring little value while spending intentionally on what truly
                 matters to you. Focus on the "big three": housing, transportation, and food.
               </p>
             </div>
-            
+
             <div className={cx(
               "p-6 rounded-xl border",
-              darkMode 
-                ? "bg-gradient-to-b from-purple-900/40 to-purple-800/40 border-purple-800" 
+              darkMode
+                ? "bg-gradient-to-b from-purple-900/40 to-purple-800/40 border-purple-800"
                 : "bg-gradient-to-b from-purple-50 to-purple-100 border-purple-200"
             )}>
               <h4 className={cx(
@@ -853,7 +835,7 @@ const FIREPage: React.FC = () => {
                 "text-sm",
                 darkMode ? "text-gray-300" : "text-gray-700"
               )}>
-                Harness the power of low-cost index funds, tax-advantaged accounts, and compound interest to grow 
+                Harness the power of low-cost index funds, tax-advantaged accounts, and compound interest to grow
                 your wealth efficiently and passively.
               </p>
             </div>
@@ -864,8 +846,8 @@ const FIREPage: React.FC = () => {
       {/* Types of FIRE Section */}
       <Section className={cx(
         "mb-10",
-        darkMode 
-          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+        darkMode
+          ? "bg-gradient-to-br from-gray-900 to-gray-800"
           : "bg-gradient-to-br from-white to-indigo-50"
       )}>
         <div className={cx(
@@ -874,9 +856,9 @@ const FIREPage: React.FC = () => {
             ? "prose-invert prose-headings:text-gray-100 prose-p:text-gray-300 prose-strong:text-white prose-a:text-indigo-400"
             : ""
         )}>
-          <SectionHeader 
-            id="fire-types" 
-            title="Find Your FIRE: Different Approaches to Financial Independence" 
+          <SectionHeader
+            id="fire-types"
+            title="Find Your FIRE: Different Approaches to Financial Independence"
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -888,7 +870,7 @@ const FIREPage: React.FC = () => {
             "mb-6",
             darkMode ? "text-gray-300" : "text-gray-700"
           )}>
-            There isn't just one way to achieve FIRE. The movement has evolved to include several variations 
+            There isn't just one way to achieve FIRE. The movement has evolved to include several variations
             that accommodate different financial goals, risk tolerances, and lifestyle preferences.
           </p>
 
@@ -900,13 +882,12 @@ const FIREPage: React.FC = () => {
               )}>
                 <div className="flex flex-col md:flex-row">
                   <div className="md:w-1/4 mb-4 md:mb-0">
-                    <div className={`inline-flex items-center justify-center p-3 rounded-lg ${
-                      index === 0 ? (darkMode ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-100 text-yellow-700') : 
-                      index === 1 ? (darkMode ? 'bg-green-900/50 text-green-300' : 'bg-green-100 text-green-700') : 
-                      index === 2 ? (darkMode ? 'bg-indigo-900/50 text-indigo-300' : 'bg-indigo-100 text-indigo-700') : 
-                      index === 3 ? (darkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-700') :
-                      (darkMode ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-100 text-purple-700')
-                    }`}>
+                    <div className={`inline-flex items-center justify-center p-3 rounded-lg ${index === 0 ? (darkMode ? 'bg-yellow-900/50 text-yellow-300' : 'bg-yellow-100 text-yellow-700') :
+                      index === 1 ? (darkMode ? 'bg-green-900/50 text-green-300' : 'bg-green-100 text-green-700') :
+                        index === 2 ? (darkMode ? 'bg-indigo-900/50 text-indigo-300' : 'bg-indigo-100 text-indigo-700') :
+                          index === 3 ? (darkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-700') :
+                            (darkMode ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-100 text-purple-700')
+                      }`}>
                       <h3 className="text-xl font-bold">{type.type}</h3>
                     </div>
                   </div>
@@ -953,8 +934,8 @@ const FIREPage: React.FC = () => {
 
           <div className={cx(
             "p-6 rounded-xl border",
-            darkMode 
-              ? "bg-gradient-to-r from-indigo-900/30 to-purple-900/30 border-indigo-800/50" 
+            darkMode
+              ? "bg-gradient-to-r from-indigo-900/30 to-purple-900/30 border-indigo-800/50"
               : "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-100"
           )}>
             <h3 className={cx(
@@ -1015,9 +996,9 @@ const FIREPage: React.FC = () => {
 
       {/* Conclusion Section */}
       <Section className={cx(
-        "mb-10", 
-        darkMode 
-          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+        "mb-10",
+        darkMode
+          ? "bg-gradient-to-br from-gray-900 to-gray-800"
           : "bg-gradient-to-br from-white to-indigo-50"
       )}>
         <div className={cx(
@@ -1026,25 +1007,25 @@ const FIREPage: React.FC = () => {
             ? "prose-invert prose-headings:text-gray-100 prose-p:text-gray-300 prose-strong:text-white prose-a:text-indigo-400"
             : ""
         )}>
-          <SectionHeader 
-            title="Your Journey to Financial Independence Starts Today" 
+          <SectionHeader
+            title="Your Journey to Financial Independence Starts Today"
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             }
           />
-          
+
           <div className="space-y-6">
             <p className={cx(
               "text-lg leading-relaxed",
               darkMode ? "text-gray-300" : "text-gray-700"
             )}>
               The FIRE movement isn't just about retiring early—it's about gaining the freedom to live life on your own terms.
-              By combining intentional spending, strategic investing, and thoughtful planning, you can break free from financial 
+              By combining intentional spending, strategic investing, and thoughtful planning, you can break free from financial
               constraints decades earlier than conventional wisdom suggests.
             </p>
-            
+
             <p className={cx(
               "text-lg leading-relaxed",
               darkMode ? "text-gray-300" : "text-gray-700"
@@ -1067,7 +1048,7 @@ const FIREPage: React.FC = () => {
                   darkMode ? "text-gray-300" : "text-gray-700"
                 )}>Here's your actionable FIRE starter plan:</p>
                 <ol className={cx(
-                  "list-decimal pl-5 space-y-2", 
+                  "list-decimal pl-5 space-y-2",
                   darkMode ? "text-gray-300" : "text-gray-700"
                 )}>
                   <li><strong>Calculate your savings rate</strong> as a percentage of your take-home pay</li>
@@ -1093,8 +1074,8 @@ const FIREPage: React.FC = () => {
       <div id="faq"></div>
       <Section className={cx(
         "mb-10",
-        darkMode 
-          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+        darkMode
+          ? "bg-gradient-to-br from-gray-900 to-gray-800"
           : "bg-gradient-to-br from-white to-indigo-50"
       )}>
         <div className={cx(
@@ -1103,8 +1084,8 @@ const FIREPage: React.FC = () => {
             ? "prose-invert prose-headings:text-gray-100 prose-p:text-gray-300 prose-strong:text-white prose-a:text-indigo-400 prose-li:text-gray-300"
             : ""
         )}>
-          <SectionHeader 
-            title="Frequently Asked Questions" 
+          <SectionHeader
+            title="Frequently Asked Questions"
             className="mb-8"
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1112,20 +1093,20 @@ const FIREPage: React.FC = () => {
               </svg>
             }
           />
-          
+
           <p className={cx(
             "mb-8",
             darkMode ? "text-gray-400" : "text-gray-600"
           )}>
             Get answers to common questions about the FIRE journey, strategies, and challenges you might face along the way.
           </p>
-          
+
           <div className={cx(
             "rounded-lg divide-y",
             darkMode ? "divide-gray-700" : "divide-gray-200"
           )}>
-            <FAQItem 
-              question="What is the 4% rule and is it still valid?" 
+            <FAQItem
+              question="What is the 4% rule and is it still valid?"
               answer={
                 <>
                   <p>The 4% rule suggests that you can safely withdraw 4% of your portfolio value in the first year of retirement, then adjust that amount for inflation each subsequent year, without running out of money for at least 30 years.</p>
@@ -1138,11 +1119,11 @@ const FIREPage: React.FC = () => {
                   </ul>
                   <p>Most financial planners now recommend a dynamic withdrawal approach that adjusts based on market conditions rather than rigidly following the 4% rule.</p>
                 </>
-              } 
+              }
             />
-            
-            <FAQItem 
-              question="Is FIRE only for high-income earners?" 
+
+            <FAQItem
+              question="Is FIRE only for high-income earners?"
               answer={
                 <>
                   <p>While a high income can accelerate your path to FIRE, it's not a requirement. FIRE is achievable at various income levels through:</p>
@@ -1155,11 +1136,11 @@ const FIREPage: React.FC = () => {
                   </ul>
                   <p>The key factor is the gap between your income and expenses, not the absolute income level. A person earning $50,000 who saves 50% will reach FIRE faster than someone earning $200,000 who saves only 10%.</p>
                 </>
-              } 
+              }
             />
-            
-            <FAQItem 
-              question="How do I account for healthcare costs in my FIRE plan?" 
+
+            <FAQItem
+              question="How do I account for healthcare costs in my FIRE plan?"
               answer={
                 <>
                   <p>Healthcare is often the biggest wild card in FIRE planning, especially in the U.S. Consider these approaches:</p>
@@ -1172,11 +1153,11 @@ const FIREPage: React.FC = () => {
                   </ul>
                   <p>Most successful FIRE plans include significantly higher healthcare allocations than what you currently pay while employed.</p>
                 </>
-              } 
+              }
             />
-            
-            <FAQItem 
-              question="What investments are best for achieving FIRE?" 
+
+            <FAQItem
+              question="What investments are best for achieving FIRE?"
               answer={
                 <>
                   <p>The most common and recommended investment approach for FIRE consists of:</p>
@@ -1193,11 +1174,11 @@ const FIREPage: React.FC = () => {
                     <li>Broad diversification</li>
                   </ul>
                 </>
-              } 
+              }
             />
-            
-            <FAQItem 
-              question="How can I access retirement funds before age 59½ without penalties?" 
+
+            <FAQItem
+              question="How can I access retirement funds before age 59½ without penalties?"
               answer={
                 <>
                   <p>Several strategies exist to access retirement funds early without the 10% penalty:</p>
@@ -1210,11 +1191,11 @@ const FIREPage: React.FC = () => {
                   </ul>
                   <p>Most FIRE plans use a combination of these strategies in different life stages.</p>
                 </>
-              } 
+              }
             />
-            
-            <FAQItem 
-              question="What happens if the market crashes right after I retire?" 
+
+            <FAQItem
+              question="What happens if the market crashes right after I retire?"
               answer={
                 <>
                   <p>This is known as "sequence of returns risk" and it's one of the biggest threats to a FIRE plan. Strategies to mitigate this risk include:</p>
@@ -1227,11 +1208,11 @@ const FIREPage: React.FC = () => {
                   </ul>
                   <p>The first 5-10 years of retirement returns have a disproportionate impact on long-term success, so having contingency plans for this period is crucial.</p>
                 </>
-              } 
+              }
             />
 
-            <FAQItem 
-              question="How do I avoid lifestyle inflation as my income grows?" 
+            <FAQItem
+              question="How do I avoid lifestyle inflation as my income grows?"
               answer={
                 <>
                   <p>Lifestyle inflation (increasing spending as income rises) is one of the biggest obstacles to reaching FIRE. Effective strategies include:</p>
@@ -1244,11 +1225,11 @@ const FIREPage: React.FC = () => {
                   </ul>
                   <p>The most successful FIRE achievers typically maintain a fairly consistent lifestyle even as their incomes and net worth grow substantially.</p>
                 </>
-              } 
+              }
             />
 
-            <FAQItem 
-              question="Is it better to pay off debt or invest when pursuing FIRE?" 
+            <FAQItem
+              question="Is it better to pay off debt or invest when pursuing FIRE?"
               answer={
                 <>
                   <p>This depends on several factors, with interest rates being the primary consideration:</p>
@@ -1266,11 +1247,11 @@ const FIREPage: React.FC = () => {
                   </ul>
                   <p>Many FIRE pursuers take a hybrid approach, investing in tax-advantaged accounts while aggressively paying down debt.</p>
                 </>
-              } 
+              }
             />
 
-            <FAQItem 
-              question="What's the biggest mistake people make when pursuing FIRE?" 
+            <FAQItem
+              question="What's the biggest mistake people make when pursuing FIRE?"
               answer={
                 <>
                   <p>Common FIRE mistakes include:</p>
@@ -1283,11 +1264,11 @@ const FIREPage: React.FC = () => {
                   </ul>
                   <p>The most successful FIRE journeys balance present enjoyment with future security, focus on value-based spending rather than deprivation, and evolve as life circumstances change.</p>
                 </>
-              } 
+              }
             />
 
-            <FAQItem 
-              question="How do I talk to my partner about FIRE if they're not interested?" 
+            <FAQItem
+              question="How do I talk to my partner about FIRE if they're not interested?"
               answer={
                 <>
                   <p>Aligning financially with a partner is crucial for FIRE success. Try these approaches:</p>
@@ -1300,11 +1281,11 @@ const FIREPage: React.FC = () => {
                   </ul>
                   <p>Remember that financial compatibility requires ongoing communication and mutual respect for different perspectives. Sometimes a financial advisor as a neutral third party can help facilitate these conversations.</p>
                 </>
-              } 
+              }
             />
 
-            <FAQItem 
-              question="How does compound interest work and why is it so important for FIRE?" 
+            <FAQItem
+              question="How does compound interest work and why is it so important for FIRE?"
               answer={
                 <>
                   <p>Compound interest is often called the eighth wonder of the world for good reason. It's the process where your investment returns generate their own returns over time, creating an exponential growth curve.</p>
@@ -1318,11 +1299,11 @@ const FIREPage: React.FC = () => {
                   <p>For FIRE seekers, compound interest is the primary engine that makes early retirement possible. The earlier you start investing, the more time your money has to compound, which is why many FIRE enthusiasts prioritize high savings rates early in their careers.</p>
                   <p>This is also why small improvements in your investment return rate (through low-cost index funds) or small increases in your savings rate can dramatically reduce the time needed to reach financial independence.</p>
                 </>
-              } 
+              }
             />
-            
-            <FAQItem 
-              question="What personal finance habits are most important to develop for FIRE success?" 
+
+            <FAQItem
+              question="What personal finance habits are most important to develop for FIRE success?"
               answer={
                 <>
                   <p>The journey to FIRE requires developing several key financial habits:</p>
@@ -1336,11 +1317,11 @@ const FIREPage: React.FC = () => {
                   </ul>
                   <p>Most FIRE achievers report that the habits themselves become rewarding and continue long after financial independence is reached. The discipline, intention, and mindfulness around money often transfer to other areas of life as well.</p>
                 </>
-              } 
+              }
             />
-            
-            <FAQItem 
-              question="How can I balance saving for FIRE with other financial priorities like buying a home or paying for education?" 
+
+            <FAQItem
+              question="How can I balance saving for FIRE with other financial priorities like buying a home or paying for education?"
               answer={
                 <>
                   <p>Balancing multiple financial goals is a common challenge. Here's a framework that works for many FIRE pursuers:</p>
@@ -1359,11 +1340,11 @@ const FIREPage: React.FC = () => {
                   </ol>
                   <p>Remember that some expenses like education or a reasonable home purchase can be viewed as investments that may actually accelerate your FIRE journey through increased earning potential or reduced long-term costs.</p>
                 </>
-              } 
+              }
             />
 
-            <FAQItem 
-              question="What tax-optimization strategies are most effective for FIRE pursuers?" 
+            <FAQItem
+              question="What tax-optimization strategies are most effective for FIRE pursuers?"
               answer={
                 <>
                   <p>Tax optimization can significantly accelerate your path to FIRE. The most effective strategies include:</p>
@@ -1377,7 +1358,7 @@ const FIREPage: React.FC = () => {
                   </ul>
                   <p>Remember that tax laws change frequently, so maintaining flexibility in your plan and regularly consulting with a tax professional can help ensure you're using the most current and applicable strategies for your situation.</p>
                 </>
-              } 
+              }
             />
           </div>
         </div>
@@ -1483,16 +1464,16 @@ const FIREPage: React.FC = () => {
             "max-w-2xl mx-auto mb-8",
             darkMode ? "text-indigo-200/90" : "text-indigo-100"
           )}>
-            Use our retirement calculator to see how your savings can grow over time and build a personalized 
+            Use our retirement calculator to see how your savings can grow over time and build a personalized
             plan for your financial future.
           </p>
           <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 justify-center items-center">
-            <a 
-              href="/" 
+            <a
+              href="/"
               className={cx(
                 "w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border text-base font-medium rounded-md shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
-                darkMode 
-                  ? "bg-indigo-100 text-indigo-900 border-transparent hover:bg-white" 
+                darkMode
+                  ? "bg-indigo-100 text-indigo-900 border-transparent hover:bg-white"
                   : "bg-white text-indigo-700 border-transparent hover:bg-indigo-50"
               )}
             >
@@ -1501,12 +1482,12 @@ const FIREPage: React.FC = () => {
               </svg>
               Try Our Retirement Calculator
             </a>
-            <a 
-              href="/fire" 
+            <a
+              href="/fire"
               className={cx(
                 "w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border text-base font-medium rounded-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
-                darkMode 
-                  ? "border-indigo-400/50 text-indigo-100 hover:bg-indigo-800/50" 
+                darkMode
+                  ? "border-indigo-400/50 text-indigo-100 hover:bg-indigo-800/50"
                   : "border-indigo-200 text-white hover:bg-white/10"
               )}
             >
@@ -1518,7 +1499,7 @@ const FIREPage: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Add Footer Component */}
       <Footer />
     </div>

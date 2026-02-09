@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Title, Subtitle, Card, Section, SectionTitle } from '../common/StyledComponents';
-import { Helmet } from 'react-helmet';
+import SEO from '../common/SEO';
 import { isSafari } from '../../utils/browserDetection';
 import Footer from '../common/Footer';
 import { useTheme } from '../../context/ThemeContext';
@@ -59,8 +59,8 @@ const FAQItem: React.FC<FAQItemProps> = ({ question, answer }) => {
         <div className="mt-4">
           <div className={cx(
             "p-5 rounded-lg border prose prose-base max-w-none",
-            darkMode 
-              ? "bg-gray-800 border-gray-700 prose-invert prose-p:text-gray-300 prose-strong:text-white prose-ul:text-gray-300 prose-ol:text-gray-300 prose-li:text-gray-300" 
+            darkMode
+              ? "bg-gray-800 border-gray-700 prose-invert prose-p:text-gray-300 prose-strong:text-white prose-ul:text-gray-300 prose-ol:text-gray-300 prose-li:text-gray-300"
               : "bg-gray-50 border-indigo-100 text-gray-700"
           )}>
             {answer}
@@ -75,7 +75,7 @@ const CompoundInterestPage: React.FC = () => {
   // State for Safari detection
   const [isSafariBrowser, setIsSafariBrowser] = useState(false);
   const { darkMode } = useTheme();
-  
+
   // Detect Safari browser on component mount
   useEffect(() => {
     setIsSafariBrowser(isSafari());
@@ -88,29 +88,29 @@ const CompoundInterestPage: React.FC = () => {
   const [compound, setCompound] = useState(12);
 
   // Section Header Component
-interface SectionHeaderProps {
-  id?: string;
-  title: string;
-  icon: React.ReactNode;
-  className?: string;
-}
+  interface SectionHeaderProps {
+    id?: string;
+    title: string;
+    icon: React.ReactNode;
+    className?: string;
+  }
 
-const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, className = '' }) => {
-  const { darkMode } = useTheme();
-  
-  return (
-    <h2 id={id} className={cx(
-      "text-2xl font-bold mb-4 flex items-center",
-      darkMode ? "text-white" : "text-gray-900",
-      className
-    )}>
-      <span className="bg-indigo-600 text-white p-2 rounded-full mr-3 flex items-center justify-center">
-        {icon}
-      </span>
-      {title}
-    </h2>
-  );
-};
+  const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, className = '' }) => {
+    const { darkMode } = useTheme();
+
+    return (
+      <h2 id={id} className={cx(
+        "text-2xl font-bold mb-4 flex items-center",
+        darkMode ? "text-white" : "text-gray-900",
+        className
+      )}>
+        <span className="bg-indigo-600 text-white p-2 rounded-full mr-3 flex items-center justify-center">
+          {icon}
+        </span>
+        {title}
+      </h2>
+    );
+  };
 
   // Calculate compound interest for the interactive example
   const compoundInterest = useMemo(() => {
@@ -118,14 +118,14 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
     if (principal <= 0 || rate <= 0 || years <= 0 || compound <= 0) {
       return "0.00";
     }
-    
+
     const r = rate / 100;
     const n = compound;
     const t = years;
     const P = principal;
-    
+
     try {
-      return (P * Math.pow(1 + r/n, n*t)).toFixed(2);
+      return (P * Math.pow(1 + r / n, n * t)).toFixed(2);
     } catch (error) {
       console.error("Error calculating compound interest:", error);
       return "Error";
@@ -138,7 +138,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
     if (principal <= 0 || rate <= 0 || years < 0 || compound <= 0) {
       return [];
     }
-    
+
     const data = [];
     try {
       for (let year = 0; year <= years; year++) {
@@ -170,45 +170,45 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
       if (monthlyContribution < 0 || startAge < 0 || endAge <= startAge || annualReturn < 0) {
         return [];
       }
-      
+
       // Ensure stopContributionAge is valid
-      if (stopContributionAge !== undefined && 
-          (stopContributionAge < startAge || stopContributionAge > endAge)) {
+      if (stopContributionAge !== undefined &&
+        (stopContributionAge < startAge || stopContributionAge > endAge)) {
         stopContributionAge = endAge;
       }
-      
+
       const data = [];
       let total = 0;
       const monthlyRate = annualReturn / 100 / 12;
-      
+
       try {
         for (let age = startAge; age <= endAge; age++) {
           // Add monthly contributions and growth for the year
           for (let month = 0; month < 12; month++) {
             // Only add contribution if before stopContributionAge (if specified) or before endAge
-            const shouldContribute = (!stopContributionAge && age < endAge) || 
-                                   (stopContributionAge && age < stopContributionAge);
-            
+            const shouldContribute = (!stopContributionAge && age < endAge) ||
+              (stopContributionAge && age < stopContributionAge);
+
             if (shouldContribute) {
               total = (total + monthlyContribution) * (1 + monthlyRate);
             } else {
               total = total * (1 + monthlyRate);
             }
           }
-          
+
           // Calculate total contribution
-          const contributionYears = stopContributionAge 
+          const contributionYears = stopContributionAge
             ? Math.min(age - startAge + 1, stopContributionAge - startAge)
             : (age < endAge ? age - startAge + 1 : 0);
           const totalContribution = contributionYears * 12 * monthlyContribution;
-          
+
           data.push({
             age,
             total: Number(total.toFixed(2)),
             contribution: Number(totalContribution.toFixed(2))
           });
         }
-        
+
         return data;
       } catch (error) {
         console.error("Error calculating growth:", error);
@@ -218,60 +218,41 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
   }, []);
 
   // Early and late investor data for the comparison chart
-  const earlyInvestorData = useMemo(() => 
-    calculateGrowth(200, 25, 65, 7, 35), 
-  [calculateGrowth]);
-  
-  const lateInvestorData = useMemo(() => 
-    calculateGrowth(200, 35, 65), 
-  [calculateGrowth]);
+  const earlyInvestorData = useMemo(() =>
+    calculateGrowth(200, 25, 65, 7, 35),
+    [calculateGrowth]);
+
+  const lateInvestorData = useMemo(() =>
+    calculateGrowth(200, 35, 65),
+    [calculateGrowth]);
 
   return (
     <div className={cx(
       "max-w-6xl mx-auto px-4 py-8",
       darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"
     )}>
-      <Helmet>
-        <title>Understanding Compound Interest | Financial Growth Guide</title>
-        <meta name="description" content="Learn how compound interest works, calculate your potential returns, and discover strategies to maximize your long-term wealth growth." />
-        
-        {/* Open Graph meta tags */}
-        <meta property="og:type" content="article" />
-        <meta property="og:title" content="Understanding Compound Interest | Financial Growth Guide" />
-        <meta property="og:description" content="Learn how compound interest can transform your savings into substantial wealth and accelerate your path to financial independence." />
-        <meta property="og:image" content="https://FIRECalculator.ai/blog-images/compound-interest-og-image.png" />
-        <meta property="og:url" content="https://FIRECalculator.ai/compound-interest" />
-        <meta property="og:site_name" content="FIRECalculator.ai" />
-        
-        {/* Twitter Card meta tags */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Understanding Compound Interest | Financial Growth Guide" />
-        <meta name="twitter:description" content="Learn how compound interest can transform your savings into substantial wealth and accelerate your path to financial independence." />
-        <meta name="twitter:image" content="https://FIRECalculator.ai/blog-images/compound-interest-twitter-card.png" />
-        
-        {/* LinkedIn meta tags */}
-        <meta property="linkedin:title" content="Understanding Compound Interest | Financial Growth Guide" />
-        <meta property="linkedin:description" content="Learn how compound interest can transform your savings into substantial wealth and accelerate your path to financial independence." />
-        <meta property="linkedin:image" content="https://FIRECalculator.ai/blog-images/compound-interest-og-image.png" />
-        
-        {/* Canonical URL */}
-        <link rel="canonical" href="https://FIRECalculator.ai/compound-interest" />
-      </Helmet>
+      <SEO
+        title="Understanding Compound Interest | Financial Growth Guide"
+        description="Learn how compound interest works, calculate your potential returns, and discover strategies to maximize your long-term wealth growth."
+        canonicalUrl="/compound-interest"
+        ogType="article"
+        ogImage="/blog-images/compound-interest-og-image.png"
+      />
 
       {/* Page Header with Gradient Background */}
       <div className="mb-6 rounded-xl overflow-hidden shadow-lg">
         <div className={cx(
           "py-8 px-6 relative",
-          isSafariBrowser 
-            ? darkMode ? "bg-indigo-800" : "bg-indigo-600" 
+          isSafariBrowser
+            ? darkMode ? "bg-indigo-800" : "bg-indigo-600"
             : "bg-gradient-to-r from-indigo-600 to-purple-600"
         )}>
           {/* Safari-specific overlay gradient using background-image */}
           {isSafariBrowser && (
             <div className={cx(
               "absolute inset-0 opacity-90",
-              darkMode 
-                ? "bg-[linear-gradient(to_right,#3730a3,#6b21a8)]" 
+              darkMode
+                ? "bg-[linear-gradient(to_right,#3730a3,#6b21a8)]"
                 : "bg-[linear-gradient(to_right,#4f46e5,#9333ea)]"
             )}></div>
           )}
@@ -280,7 +261,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
               Understanding Compound Interest: Your Path to Financial Growth
             </h1>
             <p className="text-gray-100 text-sm sm:text-base max-w-2xl mx-auto font-medium">
-              Learn how compound interest can transform your savings into substantial wealth over time, 
+              Learn how compound interest can transform your savings into substantial wealth over time,
               and why it's considered one of the most powerful forces in financial planning.
             </p>
             <div className={cx(
@@ -301,9 +282,9 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
 
       {/* Enhanced Introduction Section */}
       <Section className={cx(
-        "mb-10", 
-        darkMode 
-          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+        "mb-10",
+        darkMode
+          ? "bg-gradient-to-br from-gray-900 to-gray-800"
           : "bg-gradient-to-br from-white to-indigo-50"
       )}>
         <div className={cx(
@@ -323,22 +304,22 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
             </span>
             What is Compound Interest?
           </h2>
-          
+
           <div className="space-y-6">
             <p className={cx(
               "text-lg leading-relaxed",
               darkMode ? "text-gray-300" : "text-gray-700"
             )}>
-              Compound interest is a fundamental financial concept where you earn returns not only on your 
-              initial investment (principal) but also on the accumulated interest from previous periods. 
-              Unlike simple interest, which calculates returns solely on the principal amount, compound 
+              Compound interest is a fundamental financial concept where you earn returns not only on your
+              initial investment (principal) but also on the accumulated interest from previous periods.
+              Unlike simple interest, which calculates returns solely on the principal amount, compound
               interest creates a snowball effect that can significantly accelerate wealth accumulation over time.
             </p>
 
             <div className={cx(
               "p-4 rounded-lg border",
-              darkMode 
-                ? "bg-blue-900/30 border-blue-800 text-blue-100" 
+              darkMode
+                ? "bg-blue-900/30 border-blue-800 text-blue-100"
                 : "bg-blue-50 border-blue-100 text-blue-800"
             )}>
               <h3 className={cx(
@@ -346,16 +327,16 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                 darkMode ? "text-blue-300" : "text-blue-900"
               )}>Key Difference from Simple Interest</h3>
               <p className={darkMode ? "text-blue-200" : "text-blue-800"}>
-                With simple interest, a $1,000 investment earning 5% annually would gain $50 each year. 
-                With compound interest, you'd earn 5% on both your original $1,000 AND on previously earned 
+                With simple interest, a $1,000 investment earning 5% annually would gain $50 each year.
+                With compound interest, you'd earn 5% on both your original $1,000 AND on previously earned
                 interest, creating exponential growth potential.
               </p>
             </div>
-            
+
             <div className={cx(
               "p-6 rounded-xl border mb-8 transform hover:scale-[1.02] transition-transform duration-300",
-              darkMode 
-                ? "bg-gradient-to-br from-indigo-900/50 to-purple-900/50 border-indigo-800" 
+              darkMode
+                ? "bg-gradient-to-br from-indigo-900/50 to-purple-900/50 border-indigo-800"
                 : "bg-gradient-to-br from-indigo-100 to-purple-100 border-indigo-200"
             )}>
               <div className="flex flex-col md:flex-row items-center">
@@ -377,7 +358,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                     "italic border-l-4 pl-4 text-lg",
                     darkMode ? "text-indigo-300 border-indigo-700" : "text-indigo-900 border-indigo-300"
                   )}>
-                    "Compound interest is the eighth wonder of the world. He who understands it, earns it; 
+                    "Compound interest is the eighth wonder of the world. He who understands it, earns it;
                     he who doesn't, pays it." - Albert Einstein
                   </blockquote>
                 </div>
@@ -447,8 +428,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
       {/* Enhanced Formula Section */}
       <Card className={cx(
         "mb-10 p-8",
-        darkMode 
-          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+        darkMode
+          ? "bg-gradient-to-br from-gray-900 to-gray-800"
           : "bg-gradient-to-br from-white to-blue-50"
       )}>
         <div id="compound-formula"></div>
@@ -462,11 +443,11 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
           )}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
+            </svg>
           </span>
           Understanding the Compound Interest Formula
         </SectionTitle>
-        
+
         <div className="space-y-8">
           {/* Formula Display */}
           <div className={cx(
@@ -476,8 +457,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
             <div className="text-center mb-6">
               <div className={cx(
                 "p-4 rounded-lg inline-block",
-                darkMode 
-                  ? "bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-800/50" 
+                darkMode
+                  ? "bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-800/50"
                   : "bg-gradient-to-r from-blue-50 to-indigo-50"
               )}>
                 <p className={cx(
@@ -490,7 +471,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                 </p>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Left Column: Formula Components */}
               <div className="space-y-4">
@@ -605,8 +586,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
             {/* Left Column: Compounding Frequencies */}
             <div className={cx(
               "p-6 rounded-xl border",
-              darkMode 
-                ? "bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border-blue-800/50" 
+              darkMode
+                ? "bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border-blue-800/50"
                 : "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100"
             )}>
               <h4 className={cx(
@@ -664,8 +645,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
             {/* Right Column: Example Calculation */}
             <div className={cx(
               "p-6 rounded-xl border",
-              darkMode 
-                ? "bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border-indigo-800/50" 
+              darkMode
+                ? "bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border-indigo-800/50"
                 : "bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-100"
             )}>
               <h4 className={cx(
@@ -705,7 +686,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                   )}>
                     $1,000 × (1 + 0.05/12)<sup>12×3</sup> = <strong className={cx(
                       darkMode ? "text-indigo-300" : "text-indigo-700"
-                    )}>${(1000 * Math.pow(1 + 0.05/12, 12 * 3)).toFixed(2)}</strong>
+                    )}>${(1000 * Math.pow(1 + 0.05 / 12, 12 * 3)).toFixed(2)}</strong>
                   </p>
                 </div>
               </div>
@@ -715,8 +696,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
           {/* Key Insights */}
           <div className={cx(
             "p-6 rounded-xl border",
-            darkMode 
-              ? "bg-gradient-to-br from-green-900/40 to-emerald-900/40 border-green-800/50" 
+            darkMode
+              ? "bg-gradient-to-br from-green-900/40 to-emerald-900/40 border-green-800/50"
               : "bg-gradient-to-br from-green-50 to-emerald-50 border-green-100"
           )}>
             <h4 className={cx(
@@ -842,7 +823,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                     "text-lg font-semibold",
                     darkMode ? "text-green-400" : "text-green-600"
                   )}>
-                    ${principal} invested at {rate}% for {years} years = 
+                    ${principal} invested at {rate}% for {years} years =
                     ${(principal * (1 + (rate / 100) * years)).toFixed(2)}
                   </p>
                 </div>
@@ -896,16 +877,16 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                     darkMode ? "text-gray-400" : "text-gray-600"
                   )}>
                     With your current values (compounded {
-                      compound === 1 ? 'annually' : 
-                      compound === 4 ? 'quarterly' : 
-                      compound === 12 ? 'monthly' : 'daily'
+                      compound === 1 ? 'annually' :
+                        compound === 4 ? 'quarterly' :
+                          compound === 12 ? 'monthly' : 'daily'
                     }):
                   </p>
                   <p className={cx(
                     "text-lg font-semibold",
                     darkMode ? "text-blue-400" : "text-blue-600"
                   )}>
-                    ${principal} invested at {rate}% for {years} years = 
+                    ${principal} invested at {rate}% for {years} years =
                     ${compoundInterest}
                   </p>
                 </div>
@@ -927,23 +908,23 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
             )}>${principal} invested at {rate}% for {years} years - Simple: ~$13,000 vs. Compound: ~$24,634</p>
             <div className="h-[400px]" style={{ minHeight: '400px', width: '100%', overflow: 'hidden' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart 
-                  data={comparisonData} 
+                <LineChart
+                  data={comparisonData}
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   style={{ overflow: 'visible' }}
                   aria-label="Chart comparing simple and compound interest over time"
                   role="img"
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#e5e7eb"} />
-                  <XAxis 
-                    dataKey="year" 
+                  <XAxis
+                    dataKey="year"
                     label={{ value: 'Years', position: 'insideBottom', offset: -5 }}
                     tick={{ fill: darkMode ? "#9CA3AF" : "#4B5563" }}
                   />
-                  <YAxis 
-                    label={{ 
-                      value: 'Amount ($)', 
-                      angle: -90, 
+                  <YAxis
+                    label={{
+                      value: 'Amount ($)',
+                      angle: -90,
                       position: 'insideLeft',
                       offset: 10,
                       fill: darkMode ? "#9CA3AF" : "#4B5563"
@@ -951,7 +932,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                     tickFormatter={(value: number) => `$${value.toLocaleString()}`}
                     tick={{ fill: darkMode ? "#9CA3AF" : "#4B5563" }}
                   />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value: number) => ['$' + value.toLocaleString(), undefined]}
                     labelFormatter={(label: string) => `Year ${label}`}
                     wrapperStyle={{ zIndex: 1000 }}
@@ -961,7 +942,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                       color: darkMode ? '#F9FAFB' : '#111827'
                     }}
                   />
-                  <Legend wrapperStyle={{ paddingTop: '20px' }}/>
+                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
                   <Line
                     type="monotone"
                     dataKey="simple"
@@ -1022,8 +1003,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
 
           <div className={cx(
             "p-6 rounded-xl border",
-            darkMode 
-              ? "bg-gradient-to-br from-blue-900/40 to-green-900/40 border-blue-800" 
+            darkMode
+              ? "bg-gradient-to-br from-blue-900/40 to-green-900/40 border-blue-800"
               : "bg-gradient-to-br from-blue-50 to-green-50 border-blue-200"
           )}>
             <h3 className={cx(
@@ -1075,8 +1056,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
       {/* Enhanced Power of Starting Early Section */}
       <Section className={cx(
         "mb-10",
-        darkMode 
-          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+        darkMode
+          ? "bg-gradient-to-br from-gray-900 to-gray-800"
           : "bg-gradient-to-br from-white to-indigo-50"
       )}>
         <div className={cx(
@@ -1118,8 +1099,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
               <div className={cx(
                 "p-6 rounded-xl border",
-                darkMode 
-                  ? "bg-gradient-to-br from-purple-900/50 to-blue-900/50 border-purple-800/50" 
+                darkMode
+                  ? "bg-gradient-to-br from-purple-900/50 to-blue-900/50 border-purple-800/50"
                   : "bg-gradient-to-br from-purple-50 to-blue-50 border-purple-100"
               )}>
                 <h3 className={cx(
@@ -1198,8 +1179,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
 
               <div className={cx(
                 "p-6 rounded-xl border",
-                darkMode 
-                  ? "bg-gradient-to-br from-blue-900/50 to-indigo-900/50 border-blue-800/50" 
+                darkMode
+                  ? "bg-gradient-to-br from-blue-900/50 to-indigo-900/50 border-blue-800/50"
                   : "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100"
               )}>
                 <h3 className={cx(
@@ -1279,8 +1260,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
 
             <div className={cx(
               "p-4 rounded-lg border",
-              darkMode 
-                ? "bg-indigo-900/20 border-indigo-800/50" 
+              darkMode
+                ? "bg-indigo-900/20 border-indigo-800/50"
                 : "bg-indigo-50 border-indigo-100"
             )}>
               <h3 className={cx(
@@ -1292,45 +1273,45 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                 darkMode ? "text-gray-300" : "text-gray-700"
               )}>
                 This simulation demonstrates the dramatic difference between starting early versus starting late.
-                Despite investing <strong className={darkMode ? "text-white" : ""}>$48,000 less</strong> in total, 
-                Emily ends up with <strong className={darkMode ? "text-white" : ""}>more money</strong> at retirement 
+                Despite investing <strong className={darkMode ? "text-white" : ""}>$48,000 less</strong> in total,
+                Emily ends up with <strong className={darkMode ? "text-white" : ""}>more money</strong> at retirement
                 due to the power of compound growth over time.
               </p>
-              
+
               <div className="h-[400px]" style={{ minHeight: '400px', width: '100%', overflow: 'hidden' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart 
+                  <LineChart
                     margin={{ top: 10, right: 30, left: 20, bottom: 15 }}
                     style={{ overflow: 'visible' }}
                     aria-label="Chart comparing early and late investment strategies"
                     role="img"
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#374151" : "#e5e7eb"} />
-                    <XAxis 
-                      dataKey="age" 
+                    <XAxis
+                      dataKey="age"
                       type="number"
-                      domain={[25, 65]} 
-                      label={{ 
-                        value: 'Age', 
-                        position: 'insideBottom', 
-                        offset: -5, 
+                      domain={[25, 65]}
+                      label={{
+                        value: 'Age',
+                        position: 'insideBottom',
+                        offset: -5,
                         fill: darkMode ? "#9CA3AF" : "#4B5563"
                       }}
                       ticks={[25, 30, 35, 40, 45, 50, 55, 60, 65]}
                       tick={{ fill: darkMode ? "#9CA3AF" : "#4B5563" }}
                     />
-                    <YAxis 
-                      label={{ 
-                        value: 'Portfolio Value ($)', 
-                        angle: -90, 
+                    <YAxis
+                      label={{
+                        value: 'Portfolio Value ($)',
+                        angle: -90,
                         position: 'insideLeft',
                         offset: 10,
                         fill: darkMode ? "#9CA3AF" : "#4B5563"
                       }}
-                      tickFormatter={(value) => `$${(value/1000).toFixed(0)}K`}
+                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`}
                       tick={{ fill: darkMode ? "#9CA3AF" : "#4B5563" }}
                     />
-                    <Tooltip 
+                    <Tooltip
                       formatter={(value: number) => [`$${value.toLocaleString()}`, undefined]}
                       labelFormatter={(label: number) => `Age ${label}`}
                       wrapperStyle={{ zIndex: 1000 }}
@@ -1340,7 +1321,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                         color: darkMode ? '#F9FAFB' : '#111827'
                       }}
                     />
-                    <Legend wrapperStyle={{ paddingTop: '20px' }}/>
+                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
                     <Line
                       data={earlyInvestorData}
                       type="monotone"
@@ -1374,8 +1355,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
       {/* Practical Strategies */}
       <Section className={cx(
         "mb-10",
-        darkMode 
-          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+        darkMode
+          ? "bg-gradient-to-br from-gray-900 to-gray-800"
           : "bg-gradient-to-br from-white to-indigo-50"
       )}>
         <SectionTitle className={cx(
@@ -1388,11 +1369,11 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
           )}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
+            </svg>
           </span>
           Practical Strategies to Harness Compound Interest
         </SectionTitle>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Strategy 1 */}
           <Card className={cx(
@@ -1415,7 +1396,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
               Even small amounts invested early in life can grow substantially. Don't wait for the "perfect" time or amount – start now.
             </p>
           </Card>
-          
+
           {/* Strategy 2 */}
           <Card className={cx(
             "p-6",
@@ -1437,7 +1418,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
               Reinvesting dividends and interest payments accelerates the compounding effect, significantly boosting your returns over time.
             </p>
           </Card>
-          
+
           {/* Strategy 3 */}
           <Card className={cx(
             "p-6",
@@ -1459,7 +1440,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
               Regular contributions through methods like dollar-cost averaging help build wealth steadily and reduce the impact of market volatility.
             </p>
           </Card>
-          
+
           {/* Strategy 4 */}
           <Card className={cx(
             "p-6",
@@ -1481,7 +1462,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
               Even small increases in your annual return rate can have dramatic effects on long-term growth due to compounding.
             </p>
           </Card>
-          
+
           {/* Strategy 5 */}
           <Card className={cx(
             "p-6",
@@ -1503,7 +1484,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
               High fees can significantly reduce the power of compound interest. Choose investments with low expense ratios.
             </p>
           </Card>
-          
+
           {/* Strategy 6 */}
           <Card className={cx(
             "p-6",
@@ -1531,8 +1512,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
       {/* Interactive Examples */}
       <Section className={cx(
         "mb-10",
-        darkMode 
-          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+        darkMode
+          ? "bg-gradient-to-br from-gray-900 to-gray-800"
           : "bg-gradient-to-br from-white to-indigo-50"
       )}>
         <SectionTitle className={cx(
@@ -1545,11 +1526,11 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
           )}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
+            </svg>
           </span>
           Real-World Examples of Compound Interest
         </SectionTitle>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Example 1 */}
           <Card className={cx(
@@ -1584,7 +1565,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
               Notice how the growth accelerates dramatically in later years due to compounding.
             </p>
           </Card>
-          
+
           {/* Example 2 */}
           <Card className={cx(
             "p-6",
@@ -1618,11 +1599,11 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
             </p>
           </Card>
         </div>
-        
+
         <div className={cx(
           "p-6 rounded-lg border",
-          darkMode 
-            ? "bg-indigo-900/30 border-indigo-800/50" 
+          darkMode
+            ? "bg-indigo-900/30 border-indigo-800/50"
             : "bg-indigo-50 border-indigo-100"
         )}>
           <h3 className={cx(
@@ -1699,8 +1680,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
       {/* Enhanced Common Misconceptions and Tips Section */}
       <Section className={cx(
         "mb-10",
-        darkMode 
-          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+        darkMode
+          ? "bg-gradient-to-br from-gray-900 to-gray-800"
           : "bg-gradient-to-br from-white to-indigo-50"
       )}>
         <div className={cx(
@@ -1726,8 +1707,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
             <div className="space-y-6">
               <div className={cx(
                 "p-6 rounded-xl shadow-lg border",
-                darkMode 
-                  ? "bg-gray-800 border-red-900/50" 
+                darkMode
+                  ? "bg-gray-800 border-red-900/50"
                   : "bg-white border-red-100"
               )}>
                 <h3 className={cx(
@@ -1744,12 +1725,12 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                   </span>
                   Common Misconceptions
                 </h3>
-                
+
                 <div className="space-y-6">
                   <div className={cx(
                     "p-4 rounded-lg",
-                    darkMode 
-                      ? "bg-gradient-to-r from-red-900/30 to-pink-900/30" 
+                    darkMode
+                      ? "bg-gradient-to-r from-red-900/30 to-pink-900/30"
                       : "bg-gradient-to-r from-red-50 to-pink-50"
                   )}>
                     <h4 className={cx(
@@ -1773,16 +1754,16 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                         "p-3 rounded-md text-sm",
                         darkMode ? "bg-gray-750 border border-gray-700" : "bg-white"
                       )}>
-                        <strong className={darkMode ? "text-gray-100" : ""}>Example:</strong> $100 monthly invested at 7% annual return for 30 years 
-                        could grow to approximately ${(100 * 12 * Math.pow(1 + 0.07/12, 12 * 30)).toFixed(2)}.
+                        <strong className={darkMode ? "text-gray-100" : ""}>Example:</strong> $100 monthly invested at 7% annual return for 30 years
+                        could grow to approximately ${(100 * 12 * Math.pow(1 + 0.07 / 12, 12 * 30)).toFixed(2)}.
                       </div>
                     </div>
                   </div>
 
                   <div className={cx(
                     "p-4 rounded-lg",
-                    darkMode 
-                      ? "bg-gradient-to-r from-red-900/30 to-pink-900/30" 
+                    darkMode
+                      ? "bg-gradient-to-r from-red-900/30 to-pink-900/30"
                       : "bg-gradient-to-r from-red-50 to-pink-50"
                   )}>
                     <h4 className={cx(
@@ -1799,7 +1780,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                       <p className={cx(
                         darkMode ? "text-gray-300" : "text-gray-700"
                       )}>
-                        While timing can affect returns, consistent investing over time (dollar-cost averaging) 
+                        While timing can affect returns, consistent investing over time (dollar-cost averaging)
                         often outperforms attempts to time the market.
                       </p>
                       <div className={cx(
@@ -1814,8 +1795,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
 
                   <div className={cx(
                     "p-4 rounded-lg",
-                    darkMode 
-                      ? "bg-gradient-to-r from-red-900/30 to-pink-900/30" 
+                    darkMode
+                      ? "bg-gradient-to-r from-red-900/30 to-pink-900/30"
                       : "bg-gradient-to-r from-red-50 to-pink-50"
                   )}>
                     <h4 className={cx(
@@ -1852,8 +1833,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
             <div className="space-y-6">
               <div className={cx(
                 "p-6 rounded-xl shadow-lg border",
-                darkMode 
-                  ? "bg-gray-800 border-green-900/50" 
+                darkMode
+                  ? "bg-gray-800 border-green-900/50"
                   : "bg-white border-green-100"
               )}>
                 <h3 className={cx(
@@ -1870,12 +1851,12 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                   </span>
                   Smart Investment Strategies
                 </h3>
-                
+
                 <div className="space-y-6">
                   <div className={cx(
                     "p-4 rounded-lg",
-                    darkMode 
-                      ? "bg-gradient-to-r from-green-900/30 to-emerald-900/30" 
+                    darkMode
+                      ? "bg-gradient-to-r from-green-900/30 to-emerald-900/30"
                       : "bg-gradient-to-r from-green-50 to-emerald-50"
                   )}>
                     <h4 className={cx(
@@ -1913,8 +1894,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
 
                   <div className={cx(
                     "p-4 rounded-lg",
-                    darkMode 
-                      ? "bg-gradient-to-r from-green-900/30 to-emerald-900/30" 
+                    darkMode
+                      ? "bg-gradient-to-r from-green-900/30 to-emerald-900/30"
                       : "bg-gradient-to-r from-green-50 to-emerald-50"
                   )}>
                     <h4 className={cx(
@@ -1931,7 +1912,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                       <p className={cx(
                         darkMode ? "text-gray-300" : "text-gray-700"
                       )}>
-                        Spread your investments across different asset classes to manage risk while 
+                        Spread your investments across different asset classes to manage risk while
                         maintaining growth potential.
                       </p>
                       <div className={cx(
@@ -1953,8 +1934,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
 
                   <div className={cx(
                     "p-4 rounded-lg",
-                    darkMode 
-                      ? "bg-gradient-to-r from-green-900/30 to-emerald-900/30" 
+                    darkMode
+                      ? "bg-gradient-to-r from-green-900/30 to-emerald-900/30"
                       : "bg-gradient-to-r from-green-50 to-emerald-50"
                   )}>
                     <h4 className={cx(
@@ -1992,8 +1973,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
 
                   <div className={cx(
                     "p-4 rounded-lg",
-                    darkMode 
-                      ? "bg-gradient-to-r from-green-900/30 to-emerald-900/30" 
+                    darkMode
+                      ? "bg-gradient-to-r from-green-900/30 to-emerald-900/30"
                       : "bg-gradient-to-r from-green-50 to-emerald-50"
                   )}>
                     <h4 className={cx(
@@ -2036,8 +2017,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
 
           <div className={cx(
             "mt-8 p-6 rounded-xl border",
-            darkMode 
-              ? "bg-gradient-to-br from-indigo-900/30 to-purple-900/30 border-indigo-800/50" 
+            darkMode
+              ? "bg-gradient-to-br from-indigo-900/30 to-purple-900/30 border-indigo-800/50"
               : "bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-100"
           )}>
             <h3 className={cx(
@@ -2113,8 +2094,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
       {/* Conclusion */}
       <Section className={cx(
         "mb-10",
-        darkMode 
-          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+        darkMode
+          ? "bg-gradient-to-br from-gray-900 to-gray-800"
           : "bg-gradient-to-br from-white to-indigo-50"
       )}>
         <div className={cx(
@@ -2137,16 +2118,16 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
             </span>
             Conclusion: The Eighth Wonder of the World
           </h2>
-          
+
           <p className={cx(
             "mb-4",
             darkMode ? "text-gray-300" : "text-gray-700"
           )}>
-            Compound interest is truly a remarkable force in personal finance. When harnessed correctly, 
-            it can transform modest, consistent investments into substantial wealth over time. The key 
+            Compound interest is truly a remarkable force in personal finance. When harnessed correctly,
+            it can transform modest, consistent investments into substantial wealth over time. The key
             lessons to remember are:
           </p>
-          
+
           <ul className={cx(
             "list-disc pl-6 space-y-2 mb-6",
             darkMode ? "text-gray-300" : "text-gray-700"
@@ -2157,20 +2138,20 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
             <li><strong className={darkMode ? "text-white" : ""}>Pay attention to fees</strong> and interest rates – small differences compound dramatically</li>
             <li><strong className={darkMode ? "text-white" : ""}>Be patient</strong> – compound interest works slowly at first but accelerates over time</li>
           </ul>
-          
+
           <div className={cx(
             "p-4 rounded-lg border",
-            darkMode 
-              ? "bg-indigo-900/30 border-indigo-800/50" 
+            darkMode
+              ? "bg-indigo-900/30 border-indigo-800/50"
               : "bg-indigo-50 border-indigo-100"
           )}>
             <p className={cx(
               "italic",
               darkMode ? "text-indigo-300" : "text-indigo-800"
             )}>
-              "By understanding and applying the principles of compound interest to your financial planning, 
-              you're taking one of the most powerful steps toward achieving financial independence and a 
-              secure retirement. Remember, financial success isn't just about how much you earn – it's about 
+              "By understanding and applying the principles of compound interest to your financial planning,
+              you're taking one of the most powerful steps toward achieving financial independence and a
+              secure retirement. Remember, financial success isn't just about how much you earn – it's about
               how intelligently you put your money to work over time."
             </p>
           </div>
@@ -2181,8 +2162,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
       <div id="faq"></div>
       <Section className={cx(
         "mb-10",
-        darkMode 
-          ? "bg-gradient-to-br from-gray-900 to-gray-800" 
+        darkMode
+          ? "bg-gradient-to-br from-gray-900 to-gray-800"
           : "bg-gradient-to-br from-white to-indigo-50"
       )}>
         <div className={cx(
@@ -2191,8 +2172,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
             ? "prose-invert prose-headings:text-gray-100 prose-p:text-gray-300 prose-strong:text-white prose-a:text-indigo-400 prose-li:text-gray-300"
             : ""
         )}>
-          <SectionHeader 
-            title="Frequently Asked Questions" 
+          <SectionHeader
+            title="Frequently Asked Questions"
             className="mb-8"
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -2200,20 +2181,20 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
               </svg>
             }
           />
-          
+
           <p className={cx(
             "mb-8",
             darkMode ? "text-gray-400" : "text-gray-600"
           )}>
             Get answers to common questions about the FIRE journey, strategies, and challenges you might face along the way.
           </p>
-          
+
           <div className={cx(
             "rounded-lg divide-y",
-            darkMode ?  "divide-gray-700" : "divide-gray-200"
+            darkMode ? "divide-gray-700" : "divide-gray-200"
           )}>
-            <FAQItem 
-              question="What's the difference between simple and compound interest?" 
+            <FAQItem
+              question="What's the difference between simple and compound interest?"
               answer={
                 <>
                   <p>The main differences between simple and compound interest are:</p>
@@ -2223,11 +2204,11 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                   </ul>
                   <p>This difference becomes dramatic over long periods. After 30 years, $1,000 with 5% simple interest would grow to $2,500, while with 5% compound interest it would reach approximately $4,322.</p>
                 </>
-              } 
+              }
             />
-            
-            <FAQItem 
-              question="How does compounding frequency affect returns?" 
+
+            <FAQItem
+              question="How does compounding frequency affect returns?"
               answer={
                 <>
                   <p>Compounding frequency refers to how often interest is calculated and added to your principal. The more frequently interest compounds, the faster your money grows.</p>
@@ -2246,11 +2227,11 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                   </ul>
                   <p>The difference becomes more significant with higher interest rates and longer time periods.</p>
                 </>
-              } 
+              }
             />
-            
-            <FAQItem 
-              question="What types of investments typically provide compound returns?" 
+
+            <FAQItem
+              question="What types of investments typically provide compound returns?"
               answer={
                 <>
                   <p className={darkMode ? "text-gray-300" : ""}>Many investment vehicles offer compound returns, including:</p>
@@ -2265,11 +2246,11 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                   </ul>
                   <p className={darkMode ? "text-gray-300" : ""}>The key to maximizing compound returns is consistent reinvestment of earnings rather than withdrawing them.</p>
                 </>
-              } 
+              }
             />
-            
-            <FAQItem 
-              question="What is the Rule of 72 and how can I use it?" 
+
+            <FAQItem
+              question="What is the Rule of 72 and how can I use it?"
               answer={
                 <>
                   <p className={darkMode ? "text-gray-300" : ""}>The Rule of 72 is a simple mental math shortcut to estimate how long it will take for an investment to double in value, given a fixed annual rate of return.</p>
@@ -2283,11 +2264,11 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                   <p className={darkMode ? "text-gray-300" : ""}>This rule works reasonably well for interest rates between 4% and 12%. You can also use it backward: if you need your money to double in 6 years, you'd need an annual return of about 12% (72 ÷ 6 = 12).</p>
                   <p className={darkMode ? "text-gray-300" : ""}>The Rule of 72 helps illustrate how small differences in return rates can dramatically impact wealth accumulation over time.</p>
                 </>
-              } 
+              }
             />
-            
-            <FAQItem 
-              question="How do dividends contribute to compound growth?" 
+
+            <FAQItem
+              question="How do dividends contribute to compound growth?"
               answer={
                 <>
                   <p className={darkMode ? "text-gray-300" : ""}>Dividends can significantly enhance compound growth when reinvested through a process called dividend reinvestment:</p>
@@ -2306,11 +2287,11 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                   </ul>
                   <p className={darkMode ? "text-gray-300" : ""}>Studies have shown that reinvested dividends have accounted for a significant portion of the stock market's total return over time.</p>
                 </>
-              } 
+              }
             />
 
-            <FAQItem 
-              question="What are the tax implications of compound interest?" 
+            <FAQItem
+              question="What are the tax implications of compound interest?"
               answer={
                 <>
                   <p className={darkMode ? "text-gray-300" : ""}>The tax implications of compound interest vary depending on the investment vehicle and account type:</p>
@@ -2327,11 +2308,11 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                   </ul>
                   <p className={darkMode ? "text-gray-300" : ""}>Tax-advantaged accounts can dramatically increase the power of compounding by deferring or eliminating the tax drag, making them ideal vehicles for long-term compound growth.</p>
                 </>
-              } 
+              }
             />
 
-            <FAQItem 
-              question="How can I start investing with little money?" 
+            <FAQItem
+              question="How can I start investing with little money?"
               answer={
                 <>
                   <p className={darkMode ? "text-gray-300" : ""}>You can start benefiting from compound interest with almost any amount of money:</p>
@@ -2353,11 +2334,11 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                   </ul>
                   <p className={darkMode ? "text-gray-300" : ""}>Remember, the magic of compound interest comes more from time in the market than initial investment size. Starting small today is far better than waiting until you have "enough" to invest.</p>
                 </>
-              } 
+              }
             />
 
-            <FAQItem 
-              question="How does inflation impact compound returns?" 
+            <FAQItem
+              question="How does inflation impact compound returns?"
               answer={
                 <>
                   <p className={darkMode ? "text-gray-300" : ""}>Inflation erodes the purchasing power of money over time, which affects compound returns in several ways:</p>
@@ -2379,7 +2360,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
                   </ul>
                   <p className={darkMode ? "text-gray-300" : ""}>When planning for long-term goals, always focus on real (inflation-adjusted) returns rather than nominal returns to ensure your purchasing power truly grows over time.</p>
                 </>
-              } 
+              }
             />
           </div>
         </div>
@@ -2406,16 +2387,16 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
             "max-w-2xl mx-auto mb-8",
             darkMode ? "text-indigo-200/90" : "text-indigo-100"
           )}>
-            Use our retirement calculator to see how your savings can grow over time and build a personalized 
+            Use our retirement calculator to see how your savings can grow over time and build a personalized
             plan for your financial future.
           </p>
           <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 justify-center items-center">
-            <a 
-              href="/" 
+            <a
+              href="/"
               className={cx(
                 "w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border text-base font-medium rounded-md shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
-                darkMode 
-                  ? "bg-indigo-100 text-indigo-900 border-transparent hover:bg-white" 
+                darkMode
+                  ? "bg-indigo-100 text-indigo-900 border-transparent hover:bg-white"
                   : "bg-white text-indigo-700 border-transparent hover:bg-indigo-50"
               )}
             >
@@ -2424,12 +2405,12 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
               </svg>
               Try Our Retirement Calculator
             </a>
-            <a 
-              href="/fire" 
+            <a
+              href="/fire"
               className={cx(
                 "w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 border text-base font-medium rounded-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
-                darkMode 
-                  ? "border-indigo-400/50 text-indigo-100 hover:bg-indigo-800/50" 
+                darkMode
+                  ? "border-indigo-400/50 text-indigo-100 hover:bg-indigo-800/50"
                   : "border-indigo-200 text-white hover:bg-white/10"
               )}
             >
@@ -2455,7 +2436,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ id, title, icon, classNam
           }
         `}
       </style>
-      
+
       {/* Add Footer Component */}
       <Footer />
     </div>
