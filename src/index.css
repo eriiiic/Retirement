@@ -196,4 +196,4 @@ code {
 }
 
 /* Component-specific styles */
-@import './components.css';
+@import './styles/components.css';
