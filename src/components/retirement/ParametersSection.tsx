@@ -1432,28 +1432,7 @@ export const ParametersSection: React.FC<ParametersSectionProps> = ({
                     Monthly Withdrawal
                   </h4>
 
-                  {/* Mobile-only Inflation Adjusted Button */}
-                  <button
-                    onClick={() => onParamChange('inflationAdjustedWithdrawal', !params.inflationAdjustedWithdrawal)}
-                    className={cx(
-                      "inflation-button-mobile p-1.5 px-2 rounded-lg transition-all flex items-center",
-                      params.inflationAdjustedWithdrawal
-                        ? darkMode
-                          ? 'bg-purple-800 text-white ring-1 ring-purple-700'
-                          : 'bg-purple-600 text-white ring-1 ring-purple-300'
-                        : darkMode
-                          ? 'bg-gray-800 text-gray-300 border border-gray-700 hover:bg-purple-900/50'
-                          : 'bg-white text-gray-600 border border-gray-200 hover:bg-purple-50'
-                    )}
-                    title="Adjust the entered amount for inflation from today until retirement start"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                    <span className="text-xs font-medium whitespace-nowrap">
-                      Inflation Adjusted
-                    </span>
-                  </button>
+
                 </div>
 
                 {params.inflationAdjustedWithdrawal && (

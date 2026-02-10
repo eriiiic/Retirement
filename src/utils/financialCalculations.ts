@@ -1487,7 +1487,7 @@ export const calculateRetirementRisk = (
   const yearsToRetirement = retirementStartAge - currentAge;
 
   // Calculate capital adequacy ratio (capital at retirement / needed capital)
-  const capitalRatio = capitalAtRetirement / totalNeededCapital;
+  const capitalRatio = totalNeededCapital > 0 ? capitalAtRetirement / totalNeededCapital : 1;
 
   // Calculate effective withdrawal rate considering inflation
   const effectiveMonthlyWithdrawal = calculateEffectiveWithdrawalAmount(
@@ -1499,12 +1499,24 @@ export const calculateRetirementRisk = (
   );
 
   // Calculate withdrawal rate as percentage of capital
-  const withdrawalRate = (effectiveMonthlyWithdrawal * 12 / capitalAtRetirement) * 100;
+  const withdrawalRate = capitalAtRetirement > 0
+    ? (effectiveMonthlyWithdrawal * 12 / capitalAtRetirement) * 100
+    : 100;
 
-  // Calculate withdrawal risk factor (4% rule reference)
-  const withdrawalRiskFactor = withdrawalRate / 4;
+  // Calculate withdrawal risk factor (Non-linear scale)
+  // < 3%: Very Safe (0)
+  // 3-4%: Safe (0-0.2)
+  // 4-5%: Moderate Risk (0.2-0.5)
+  // 5-6%: High Risk (0.5-0.8)
+  // > 6%: Critical (0.8-1.0)
+  let normalizedWithdrawalRisk = 0;
+  if (withdrawalRate <= 3) normalizedWithdrawalRisk = 0;
+  else if (withdrawalRate <= 4) normalizedWithdrawalRisk = (withdrawalRate - 3) * 0.2;
+  else if (withdrawalRate <= 5) normalizedWithdrawalRisk = 0.2 + (withdrawalRate - 4) * 0.3;
+  else if (withdrawalRate <= 6) normalizedWithdrawalRisk = 0.5 + (withdrawalRate - 5) * 0.3;
+  else normalizedWithdrawalRisk = Math.min(1, 0.8 + (withdrawalRate - 6) * 0.2);
 
-  // Calculate longevity risk factor (risk of outliving money)
+  // Calculate longevity risk factor (Continuous scale)
   const estimatedExhaustionAge = calculateExhaustionAge(
     capitalAtRetirement,
     effectiveMonthlyWithdrawal,
@@ -1513,20 +1525,16 @@ export const calculateRetirementRisk = (
     retirementStartAge,
     0.7 // Conservative multiplier
   );
-  // Risk = 1 when funds deplete before target age, 0 when they last beyond
-  const longevityRiskFactor = estimatedExhaustionAge < targetAge ? 1 : 0;
 
-  // Calculate optimal withdrawal reduction
-  const withdrawalReduction = calculateWithdrawalReduction(
-    capitalAtRetirement,
-    effectiveMonthlyWithdrawal,
-    annualReturnRate,
-    retirementStartAge,
-    targetAge,
-    0.7 // Conservative multiplier
-  );
+  // Calculate years short of target age
+  const yearsShort = Math.max(0, targetAge - estimatedExhaustionAge);
 
-  // Calculate recommended investment increase
+  // Normalize longevity risk: 
+  // 0 years short = 0 risk
+  // 20+ years short = 1 (100%) risk
+  const normalizedLongevityRisk = Math.min(1, yearsShort / 20);
+
+  // Calculate recommended investment increase for context
   const recommendedInvestment = calculateRecommendedInvestment(
     monthlyInvestment,
     capitalAtRetirement,
@@ -1542,110 +1550,128 @@ export const calculateRetirementRisk = (
   // Investment shortfall factor
   const investmentShortfallFactor = recommendedInvestment.realistic.percentageIncrease / 100;
 
-  // Volatility risk factor based on return rate vs. inflation (real return stability)
+  // Volatility risk factor based on real return rate stability
   const realReturnRate = ((1 + annualReturnRate / 100) / (1 + inflationRate / 100) - 1) * 100;
-  const volatilityRiskFactor = realReturnRate < 2 ? 2 - realReturnRate : 0;
+  // If real return < 3%, risk increases. If real return < 0%, risk is max.
+  const normalizedVolatilityRisk = realReturnRate >= 3 ? 0 : Math.min(1, (3 - realReturnRate) / 3);
 
-  // Calculate overall risk score (weighted sum of factors)
-  // First, normalize each factor to a 0-1 scale
+  // Capital Adequacy Normalization
+  // > 1.2 ratio = 0 risk
+  // < 0.5 ratio = 1 risk
+  const normalizedCapitalRatio = Math.max(0, Math.min(1, (1.2 - capitalRatio) / 0.7));
 
-  // 1. Capital Adequacy (0-1)
-  // - 0 means we have 150% or more of needed capital (very safe)
-  // - 1 means we have 50% or less of needed capital (very risky)
-  const normalizedCapitalRatio = Math.max(0, Math.min(1, (1.5 - capitalRatio) / 1));
-
-  // 2. Withdrawal Risk (0-1)
-  // - 0 means withdrawal rate is 3% or less (very safe)
-  // - 1 means withdrawal rate is 7% or more (very risky)
-  const normalizedWithdrawalRisk = Math.max(0, Math.min(1, (withdrawalRate - 3) / 4));
-
-  // 3. Longevity Risk (0-1)
-  // - 0 means funds last beyond target age
-  // - 1 means funds are depleted 10 or more years before target age
-  const normalizedLongevityRisk = Math.max(0, Math.min(1, longevityRiskFactor));
-
-  // 4. Investment Shortfall (0-1)
-  // - 0 means no increase needed
-  // - 1 means 100% or more increase needed
-  const normalizedInvestmentShortfall = Math.max(0, Math.min(1, investmentShortfallFactor));
-
-  // 5. Volatility Risk (0-1)
-  // - 0 means real return rate is 4% or higher
-  // - 1 means real return rate is 0% or lower
-  const normalizedVolatilityRisk = Math.max(0, Math.min(1, (4 - realReturnRate) / 4));
+  // Investment Shortfall Normalization
+  // 0 increase needed = 0 risk
+  // > 50% increase needed = 1 risk
+  const normalizedInvestmentShortfall = Math.max(0, Math.min(1, investmentShortfallFactor * 2));
 
   // Calculate weighted risk score (0-10 scale)
+  // Adjusted weights to prioritize running out of money (Longevity + Capital)
   const riskScore = (
-    (normalizedCapitalRatio * 0.35) +        // 35% weight - Capital adequacy is most important
-    (normalizedWithdrawalRisk * 0.25) +      // 25% weight - Withdrawal sustainability
-    (normalizedLongevityRisk * 0.20) +       // 20% weight - Risk of outliving money
-    (normalizedInvestmentShortfall * 0.15) + // 15% weight - Investment gap
-    (normalizedVolatilityRisk * 0.05)        // 5% weight - Market volatility impact
-  ) * 10; // Scale to 0-10
+    (normalizedLongevityRisk * 0.35) +       // 35% - Usefulness: Do I run out of money?
+    (normalizedCapitalRatio * 0.25) +        // 25% - Robustness: Do I have enough buffer?
+    (normalizedWithdrawalRisk * 0.25) +      // 25% - Sustainability: Is my burn rate too high?
+    (normalizedInvestmentShortfall * 0.10) + // 10% - Fixability: Can I fix it by saving more?
+    (normalizedVolatilityRisk * 0.05)        // 5% - Market: am I too dependent on high returns?
+  ) * 10;
 
-  // Determine risk level based on score with more appropriate thresholds
+  // Determine risk level
   let riskLevel: 'Low' | 'Moderate' | 'Significant' | 'High' | 'Critical';
   let description: string;
   let recommendationPriority: 'Low' | 'Medium' | 'High' | 'Urgent' | 'Critical';
-  let primaryRecommendation: string;
+
+  if (riskScore < 2) riskLevel = 'Low';
+  else if (riskScore < 4) riskLevel = 'Moderate';
+  else if (riskScore < 6) riskLevel = 'Significant';
+  else if (riskScore < 8) riskLevel = 'High';
+  else riskLevel = 'Critical';
+
+  // Determine priority
+  if (riskLevel === 'Low') recommendationPriority = 'Low';
+  else if (riskLevel === 'Moderate') recommendationPriority = 'Medium';
+  else if (riskLevel === 'Significant') recommendationPriority = 'High';
+  else if (riskLevel === 'High') recommendationPriority = 'Urgent';
+  else recommendationPriority = 'Critical';
+
+  // Generate Dynamic Description based on primary risk driver
+  const risks = [
+    { name: 'longevity', val: normalizedLongevityRisk, label: 'running out of money early' },
+    { name: 'capital', val: normalizedCapitalRatio, label: 'insufficient total capital' },
+    { name: 'withdrawal', val: normalizedWithdrawalRisk, label: 'unsustainable withdrawal rate' },
+    { name: 'investment', val: normalizedInvestmentShortfall, label: 'low savings rate' }
+  ];
+
+  // Sort by risk value descending
+  risks.sort((a, b) => b.val - a.val);
+  const primaryRisk = risks[0];
+
+  if (riskLevel === 'Low') {
+    description = 'Your retirement plan is on solid ground. You are projected to meet your goals with a comfortable safety margin.';
+  } else {
+    // Dynamic description construction
+    const urgency = riskLevel === 'Critical' || riskLevel === 'High' ? 'critical' : 'significant';
+
+    if (primaryRisk.name === 'longevity') {
+      description = `Your plan faces ${urgency} risk of ${primaryRisk.label}. Projections show funds may be depleted ${Math.round(yearsShort)} years before age ${targetAge}.`;
+    } else if (primaryRisk.name === 'withdrawal') {
+      description = `Your plan faces ${urgency} risk due to an ${primaryRisk.label} of ${withdrawalRate.toFixed(1)}%. A sustainable rate is typically under 4%.`;
+    } else if (primaryRisk.name === 'capital') {
+      description = `Your plan faces ${urgency} risk due to ${primaryRisk.label}. You are on track to reach only ${(capitalRatio * 100).toFixed(0)}% of your target.`;
+    } else {
+      description = `Your plan requires optimization. The main factor is a ${primaryRisk.label}, requiring a ${recommendedInvestment.realistic.percentageIncrease.toFixed(0)}% increase in contributions.`;
+    }
+  }
+
+  // Define recommendations
+  // ... (keep existing logic for recommendations or refine similarly)
+
+  let primaryRecommendation = '';
   let secondaryRecommendations: string[] = [];
 
-  if (riskScore < 2.5) {
-    riskLevel = 'Low';
-    description = 'Your retirement plan is very secure. You have more than adequate capital, sustainable withdrawal rates, and a strong safety margin.';
-    recommendationPriority = 'Low';
-    primaryRecommendation = 'Maintain your current strategy while monitoring annually.';
+  // Calculate optimal withdrawal reduction
+  const withdrawalReduction = calculateWithdrawalReduction(
+    capitalAtRetirement,
+    effectiveMonthlyWithdrawal,
+    annualReturnRate,
+    retirementStartAge,
+    targetAge,
+    0.7
+  );
+
+  if (riskLevel === 'Low') {
+    primaryRecommendation = 'Maintain your current strategy while monitoring annualy.';
     secondaryRecommendations = [
-      'Consider more conservative investments to preserve wealth',
-      'Explore options for legacy planning or charitable giving',
-      'Review tax optimization strategies'
+      'Consider tax-efficient withdrawal strategies',
+      'Review estate planning goals',
+      'Optimize asset location for tax benefits'
     ];
-  } else if (riskScore < 4.5) {
-    riskLevel = 'Moderate';
-    description = 'Your retirement plan is generally sound but has room for optimization. Minor adjustments could further strengthen your position.';
-    recommendationPriority = 'Medium';
-    primaryRecommendation = capitalRatio < 1.2
-      ? `Consider increasing monthly investments by ${Math.round(recommendedInvestment.realistic.monthlyAmount - monthlyInvestment)} to build additional safety margin.`
-      : 'Review your investment allocation to ensure it aligns with your goals.';
+  } else if (riskLevel === 'Moderate') {
+    primaryRecommendation = comparisonRecommendation(
+      monthlyInvestment,
+      recommendedInvestment.realistic.monthlyAmount,
+      monthlyRetirementWithdrawal,
+      withdrawalReduction.optimalMonthlyWithdrawal,
+      'investment' // bias towards investment for moderate risk
+    );
     secondaryRecommendations = [
-      'Consider small adjustments to planned withdrawal rates',
-      'Review investment diversification',
-      'Plan for unexpected expenses'
-    ];
-  } else if (riskScore < 6.5) {
-    riskLevel = 'Significant';
-    description = 'Your retirement plan shows some important areas needing attention. While not critical, addressing these could significantly improve your retirement security.';
-    recommendationPriority = 'High';
-    primaryRecommendation = withdrawalRate > 5
-      ? `Consider reducing your planned monthly withdrawal from ${monthlyRetirementWithdrawal} to ${withdrawalReduction.optimalMonthlyWithdrawal}.`
-      : `Increase your monthly investment by ${Math.round(recommendedInvestment.realistic.monthlyAmount - monthlyInvestment)} to strengthen your position.`;
-    secondaryRecommendations = [
-      'Review retirement expense assumptions',
-      'Consider part-time work in early retirement',
-      'Explore ways to increase investment returns safely'
-    ];
-  } else if (riskScore < 8.5) {
-    riskLevel = 'High';
-    description = 'Your retirement plan faces substantial risks that require attention. Without changes, you may face challenges maintaining your desired lifestyle in retirement.';
-    recommendationPriority = 'Urgent';
-    primaryRecommendation = capitalRatio < 0.8
-      ? `Increase your monthly investment by at least ${Math.round(recommendedInvestment.realistic.monthlyAmount - monthlyInvestment)} and consider delaying retirement.`
-      : `Reduce your planned monthly withdrawal to ${withdrawalReduction.optimalMonthlyWithdrawal} to ensure sustainability.`;
-    secondaryRecommendations = [
-      'Consider delaying retirement by 2-3 years',
-      'Review and reduce planned retirement expenses',
-      'Explore additional income sources'
+      'Optimize investment allocation for better risk-adjusted returns',
+      'Review discretionary spending in retirement budget',
+      'Consider small annual increases in contributions'
     ];
   } else {
-    riskLevel = 'Critical';
-    description = 'Your retirement plan needs immediate attention. Current projections suggest significant shortfalls that require substantial changes to ensure retirement security.';
-    recommendationPriority = 'Critical';
-    primaryRecommendation = `Increase monthly investments to ${recommendedInvestment.ideal.monthlyAmount} and consider delaying retirement by ${Math.max(3, Math.ceil((riskScore - 8) * 2))} years.`;
+    // Significant, High, Critical
+    primaryRecommendation = comparisonRecommendation(
+      monthlyInvestment,
+      recommendedInvestment.realistic.monthlyAmount,
+      monthlyRetirementWithdrawal,
+      withdrawalReduction.optimalMonthlyWithdrawal,
+      'withdrawal' // bias towards withdrawal for high risk as it's more immediate
+    );
+
     secondaryRecommendations = [
-      'Significantly reduce planned retirement expenses',
-      'Consider major changes to retirement lifestyle expectations',
-      'Seek professional financial planning assistance',
-      'Explore additional income sources or part-time work'
+      `Consider delaying retirement by ${riskLevel === 'Critical' ? '3-5' : '1-2'} years`,
+      `Reduce essential retirement expenses to lower the required capital`,
+      'Explore part-time work during early retirement years'
     ];
   }
 
@@ -1664,4 +1690,28 @@ export const calculateRetirementRisk = (
     primaryRecommendation,
     secondaryRecommendations
   };
-}; 
+};
+
+// Helper to choose between investment or withdrawal recommendation
+const comparisonRecommendation = (
+  currentInv: number,
+  targetInv: number,
+  currentWith: number,
+  targetWith: number,
+  bias: 'investment' | 'withdrawal'
+): string => {
+  const invDiff = targetInv - currentInv;
+  const withDiff = currentWith - targetWith;
+
+  // If no change needed in one, recommend the other
+  if (invDiff <= 0 && withDiff <= 0) return "Review your overall financial plan.";
+  if (invDiff <= 0) return `Reduce monthly withdrawal to ${Math.round(targetWith)} to ensure sustainability.`;
+  if (withDiff <= 0 || targetWith <= 0) return `Increase monthly investment by ${Math.round(invDiff)} to build safety.`;
+
+  // Otherwise prioritize based on bias or impact
+  if (bias === 'withdrawal') {
+    return `Reduce monthly withdrawal to ${Math.round(targetWith)} to extend portfolio longevity.`;
+  } else {
+    return `Increase monthly investment by ${Math.round(invDiff)} to reach your capital goals.`;
+  }
+};
