@@ -22,35 +22,35 @@ export const calculateFutureValue = (
   compoundFrequency: 'monthly' | 'annual' = 'monthly'
 ): number => {
   const annualRateDecimal = annualRate / 100;
-  
+
   if (compoundFrequency === 'monthly') {
     // Convert annual rate to monthly rate for monthly compounding
-    const monthlyRate = Math.pow(1 + annualRateDecimal, 1/12) - 1;
+    const monthlyRate = Math.pow(1 + annualRateDecimal, 1 / 12) - 1;
     const totalMonths = years * 12;
-    
+
     // Calculate future value of initial principal with monthly compounding
     const principalFV = principal * Math.pow(1 + monthlyRate, totalMonths);
-    
+
     // Calculate future value of regular contributions with monthly compounding
     const contributionFV = monthlyContribution * ((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate);
-    
+
     return principalFV + contributionFV;
   } else {
     // Annual compounding
     // First calculate annual contribution from monthly contributions
     const annualContribution = monthlyContribution * 12;
-    
+
     // Calculate future value with annual compounding
     let totalValue = principal;
-    
+
     for (let i = 0; i < years; i++) {
       // Add annual contribution at the beginning of the year
       totalValue += annualContribution;
-      
+
       // Apply annual interest
       totalValue *= (1 + annualRateDecimal);
     }
-    
+
     return totalValue;
   }
 };
@@ -75,39 +75,39 @@ export const calculateWithdrawalAmount = (
   const nominalRate = annualRate / 100;
   const inflationRate = inflation / 100;
   const realAnnualRate = (1 + nominalRate) / (1 + inflationRate) - 1;
-  
+
   if (compoundFrequency === 'monthly') {
     // Convert to monthly rate for monthly compounding
-    const realMonthlyRate = Math.pow(1 + realAnnualRate, 1/12) - 1;
+    const realMonthlyRate = Math.pow(1 + realAnnualRate, 1 / 12) - 1;
     const totalMonths = years * 12;
-    
+
     // Calculate monthly payment (PMT) that will exhaust the principal over the retirement period
     // Using the formula for payment of an annuity with monthly compounding
     if (realMonthlyRate <= 0) {
       // If real rate is zero or negative, use simple division
       return principal / totalMonths;
     }
-    
+
     const monthlyWithdrawal = principal * realMonthlyRate / (1 - Math.pow(1 + realMonthlyRate, -totalMonths));
-    
+
     return monthlyWithdrawal;
   } else {
     // Annual compounding
     const totalMonths = years * 12;
-    
+
     if (realAnnualRate <= 0) {
       // If real rate is zero or negative, use simple division
       return principal / totalMonths;
     }
-    
+
     // For annual compounding, we need to determine what monthly withdrawal would
     // deplete the principal over the specified years with annual interest calculation
-    
+
     // This is a simplified approximation for annual compounding
     // A more accurate computation would require iterative or solver approaches
     const annualWithdrawal = principal * realAnnualRate / (1 - Math.pow(1 + realAnnualRate, -years));
     const monthlyWithdrawal = annualWithdrawal / 12;
-    
+
     return monthlyWithdrawal;
   }
 };
@@ -132,33 +132,33 @@ export const calculateCapitalNeeded = (
   const nominalRate = annualRate / 100;
   const inflationRate = inflation / 100;
   const realAnnualRate = (1 + nominalRate) / (1 + inflationRate) - 1;
-  
+
   if (compoundFrequency === 'monthly') {
     // Convert to monthly rate for monthly compounding
-    const realMonthlyRate = Math.pow(1 + realAnnualRate, 1/12) - 1;
+    const realMonthlyRate = Math.pow(1 + realAnnualRate, 1 / 12) - 1;
     const totalMonths = years * 12;
-    
+
     // Calculate present value (PV) of the annuity with monthly compounding
     if (realMonthlyRate <= 0) {
       // If real rate is zero or negative, use simple multiplication
       return monthlyWithdrawal * totalMonths;
     }
-    
+
     const capitalNeeded = monthlyWithdrawal * (1 - Math.pow(1 + realMonthlyRate, -totalMonths)) / realMonthlyRate;
-    
+
     return capitalNeeded;
   } else {
     // Annual compounding
     const annualWithdrawal = monthlyWithdrawal * 12;
-    
+
     if (realAnnualRate <= 0) {
       // If real rate is zero or negative, use simple multiplication
       return annualWithdrawal * years;
     }
-    
+
     // Present value calculation with annual compounding
     const capitalNeeded = annualWithdrawal * (1 - Math.pow(1 + realAnnualRate, -years)) / realAnnualRate;
-    
+
     return capitalNeeded;
   }
 };
@@ -201,9 +201,9 @@ export const calculatePresentValue = (
   years: number
 ): number => {
   // Convert annual rate to monthly rate
-  const monthlyRate = Math.pow(1 + annualRate / 100, 1/12) - 1;
+  const monthlyRate = Math.pow(1 + annualRate / 100, 1 / 12) - 1;
   const totalMonths = years * 12;
-  
+
   // Calculate present value with monthly compounding
   return futureValue / Math.pow(1 + monthlyRate, totalMonths);
 };
@@ -253,14 +253,14 @@ export const calculateCapitalMetrics = (
     monthlyInvestment,
     compoundFrequency
   );
-  
+
   // Calculate total invested amount
   const totalInvestedAmount = initialCapital + (monthlyInvestment * 12 * years);
-  
+
   // Calculate growth amount and percentage
   const growthAmount = capitalAtRetirement - totalInvestedAmount;
   const growthPercentage = (growthAmount / totalInvestedAmount) * 100;
-  
+
   return {
     capitalAtRetirement,
     totalInvestedAmount,
@@ -300,7 +300,7 @@ export const calculateDelayedScenario = (
   currentYear: number,
   annualReturnRate: number,
   inflation: number
-): { 
+): {
   capital: number;
   investment: number;
   withdrawal: number;
@@ -308,10 +308,10 @@ export const calculateDelayedScenario = (
   let capital = initialCapital;
   let investment = monthlyInvestment;
   let withdrawal = monthlyWithdrawal;
-  
+
   const delayedRetirementYear = retirementYear + delayYears;
   const isRetired = currentYear >= delayedRetirementYear;
-  
+
   if (!isRetired) {
     // Investment phase: apply returns on capital + monthly investments
     capital = calculateFutureValue(capital, annualReturnRate, 1, investment, 'monthly');
@@ -323,11 +323,11 @@ export const calculateDelayedScenario = (
     capital = calculateFutureValue(capital, annualReturnRate, 1, -withdrawal, 'monthly');
     withdrawal *= (1 + inflation / 100); // Adjust withdrawal for next year's inflation
   }
-  
-  return { 
-    capital, 
-    investment, 
-    withdrawal 
+
+  return {
+    capital,
+    investment,
+    withdrawal
   };
 };
 
@@ -344,16 +344,16 @@ export const calculateTimeToRetirement = (retirementYear: number): {
 } | null => {
   const now = new Date();
   const retirementDate = new Date(retirementYear, 0, 1); // January 1st of retirement year
-  
+
   const difference = retirementDate.getTime() - now.getTime();
-  
+
   if (difference <= 0) return null;
-  
+
   const years = Math.floor(difference / (1000 * 60 * 60 * 24 * 365));
   const months = Math.floor((difference % (1000 * 60 * 60 * 24 * 365)) / (1000 * 60 * 60 * 24 * 30));
   const days = Math.floor((difference % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24));
   const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  
+
   return { years, months, days, hours };
 };
 
@@ -389,14 +389,14 @@ export const calculatePhaseSummary = (data: any[]): {
   totalWithdrawal: number;
 } | null => {
   if (!data.length) return null;
-  
+
   const firstEntry = data[0];
   const lastEntry = data[data.length - 1];
-  
+
   const totalInterest = data.reduce((sum, entry) => sum + entry.annualInterest, 0);
   const totalInvestment = data.reduce((sum, entry) => sum + entry.annualInvestment, 0);
   const totalWithdrawal = data.reduce((sum, entry) => sum + entry.annualWithdrawal, 0);
-  
+
   return {
     years: data.length,
     startYear: firstEntry.year,
@@ -429,7 +429,7 @@ export const findCapitalWithdrawalDecreaseYear = (graphData: any[]): number | nu
   const retirementIndex = findRetirementStartIndex(graphData);
   if (retirementIndex === -1) return null;
 
-  const decreasePoint = graphData.slice(retirementIndex).find((point, index, arr) => 
+  const decreasePoint = graphData.slice(retirementIndex).find((point, index, arr) =>
     index > 0 && point.annualWithdrawal < arr[index - 1].annualWithdrawal
   );
   return decreasePoint?.year || null;
@@ -442,16 +442,16 @@ export const findCapitalWithdrawalDecreaseYear = (graphData: any[]): number | nu
  * @returns Effective retirement duration in years
  */
 export const calculateEffectiveRetirementDuration = (
-  graphData: any[], 
+  graphData: any[],
   defaultDuration: number
 ): number => {
   const retirementYearIndex = findRetirementStartIndex(graphData);
   const exhaustionIndex = graphData.length - 1;
-  
+
   if (retirementYearIndex !== -1) {
     return exhaustionIndex - retirementYearIndex + 1;
   }
-  
+
   return defaultDuration;
 };
 
@@ -474,13 +474,13 @@ export const calculateYearsUntilExhaustion = (
   const conservativeReturnRate = annualReturnRate * conservativeMultiplier / 100;
   let remainingCapital = capital;
   let years = 0;
-  
+
   while (remainingCapital > 0 && years < maxYears) {
     const annualReturn = remainingCapital * conservativeReturnRate;
     remainingCapital = remainingCapital + annualReturn - annualWithdrawal;
     if (remainingCapital > 0) years++;
   }
-  
+
   return years;
 };
 
@@ -519,19 +519,19 @@ export const calculateDelayedRetirementImpact = (
     investment: monthlyInvestment,
     withdrawal: monthlyWithdrawal
   };
-  
+
   let delayedScenario = {
     capital: initialCapital,
     investment: monthlyInvestment,
     withdrawal: monthlyWithdrawal
   };
-  
+
   // Calculate the delayed retirement year
   const delayedRetirementYear = retirementYear + delayYears;
-  
+
   // Variable to store capital at original retirement year
   let originalCapitalAtRetirementValue = 0;
-  
+
   // Simulate year by year from current year to max(retirement, delayedRetirement)
   for (let year = currentYear; year <= delayedRetirementYear; year++) {
     // Update original retirement scenario
@@ -545,7 +545,7 @@ export const calculateDelayedRetirementImpact = (
       annualReturnRate,
       inflation
     );
-    
+
     // Update delayed retirement scenario
     delayedScenario = calculateDelayedScenario(
       delayedScenario.capital,
@@ -557,22 +557,22 @@ export const calculateDelayedRetirementImpact = (
       annualReturnRate,
       inflation
     );
-    
+
     // Capture capital at original retirement year
     if (year === retirementYear) {
       originalCapitalAtRetirementValue = originalScenario.capital;
     }
   }
-  
+
   // Capital at the end of delayed retirement
   const delayedCapitalAtRetirement = delayedScenario.capital;
-  
+
   // Calculate the increase in capital
   const capitalIncrease = delayedCapitalAtRetirement - originalCapitalAtRetirementValue;
-  
+
   // Calculate percentage increase
   const percentageIncrease = (capitalIncrease / originalCapitalAtRetirementValue) * 100;
-  
+
   return {
     originalCapitalAtRetirement: originalCapitalAtRetirementValue,
     delayedCapitalAtRetirement,
@@ -625,10 +625,10 @@ export const calculateRecommendedInvestment = (
 } => {
   // Get capital gap
   const capitalGap = Math.max(0, totalNeededCapital - capitalAtRetirement);
-  
+
   // Calculate the annual withdrawal for years calculation
   const annualWithdrawal = monthlyRetirementWithdrawal * 12;
-  
+
   // Calculate years retirement will last with current plan
   const currentYearsUntilExhaustion = calculateYearsUntilExhaustion(
     capitalAtRetirement,
@@ -637,27 +637,27 @@ export const calculateRecommendedInvestment = (
     0.85, // Slightly more conservative for planning
     100
   );
-  
+
   // Convert to age at exhaustion
   const exhaustionAge = retirementStartAge + currentYearsUntilExhaustion;
-  
+
   // Determine if there's a shortfall vs. target age
   const ageShortfall = Math.max(0, targetAge - exhaustionAge);
-  
+
   // Calculate additional capital needed for each year of retirement
   const capitalPerYear = annualWithdrawal * (1 - 1 / Math.pow(1 + annualReturnRate / 100, 1));
-  
+
   // Calculate additional capital needed to reach target age
   const additionalCapitalNeeded = ageShortfall * capitalPerYear;
-  
+
   // REALISTIC CALCULATION
   // Determine a realistic investment increase (cap at 40% increase)
   let realisticPercentageIncrease: number;
-  
+
   if (capitalGap > 0) {
     // Different increases based on the relative size of the gap
     const gapRatio = capitalGap / capitalAtRetirement;
-    
+
     if (gapRatio > 0.5) {
       // Large gap - recommend 30-40% increase
       realisticPercentageIncrease = Math.min(0.4, Math.max(0.3, gapRatio * 0.4));
@@ -672,68 +672,68 @@ export const calculateRecommendedInvestment = (
     // No gap, but recommend small optimization of 5-10%
     realisticPercentageIncrease = 0.05 + (Math.random() * 0.05);
   }
-  
+
   // Calculate the realistic monthly amount
   const realisticMonthlyIncrease = currentMonthlyInvestment * realisticPercentageIncrease;
   const realisticMonthlyAmount = currentMonthlyInvestment + realisticMonthlyIncrease;
-  
+
   // Calculate the impact of this realistic increase
   const realisticAdditionalContributions = realisticMonthlyIncrease * 12 * yearsUntilRetirement;
-  
+
   // Calculate estimated returns on additional contributions (simplified)
   const annualRateDecimal = annualReturnRate / 100;
   const realisticEstimatedReturns = realisticAdditionalContributions * (Math.pow(1 + annualRateDecimal, yearsUntilRetirement / 2) - 1);
-  
+
   // Total benefit at retirement from realistic increase
   const realisticAdditionalCapital = realisticAdditionalContributions + realisticEstimatedReturns;
   const realisticNewCapitalAtRetirement = capitalAtRetirement + realisticAdditionalCapital;
-  
+
   // Calculate additional years this would provide
-  const realisticAdditionalYears = annualWithdrawal > 0 
+  const realisticAdditionalYears = annualWithdrawal > 0
     ? Math.round((realisticAdditionalCapital / annualWithdrawal) * (1 - 1 / Math.pow(1 + annualRateDecimal, 1)))
     : 0;
-  
+
   // Calculate percent of target for realistic scenario
   const realisticPercentOfTarget = (realisticNewCapitalAtRetirement / totalNeededCapital) * 100;
-  
+
   // IDEAL CALCULATION
   // Calculate the monthly investment needed to meet the total needed capital
   // Consider constraints on the maximum viable increase (cap at 100% increase for reality)
   const idealAdditionalCapitalNeeded = Math.max(0, totalNeededCapital - capitalAtRetirement);
-  
+
   // Using future value formula to determine how much additional monthly investment is needed
   // to close the gap over the remaining years until retirement
-  const monthlyRateDecimal = Math.pow(1 + annualRateDecimal, 1/12) - 1;
+  const monthlyRateDecimal = Math.pow(1 + annualRateDecimal, 1 / 12) - 1;
   const totalMonths = yearsUntilRetirement * 12;
-  
+
   // Calculate monthly investment needed to close the gap
   // FV = PMT * ((1 + r)^n - 1) / r
   // Therefore, PMT = FV * r / ((1 + r)^n - 1)
   let idealMonthlyAdditional = 0;
-  
+
   if (totalMonths > 0 && monthlyRateDecimal > 0) {
-    idealMonthlyAdditional = idealAdditionalCapitalNeeded * monthlyRateDecimal / 
+    idealMonthlyAdditional = idealAdditionalCapitalNeeded * monthlyRateDecimal /
       (Math.pow(1 + monthlyRateDecimal, totalMonths) - 1);
   } else if (totalMonths > 0) {
     // If rate is zero, use simple division
     idealMonthlyAdditional = idealAdditionalCapitalNeeded / totalMonths;
   }
-  
+
   // Cap the ideal monthly amount to be at most 100% more than current
   const maxIdealIncrease = currentMonthlyInvestment;
   const cappedIdealAdditional = Math.min(idealMonthlyAdditional, maxIdealIncrease);
   const idealMonthlyAmount = currentMonthlyInvestment + cappedIdealAdditional;
   const idealPercentageIncrease = cappedIdealAdditional / currentMonthlyInvestment;
-  
+
   // Calculate the impact if the ideal increase was applied
   const idealAdditionalContributions = cappedIdealAdditional * 12 * yearsUntilRetirement;
   const idealEstimatedReturns = idealAdditionalContributions * (Math.pow(1 + annualRateDecimal, yearsUntilRetirement / 2) - 1);
   const idealTotalBenefit = idealAdditionalContributions + idealEstimatedReturns;
   const idealNewCapitalAtRetirement = capitalAtRetirement + idealTotalBenefit;
-  
+
   // Calculate percent of target for ideal scenario
   const idealPercentOfTarget = (idealNewCapitalAtRetirement / totalNeededCapital) * 100;
-  
+
   return {
     realistic: {
       monthlyAmount: realisticMonthlyAmount,
@@ -810,12 +810,12 @@ export const calculateOptimalWithdrawalRate = (
   // Start with a reasonable range
   let low = 0.01; // 1% withdrawal rate
   let high = 0.08; // 8% withdrawal rate
-  
+
   // Binary search to find optimal rate
   for (let i = 0; i < 10; i++) { // 10 iterations should be enough for precision
     const mid = (low + high) / 2;
     const optimalAnnualWithdrawal = capitalAtRetirement * mid;
-    
+
     const yearsUntilExhaustion = calculateYearsUntilExhaustion(
       capitalAtRetirement,
       optimalAnnualWithdrawal,
@@ -823,14 +823,14 @@ export const calculateOptimalWithdrawalRate = (
       1,
       100
     );
-    
+
     const exhaustionAge = retirementStartAge + yearsUntilExhaustion;
-    
+
     if (Math.abs(exhaustionAge - targetAge) < 1) {
       // Close enough to target
       return mid;
     }
-    
+
     if (exhaustionAge < targetAge) {
       // Exhaustion too early, need lower withdrawal rate
       high = mid;
@@ -839,7 +839,7 @@ export const calculateOptimalWithdrawalRate = (
       low = mid;
     }
   }
-  
+
   return (low + high) / 2; // Return the best approximation
 };
 
@@ -866,26 +866,26 @@ export const calculateReturnImprovementImpact = (
   if (improvedReturnRate === -1) {
     improvedReturnRate = currentReturnRate + 0.5;
   }
-  
+
   const improvementRate = improvedReturnRate - currentReturnRate;
   const months = yearsToRetirement * 12;
-  
+
   // Calculate monthly rates
   const currentMonthlyRate = currentReturnRate / 12 / 100;
   const improvedMonthlyRate = improvedReturnRate / 12 / 100;
-  
+
   // Calculate future values with current and improved returns
-  const futureValueCurrentRate = monthlyInvestment * 
-    ((Math.pow(1 + currentMonthlyRate, months) - 1) / currentMonthlyRate) * 
+  const futureValueCurrentRate = monthlyInvestment *
+    ((Math.pow(1 + currentMonthlyRate, months) - 1) / currentMonthlyRate) *
     (1 + currentMonthlyRate);
-    
-  const futureValueImprovedRate = monthlyInvestment * 
-    ((Math.pow(1 + improvedMonthlyRate, months) - 1) / improvedMonthlyRate) * 
+
+  const futureValueImprovedRate = monthlyInvestment *
+    ((Math.pow(1 + improvedMonthlyRate, months) - 1) / improvedMonthlyRate) *
     (1 + improvedMonthlyRate);
-  
+
   // Calculate the benefit from improved returns
   const benefit = futureValueImprovedRate - futureValueCurrentRate;
-  
+
   return {
     improvementRate,
     benefit,
@@ -915,20 +915,20 @@ export const calculateAdditionalInvestmentImpact = (
 } => {
   // Calculate the monthly increase amount
   const monthlyIncrease = currentMonthlyInvestment * increaseRate;
-  
+
   // Calculate total additional contributions without interest
   const additionalContributions = monthlyIncrease * 12 * yearsToRetirement;
-  
+
   // Calculate future value of additional monthly investments with compound interest
   const monthlyRate = annualReturnRate / 12 / 100;
   const months = yearsToRetirement * 12;
-  const futureValueOfAdditional = monthlyIncrease * 
-    ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate) * 
+  const futureValueOfAdditional = monthlyIncrease *
+    ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate) *
     (1 + monthlyRate);
-  
+
   // Calculate estimated returns (difference between future value and contributions)
   const estimatedReturns = futureValueOfAdditional - additionalContributions;
-  
+
   return {
     monthlyIncrease,
     additionalContributions,
@@ -957,13 +957,13 @@ export const calculateExhaustionAge = (
 ): number => {
   // Convert percentages to decimals
   const inflationRate = inflation / 100;
-  
+
   // Calculate real return rate (adjusted for inflation)
   const realReturnRate = ((1 + annualReturnRate / 100) / (1 + inflationRate) - 1) * 100;
-  
+
   // Use conservative real return rate
   const conservativeRealReturnRate = realReturnRate * conservativeMultiplier;
-  
+
   // Calculate years until exhaustion
   const annualWithdrawal = monthlyWithdrawal * 12;
   const yearsUntilExhaustion = calculateYearsUntilExhaustion(
@@ -973,7 +973,7 @@ export const calculateExhaustionAge = (
     1,
     100
   );
-  
+
   // Calculate exhaustion age
   return retirementStartAge + yearsUntilExhaustion;
 };
@@ -990,9 +990,9 @@ export const calculateAdditionalYears = (
 ): number => {
   // Simple estimation - how many additional years the extra capital would last
   const annualWithdrawal = monthlyWithdrawal * 12;
-  
+
   if (annualWithdrawal <= 0) return 0;
-  
+
   return Math.round(additionalCapital / annualWithdrawal);
 };
 
@@ -1028,7 +1028,7 @@ export const calculateDelayImpactOnLongevity = (
 } => {
   // Calculate delayed retirement age
   const delayedRetirementAge = retirementStartAge + delayYears;
-  
+
   // Calculate impact of delay on capital
   const result = calculateDelayedRetirementImpact(
     initialCapital,
@@ -1039,7 +1039,7 @@ export const calculateDelayImpactOnLongevity = (
     annualReturnRate,
     inflation
   );
-  
+
   // Calculate years until exhaustion
   const yearsUntilExhaustion = calculateYearsUntilExhaustion(
     result.delayedCapitalAtRetirement,
@@ -1048,10 +1048,10 @@ export const calculateDelayImpactOnLongevity = (
     1,
     100
   );
-  
+
   // Calculate exhaustion age
   const exhaustionAge = delayedRetirementAge + yearsUntilExhaustion;
-  
+
   return {
     lastsUntilTargetAge: exhaustionAge >= targetAge,
     delayedRetirementAge,
@@ -1121,8 +1121,8 @@ export const calculateWithdrawalReduction = (
 
   // Calculate reduction details
   const reductionNeeded = currentMonthlyWithdrawal > optimalMonthlyWithdrawal;
-  const reductionAmount = reductionNeeded 
-    ? Math.max(0, currentMonthlyWithdrawal - optimalMonthlyWithdrawal) 
+  const reductionAmount = reductionNeeded
+    ? Math.max(0, currentMonthlyWithdrawal - optimalMonthlyWithdrawal)
     : 0;
   const reductionPercentage = reductionNeeded
     ? Math.round((reductionAmount / currentMonthlyWithdrawal) * 100)
@@ -1171,10 +1171,10 @@ export const calculateOptimalDelayYears = (
   }
 
   const targetMaxAge = withdrawalMode === "age" ? maxAge : 95;
-  
+
   // Calculate the year when user reaches target max age
   const targetYear = currentYear + (targetMaxAge - currentAge);
-  
+
   // Check if capital is already exhausted at target age with current plan
   const capitalEvolution = [];
   let scenario = {
@@ -1182,7 +1182,7 @@ export const calculateOptimalDelayYears = (
     investment: monthlyInvestment,
     withdrawal: monthlyWithdrawal
   };
-  
+
   // Simulate from current year to target year with original retirement plan
   for (let year = currentYear; year <= targetYear; year++) {
     scenario = calculateDelayedScenario(
@@ -1195,21 +1195,21 @@ export const calculateOptimalDelayYears = (
       annualReturnRate,
       inflation
     );
-    
+
     capitalEvolution.push({
       year,
       capital: scenario.capital
     });
   }
-  
+
   // Check if capital is exhausted at target age
   const finalCapital = capitalEvolution[capitalEvolution.length - 1].capital;
-  
+
   // If capital isn't exhausted at target age, no need for delay
   if (finalCapital > 0) {
     return 0;
   }
-  
+
   // If capital gets exhausted, calculate various delay scenarios
   for (let delayYears = 1; delayYears <= 5; delayYears++) {
     // Initialize scenario for this delay option
@@ -1218,10 +1218,10 @@ export const calculateOptimalDelayYears = (
       investment: monthlyInvestment,
       withdrawal: monthlyWithdrawal
     };
-    
+
     const delayedRetirementYear = retirementYear + delayYears;
     const delayCapitalEvolution = [];
-    
+
     // Simulate from current year to target year with delayed retirement
     for (let year = currentYear; year <= targetYear; year++) {
       scenario = calculateDelayedScenario(
@@ -1234,21 +1234,21 @@ export const calculateOptimalDelayYears = (
         annualReturnRate,
         inflation
       );
-      
+
       delayCapitalEvolution.push({
         year,
         capital: scenario.capital
       });
     }
-    
+
     // Check if capital remains positive at target age with this delay
     const delayFinalCapital = delayCapitalEvolution[delayCapitalEvolution.length - 1].capital;
-    
+
     if (delayFinalCapital > 0) {
       return delayYears;
     }
   }
-  
+
   // If we reach here, even 5 years delay isn't enough, so recommend maximum
   return 5;
 };
@@ -1270,7 +1270,7 @@ export const calculateSuggestedWithdrawal = (
 } => {
   const suggestedWithdrawalRate = Math.min(safeWithdrawalRate, currentWithdrawalRate * 0.85);
   const suggestedMonthlyWithdrawal = currentMonthlyWithdrawal * (suggestedWithdrawalRate / currentWithdrawalRate);
-  
+
   return {
     suggestedWithdrawalRate,
     suggestedMonthlyWithdrawal: Math.round(suggestedMonthlyWithdrawal)
@@ -1298,10 +1298,10 @@ export const calculateOptimalAssessment = (
 } => {
   const yearsToRetirement = retirementStartAge - currentAge;
   const capitalRatio = capitalAtRetirement / totalNeededCapital;
-  
+
   // Calculate withdrawal rate
   const withdrawalRate = (effectiveMonthlyWithdrawal * 12 / capitalAtRetirement) * 100;
-  
+
   if (capitalRatio < 0.9) {
     return {
       assessment: "risky",
@@ -1362,10 +1362,10 @@ export const calculateInvestmentImpact = (
 } => {
   // Default inflation if not provided
   const inflationRate = inflation ?? 2;
-  
+
   // Calculate improved capital at retirement
   const improvedCapitalAtRetirement = capitalAtRetirement + investmentIncrease.totalBenefit;
-  
+
   // Calculate exhaustion ages using existing function
   const exhaustionAge = calculateExhaustionAge(
     capitalAtRetirement,
@@ -1375,7 +1375,7 @@ export const calculateInvestmentImpact = (
     retirementStartAge,
     0.7 // Conservative multiplier
   );
-  
+
   const improvedExhaustionAge = calculateExhaustionAge(
     improvedCapitalAtRetirement,
     effectiveMonthlyWithdrawal,
@@ -1384,26 +1384,26 @@ export const calculateInvestmentImpact = (
     retirementStartAge,
     0.7 // Conservative multiplier
   );
-  
+
   // Calculate years gained
   const yearsGained = improvedExhaustionAge - exhaustionAge;
-  
+
   // Estimate the yearly capital increase from investing
   const yearlyCapitalIncrease = monthlyInvestment * 12 * (1 + annualReturnRate / 100);
-  
+
   // Calculate percentage increase in monthly investment
   const percentageIncrease = (investmentIncrease.monthlyIncrease / monthlyInvestment) * 100;
-  
+
   // Calculate capital gap
   const capitalGap = totalNeededCapital - capitalAtRetirement;
   const gapPercentage = (capitalGap / totalNeededCapital) * 100;
-  
+
   // Calculate additional years of retirement funding
   const additionalYears = calculateAdditionalYears(
     effectiveMonthlyWithdrawal,
     investmentIncrease.totalBenefit
   );
-  
+
   return {
     improvedCapitalAtRetirement,
     exhaustionAge,
@@ -1434,7 +1434,7 @@ export const calculateIdealWithdrawal = (
   const withdrawalRate = safeWithdrawalRatePercentage / 100;
   const annualWithdrawal = capitalAtRetirement * withdrawalRate;
   const monthlyWithdrawal = annualWithdrawal / 12;
-  
+
   return {
     annualWithdrawal,
     monthlyWithdrawal,
@@ -1485,10 +1485,10 @@ export const calculateRetirementRisk = (
   // Default inflation if not provided
   const inflationRate = inflation || 2;
   const yearsToRetirement = retirementStartAge - currentAge;
-  
+
   // Calculate capital adequacy ratio (capital at retirement / needed capital)
   const capitalRatio = capitalAtRetirement / totalNeededCapital;
-  
+
   // Calculate effective withdrawal rate considering inflation
   const effectiveMonthlyWithdrawal = calculateEffectiveWithdrawalAmount(
     monthlyRetirementWithdrawal,
@@ -1497,33 +1497,35 @@ export const calculateRetirementRisk = (
     inflationRate,
     yearsToRetirement
   );
-  
+
   // Calculate withdrawal rate as percentage of capital
   const withdrawalRate = (effectiveMonthlyWithdrawal * 12 / capitalAtRetirement) * 100;
-  
+
   // Calculate withdrawal risk factor (4% rule reference)
   const withdrawalRiskFactor = withdrawalRate / 4;
-  
+
   // Calculate longevity risk factor (risk of outliving money)
-  const longevityRiskFactor = targetAge > calculateExhaustionAge(
+  const estimatedExhaustionAge = calculateExhaustionAge(
     capitalAtRetirement,
     effectiveMonthlyWithdrawal,
     annualReturnRate,
     inflationRate,
     retirementStartAge,
     0.7 // Conservative multiplier
-  ) ? 0 : 1;
-  
+  );
+  // Risk = 1 when funds deplete before target age, 0 when they last beyond
+  const longevityRiskFactor = estimatedExhaustionAge < targetAge ? 1 : 0;
+
   // Calculate optimal withdrawal reduction
   const withdrawalReduction = calculateWithdrawalReduction(
     capitalAtRetirement,
     effectiveMonthlyWithdrawal,
     annualReturnRate,
-    inflationRate,
     retirementStartAge,
-    targetAge
+    targetAge,
+    0.7 // Conservative multiplier
   );
-  
+
   // Calculate recommended investment increase
   const recommendedInvestment = calculateRecommendedInvestment(
     monthlyInvestment,
@@ -1536,42 +1538,42 @@ export const calculateRetirementRisk = (
     currentAge,
     retirementStartAge
   );
-  
+
   // Investment shortfall factor
   const investmentShortfallFactor = recommendedInvestment.realistic.percentageIncrease / 100;
-  
+
   // Volatility risk factor based on return rate vs. inflation (real return stability)
   const realReturnRate = ((1 + annualReturnRate / 100) / (1 + inflationRate / 100) - 1) * 100;
   const volatilityRiskFactor = realReturnRate < 2 ? 2 - realReturnRate : 0;
-  
+
   // Calculate overall risk score (weighted sum of factors)
   // First, normalize each factor to a 0-1 scale
-  
+
   // 1. Capital Adequacy (0-1)
   // - 0 means we have 150% or more of needed capital (very safe)
   // - 1 means we have 50% or less of needed capital (very risky)
   const normalizedCapitalRatio = Math.max(0, Math.min(1, (1.5 - capitalRatio) / 1));
-  
+
   // 2. Withdrawal Risk (0-1)
   // - 0 means withdrawal rate is 3% or less (very safe)
   // - 1 means withdrawal rate is 7% or more (very risky)
   const normalizedWithdrawalRisk = Math.max(0, Math.min(1, (withdrawalRate - 3) / 4));
-  
+
   // 3. Longevity Risk (0-1)
   // - 0 means funds last beyond target age
   // - 1 means funds are depleted 10 or more years before target age
   const normalizedLongevityRisk = Math.max(0, Math.min(1, longevityRiskFactor));
-  
+
   // 4. Investment Shortfall (0-1)
   // - 0 means no increase needed
   // - 1 means 100% or more increase needed
   const normalizedInvestmentShortfall = Math.max(0, Math.min(1, investmentShortfallFactor));
-  
+
   // 5. Volatility Risk (0-1)
   // - 0 means real return rate is 4% or higher
   // - 1 means real return rate is 0% or lower
   const normalizedVolatilityRisk = Math.max(0, Math.min(1, (4 - realReturnRate) / 4));
-  
+
   // Calculate weighted risk score (0-10 scale)
   const riskScore = (
     (normalizedCapitalRatio * 0.35) +        // 35% weight - Capital adequacy is most important
@@ -1580,14 +1582,14 @@ export const calculateRetirementRisk = (
     (normalizedInvestmentShortfall * 0.15) + // 15% weight - Investment gap
     (normalizedVolatilityRisk * 0.05)        // 5% weight - Market volatility impact
   ) * 10; // Scale to 0-10
-  
+
   // Determine risk level based on score with more appropriate thresholds
   let riskLevel: 'Low' | 'Moderate' | 'Significant' | 'High' | 'Critical';
   let description: string;
   let recommendationPriority: 'Low' | 'Medium' | 'High' | 'Urgent' | 'Critical';
   let primaryRecommendation: string;
   let secondaryRecommendations: string[] = [];
-  
+
   if (riskScore < 2.5) {
     riskLevel = 'Low';
     description = 'Your retirement plan is very secure. You have more than adequate capital, sustainable withdrawal rates, and a strong safety margin.';
@@ -1646,7 +1648,7 @@ export const calculateRetirementRisk = (
       'Explore additional income sources or part-time work'
     ];
   }
-  
+
   return {
     riskLevel,
     riskScore,

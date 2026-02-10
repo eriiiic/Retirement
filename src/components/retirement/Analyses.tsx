@@ -27,18 +27,18 @@ export const Analyses: React.FC<AnalysesProps> = ({
   currency
 }) => {
   const { darkMode } = useTheme();
-  
+
   // Currency formatting with appropriate locale and decimals
   const formatCurrencyValue = useCallback((value: number, showDecimals: boolean = false): string => {
-    const locale = currency === 'EUR' ? 'fr-FR' : 
+    const locale = currency === 'EUR' ? 'fr-FR' :
       currency === 'GBP' ? 'en-GB' :
-                   currency === 'JPY' ? 'ja-JP' : 'en-US';
-    
+        currency === 'JPY' ? 'ja-JP' : 'en-US';
+
     return new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency: currency,
-        minimumFractionDigits: showDecimals ? 1 : 0,
-        maximumFractionDigits: showDecimals ? 1 : 0
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: showDecimals ? 1 : 0,
+      maximumFractionDigits: showDecimals ? 1 : 0
     }).format(value);
   }, [currency]);
 
@@ -74,10 +74,10 @@ export const Analyses: React.FC<AnalysesProps> = ({
     statistics.lifeExpectancy,
     params.monthlyInvestment
   ]);
-  
+
   // Transform riskLevel to match the legacy format expected by components
   const legacyRiskLevel = useMemo(() => {
-    switch(riskAssessment.riskLevel) {
+    switch (riskAssessment.riskLevel) {
       case 'Critical':
       case 'High':
         return 'High';
@@ -90,19 +90,19 @@ export const Analyses: React.FC<AnalysesProps> = ({
         return 'Medium';
     }
   }, [riskAssessment.riskLevel]);
-  
+
   // Use the custom hook to calculate analyses
   const analyses = useRetirementAnalyses(
     statistics,
     params,
     formatDisplayValue
   );
-  
+
   return (
     <div className={cx(
       "p-4 rounded-2xl shadow-md border",
-      darkMode 
-        ? "bg-gray-900 border-gray-700" 
+      darkMode
+        ? "bg-gray-900 border-gray-700"
         : "bg-gray-50 border-gray-200"
     )}>
       {/* Header section with title and description */}
@@ -124,18 +124,18 @@ export const Analyses: React.FC<AnalysesProps> = ({
 
           </div>
           <p className={cx(
-            typography.style.subtitle, 
+            typography.style.subtitle,
             "sm:pl-7",
             darkMode ? "text-gray-400" : "text-gray-600"
           )}>
             Personalized strategies to enhance your retirement plan
           </p>
         </div>
-        
+
         {/* Enhanced Risk indicator badge - now using the new comprehensive risk assessment */}
         <div className="mt-2 sm:mt-0">
           <div className="flex flex-col items-end">
-            <div 
+            <div
               className={cx(
                 "rounded-lg px-3 py-1.5 inline-flex items-center gap-1.5 border",
                 riskAssessment.riskLevel === 'Critical' || riskAssessment.riskLevel === 'High'
@@ -152,23 +152,23 @@ export const Analyses: React.FC<AnalysesProps> = ({
                 riskAssessment.riskLevel === 'Critical' || riskAssessment.riskLevel === 'High'
                   ? darkMode ? "bg-red-600" : "bg-red-500"
                   : riskAssessment.riskLevel === 'Significant' || riskAssessment.riskLevel === 'Moderate'
-                    ? darkMode ? "bg-yellow-600" : "bg-yellow-500" 
+                    ? darkMode ? "bg-yellow-600" : "bg-yellow-500"
                     : darkMode ? "bg-green-600" : "bg-green-500"
               )}
-              aria-hidden="true"
+                aria-hidden="true"
               ></div>
               <span className={cx(
                 "text-xs font-semibold",
-                darkMode 
-                  ? riskAssessment.riskLevel === 'Critical' || riskAssessment.riskLevel === 'High' ? "text-red-300" 
-                    : riskAssessment.riskLevel === 'Significant' || riskAssessment.riskLevel === 'Moderate' ? "text-yellow-300" 
-                    : "text-green-300"
+                darkMode
+                  ? riskAssessment.riskLevel === 'Critical' || riskAssessment.riskLevel === 'High' ? "text-red-300"
+                    : riskAssessment.riskLevel === 'Significant' || riskAssessment.riskLevel === 'Moderate' ? "text-yellow-300"
+                      : "text-green-300"
                   : ""
               )}>
                 {riskAssessment.riskLevel} Risk
               </span>
             </div>
-            
+
             {/* Add risk score visualization */}
             <div className="mt-1 w-full max-w-[120px]">
               <div className="flex justify-between items-center mb-1">
@@ -180,10 +180,10 @@ export const Analyses: React.FC<AnalysesProps> = ({
                 </span>
               </div>
               <div className={`w-full h-1.5 rounded-full ${darkMode ? "bg-gray-700" : "bg-gray-200"}`}>
-                <div 
+                <div
                   className={cx(
                     "h-1.5 rounded-full",
-                    riskAssessment.riskScore < 2 
+                    riskAssessment.riskScore < 2
                       ? darkMode ? "bg-green-600" : "bg-green-500"
                       : riskAssessment.riskScore < 4
                         ? darkMode ? "bg-blue-600" : "bg-blue-500"
@@ -192,7 +192,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
                           : riskAssessment.riskScore < 8
                             ? darkMode ? "bg-orange-600" : "bg-orange-500"
                             : darkMode ? "bg-red-600" : "bg-red-500"
-                  )} 
+                  )}
                   style={{ width: `${Math.min(riskAssessment.riskScore * 10, 100)}%` }}
                 ></div>
               </div>
@@ -200,7 +200,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
           </div>
         </div>
       </div>
-      
+
       {/* Priority Recommendation Banner - New addition */}
       {riskAssessment.recommendationPriority !== 'Low' && (
         <div className={cx(
@@ -243,7 +243,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
           </div>
         </div>
       )}
-      
+
       {/* Auto-calculated retirement age insights - Conditionally displayed card */}
       {params.autoCalculateRetirementAge && analyses.retirementAgeInsights && (
         <div className={cx(
@@ -266,25 +266,25 @@ export const Analyses: React.FC<AnalysesProps> = ({
               "mb-0",
               darkMode ? "text-purple-300" : "text-purple-800"
             )}>
-            Auto-Calculated Retirement Age: {analyses.retirementAgeInsights.calculatedAge}
+              Auto-Calculated Retirement Age: {analyses.retirementAgeInsights.calculatedAge}
             </SectionTitle>
             <span className={cx(
               "ml-auto px-2 py-0.5 text-xs font-medium rounded",
-              analyses.retirementAgeInsights.optimalAssessment.assessment === "risky" 
+              analyses.retirementAgeInsights.optimalAssessment.assessment === "risky"
                 ? darkMode ? "bg-red-900/30 text-red-300" : "bg-red-100 text-red-800"
-                : analyses.retirementAgeInsights.optimalAssessment.assessment === "moderate" 
+                : analyses.retirementAgeInsights.optimalAssessment.assessment === "moderate"
                   ? darkMode ? "bg-yellow-900/30 text-yellow-300" : "bg-yellow-100 text-yellow-800"
-                  : analyses.retirementAgeInsights.optimalAssessment.assessment === "soon" 
+                  : analyses.retirementAgeInsights.optimalAssessment.assessment === "soon"
                     ? darkMode ? "bg-blue-900/30 text-blue-300" : "bg-blue-100 text-blue-800"
                     : darkMode ? "bg-green-900/30 text-green-300" : "bg-green-100 text-green-800"
             )}>
               {analyses.retirementAgeInsights.optimalAssessment.assessment === "risky" ? "Risky" :
-               analyses.retirementAgeInsights.optimalAssessment.assessment === "moderate" ? "Moderate" :
-               analyses.retirementAgeInsights.optimalAssessment.assessment === "soon" ? "Coming Soon" :
-               "Solid Plan"}
+                analyses.retirementAgeInsights.optimalAssessment.assessment === "moderate" ? "Moderate" :
+                  analyses.retirementAgeInsights.optimalAssessment.assessment === "soon" ? "Coming Soon" :
+                    "Solid Plan"}
             </span>
           </div>
-          
+
           <div className="p-3">
             <div className="flex items-center mb-3">
               <p className={cx(
@@ -293,7 +293,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
               )}>
                 {analyses.retirementAgeInsights.optimalAssessment.message}
               </p>
-              
+
               {/* Risk score for retirement age */}
               <div className="flex items-center ml-2">
                 <span className={cx(
@@ -303,10 +303,10 @@ export const Analyses: React.FC<AnalysesProps> = ({
                   Risk Impact:
                 </span>
                 <div className="w-20 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700">
-                  <div 
+                  <div
                     className={cx(
                       "h-1.5 rounded-full",
-                      riskAssessment.riskScore < 2 
+                      riskAssessment.riskScore < 2
                         ? darkMode ? "bg-green-600" : "bg-green-500"
                         : riskAssessment.riskScore < 4
                           ? darkMode ? "bg-blue-600" : "bg-blue-500"
@@ -315,18 +315,18 @@ export const Analyses: React.FC<AnalysesProps> = ({
                             : riskAssessment.riskScore < 8
                               ? darkMode ? "bg-orange-600" : "bg-orange-500"
                               : darkMode ? "bg-red-600" : "bg-red-500"
-                    )} 
+                    )}
                     style={{ width: `${Math.min(riskAssessment.riskScore * 10, 100)}%` }}
                   ></div>
                 </div>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <div className={cx(
                 "rounded-lg p-3 border flex items-start",
-                darkMode 
-                  ? "bg-gray-800 border-purple-800/50" 
+                darkMode
+                  ? "bg-gray-800 border-purple-800/50"
                   : "bg-white border-purple-100"
               )}>
                 <div className={cx(
@@ -334,12 +334,12 @@ export const Analyses: React.FC<AnalysesProps> = ({
                   darkMode ? "bg-indigo-900/50 text-indigo-400" : "bg-indigo-100 text-indigo-600"
                 )}>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 </div>
                 <div>
                   <h4 className={cx(
-                    "text-sm font-medium", 
+                    "text-sm font-medium",
                     darkMode ? "text-indigo-300" : "text-indigo-800"
                   )}>Earlier Retirement Option</h4>
                   <p className={cx(
@@ -348,7 +348,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
                   )}>
                     Retire at age <span className="font-semibold">{analyses.retirementAgeInsights.earlierPossible.age}</span> by increasing monthly investment by {formatDisplayValue(analyses.retirementAgeInsights.earlierPossible.extraMonthlyInvestment)}.
                   </p>
-                  
+
                   {/* Risk impact of earlier retirement */}
                   <div className={cx(
                     "mt-2 text-xs px-2 py-1 rounded-full inline-flex items-center",
@@ -363,11 +363,11 @@ export const Analyses: React.FC<AnalysesProps> = ({
                   </div>
                 </div>
               </div>
-            
+
               <div className={cx(
                 "rounded-lg p-3 border flex items-start",
-                darkMode 
-                  ? "bg-gray-800 border-purple-800/50" 
+                darkMode
+                  ? "bg-gray-800 border-purple-800/50"
                   : "bg-white border-purple-100"
               )}>
                 <div className={cx(
@@ -375,12 +375,12 @@ export const Analyses: React.FC<AnalysesProps> = ({
                   darkMode ? "bg-purple-900/50 text-purple-400" : "bg-purple-100 text-purple-600"
                 )}>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                </svg>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
                 </div>
                 <div>
                   <h4 className={cx(
-                    "text-sm font-medium", 
+                    "text-sm font-medium",
                     darkMode ? "text-purple-300" : "text-purple-800"
                   )}>Delaying Benefits</h4>
                   <p className={cx(
@@ -389,7 +389,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
                   )}>
                     Working until <span className="font-semibold">{analyses.retirementAgeInsights.laterBenefits.age}</span> would add {formatDisplayValue(analyses.retirementAgeInsights.laterBenefits.additionalCapital)} (+{Math.round(analyses.retirementAgeInsights.laterBenefits.improvedSafety)}% safety).
                   </p>
-                  
+
                   {/* Risk impact of delaying retirement */}
                   <div className={cx(
                     "mt-2 text-xs px-2 py-1 rounded-full inline-flex items-center",
@@ -403,7 +403,7 @@ export const Analyses: React.FC<AnalysesProps> = ({
                 </div>
               </div>
             </div>
-            
+
             {/* Risk mitigation recommendation */}
             {riskAssessment.riskScore > 4 && (
               <div className={cx(
@@ -423,13 +423,13 @@ export const Analyses: React.FC<AnalysesProps> = ({
           </div>
         </div>
       )}
-      
+
       {/* Main content grid - use our refactored components */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
         {/* First row: 3 cards */}
-       
+
         {/* 1. Risk Assessment card - now using the new risk assessment */}
-        <RiskAssessmentCard 
+        <RiskAssessmentCard
           risk={legacyRiskLevel}
           safetyMargin={analyses.runningOut.safetyMargin}
           withdrawalRate={analyses.withdrawalRate}
@@ -453,22 +453,23 @@ export const Analyses: React.FC<AnalysesProps> = ({
         />
 
         {/* 2. Recommended Action Plan card */}
-        <RecommendationPanel 
+        <RecommendationPanel
           recommendations={analyses.recommendations}
           withdrawalRate={analyses.withdrawalRate}
           capitalAtRetirement={statistics.capitalAtRetirement}
           totalNeededCapital={statistics.totalNeededCapital}
           monthlyRetirementWithdrawal={params.monthlyRetirementWithdrawal}
           annualReturnRate={params.annualReturnRate}
+          formatDisplayValue={formatDisplayValue}
           params={params}
           statistics={statistics}
           currentAge={params.currentAge}
           risk={legacyRiskLevel}
           riskAssessment={riskAssessment}
         />
-        
+
         {/* 3. Delaying retirement impact card */}
-        <RetirementDelayCard 
+        <RetirementDelayCard
           risk={legacyRiskLevel}
           yearDelayImpact={analyses.yearDelayImpact}
           capitalAtRetirement={statistics.capitalAtRetirement}
@@ -485,10 +486,10 @@ export const Analyses: React.FC<AnalysesProps> = ({
           inflation={params.inflation}
           riskAssessment={riskAssessment}
         />
-        
+
         {/* Second row: 2 cards spanning wider */}
         {/* 4. Investment Increase Strategy card */}
-        <InvestmentIncreaseCard 
+        <InvestmentIncreaseCard
           risk={legacyRiskLevel}
           monthlyInvestment={params.monthlyInvestment}
           investmentIncrease={analyses.investmentIncrease}
@@ -503,9 +504,9 @@ export const Analyses: React.FC<AnalysesProps> = ({
           inflation={params.inflation}
           riskAssessment={riskAssessment}
         />
-        
+
         {/* 5. Withdraw Strategy card */}
-        <WithdrawalStrategyCard 
+        <WithdrawalStrategyCard
           risk={legacyRiskLevel}
           monthlyRetirementWithdrawal={params.monthlyRetirementWithdrawal}
           capitalAtRetirement={statistics.capitalAtRetirement}

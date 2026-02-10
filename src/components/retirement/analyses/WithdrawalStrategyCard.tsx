@@ -3,8 +3,8 @@ import { FormatAmountFunction, WithdrawalMode, Currency } from '../types';
 import { colors, typography, spacing, components, cx } from '../../../styles/styleGuide';
 import { SectionTitle, Card, PositiveMetric } from '../../common/StyledComponents';
 import { Metric } from '../../common/Metric';
-import { 
-  calculateYearsUntilExhaustion, 
+import {
+  calculateYearsUntilExhaustion,
   calculateOptimalWithdrawalRate,
   calculateExhaustionAge,
   calculateEffectiveWithdrawalAmount,
@@ -70,10 +70,10 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
   riskAssessment
 }) => {
   const { darkMode } = useTheme();
-  
+
   // Calculate years until retirement
   const yearsUntilRetirement = retirementStartAge - currentAge;
-  
+
   // Use centralized function for effective withdrawal amount
   const effectiveMonthlyWithdrawal = calculateEffectiveWithdrawalAmount(
     monthlyRetirementWithdrawal,
@@ -82,14 +82,14 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
     inflation,
     yearsUntilRetirement
   );
-  
+
   // Calculate current withdrawal details using the effective monthly withdrawal
   const currentAnnualWithdrawal = effectiveMonthlyWithdrawal * 12;
   const currentWithdrawalRate = (currentAnnualWithdrawal / capitalAtRetirement) * 100;
-  
+
   // Define target age
   const targetAge = 95;
-  
+
   // Use either the provided withdrawal reduction data or calculate it if not provided
   const withdrawalReductionData = useMemo(() => {
     return withdrawalReduction || calculateWithdrawalReduction(
@@ -102,22 +102,22 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
     );
   }, [
     withdrawalReduction,
-    capitalAtRetirement, 
-    effectiveMonthlyWithdrawal, 
-    annualReturnRate, 
-    retirementStartAge, 
+    capitalAtRetirement,
+    effectiveMonthlyWithdrawal,
+    annualReturnRate,
+    retirementStartAge,
     targetAge
   ]);
-  
+
   // Extract values from the withdrawal reduction data
   const optimalRate = withdrawalReductionData.optimalRate;
   const optimizedMonthlyWithdrawal = withdrawalReductionData.optimalMonthlyWithdrawal;
   const reductionNeeded = withdrawalReductionData.reductionNeeded;
   const reductionPercent = withdrawalReductionData.reductionPercentage;
-  
+
   // Use centralized function to calculate exhaustion age with default inflation if not provided
   const inflationRate = inflation ?? 2; // Default to 2% if inflation is undefined
-  
+
   // Calculate exhaustion ages using the centralized function
   const currentExhaustionAge = useMemo(() => {
     return calculateExhaustionAge(
@@ -129,7 +129,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
       0.7 // Conservative multiplier
     );
   }, [capitalAtRetirement, effectiveMonthlyWithdrawal, annualReturnRate, inflationRate, retirementStartAge]);
-  
+
   const newExhaustionAge = useMemo(() => {
     return calculateExhaustionAge(
       capitalAtRetirement,
@@ -140,19 +140,19 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
       0.7 // Conservative multiplier
     );
   }, [capitalAtRetirement, optimizedMonthlyWithdrawal, annualReturnRate, inflationRate, retirementStartAge]);
-  
+
   const yearsGained = newExhaustionAge - currentExhaustionAge;
-  
+
   // Use centralized function for ideal withdrawal based on 4% rule
   const idealWithdrawalData = useMemo(() => {
     return calculateIdealWithdrawal(capitalAtRetirement);
   }, [capitalAtRetirement]);
-  
+
   // Extract values from ideal withdrawal data
   const idealMonthlyWithdrawal = idealWithdrawalData.monthlyWithdrawal;
   const idealAnnualWithdrawal = idealWithdrawalData.annualWithdrawal;
   const idealRate = idealWithdrawalData.withdrawalRate;
-  
+
   // Calculate ideal withdrawal exhaustion age using the centralized function
   const idealExhaustionAge = useMemo(() => {
     return calculateExhaustionAge(
@@ -164,13 +164,13 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
       0.7 // Conservative multiplier
     );
   }, [capitalAtRetirement, idealMonthlyWithdrawal, annualReturnRate, inflationRate, retirementStartAge]);
-  
+
   // Define safe withdrawal threshold from the 4% rule
   const safeWithdrawalThreshold = 4; // 4% rule
-  
+
   // Map legacy risk levels to new standardized levels
   const mapRiskLevel = (legacyRisk: 'High' | 'Medium' | 'Low'): 'Critical' | 'High' | 'Significant' | 'Moderate' | 'Low' => {
-    switch(legacyRisk) {
+    switch (legacyRisk) {
       case 'High':
         return 'Critical';
       case 'Medium':
@@ -185,7 +185,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
 
   // Get risk color classes based on standardized risk level
   const getRiskColorClasses = (level: string, isDark: boolean = false) => {
-    switch(level) {
+    switch (level) {
       case 'Critical':
         return isDark ? "bg-red-900/50 border-red-700 text-red-300" : "bg-red-50 border-red-200 text-red-700";
       case 'High':
@@ -203,7 +203,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
 
   // Get priority label based on risk level
   const getPriorityLabel = (level: string): string => {
-    switch(level) {
+    switch (level) {
       case 'Critical':
       case 'High':
         return 'Critical';
@@ -221,8 +221,8 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
     <Card className="overflow-hidden lg:col-span-3">
       <div className={cx(
         "px-3 sm:px-4 py-2 sm:py-3 border-b flex items-center justify-between",
-        darkMode 
-          ? "bg-purple-900/50 border-purple-700" 
+        darkMode
+          ? "bg-purple-900/50 border-purple-700"
           : "bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200"
       )}>
         <div className="flex items-center">
@@ -236,7 +236,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
           <h3 className={cx(
             "mb-0 text-sm sm:text-base font-semibold",
             darkMode ? "text-purple-300" : "text-purple-800"
-          )}>Withdraw Strategy</h3>
+          )}>Withdrawal Strategy</h3>
         </div>
         <div className={cx(
           "text-xs font-medium px-1.5 py-0.5 rounded-full",
@@ -248,8 +248,8 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
       <div className="p-2 sm:p-3">
         <div className={cx(
           "flex items-start mb-2.5 p-2 rounded-lg border",
-          darkMode 
-            ? "bg-purple-900/40 border-purple-700" 
+          darkMode
+            ? "bg-purple-900/40 border-purple-700"
             : "bg-purple-100/70 border-purple-200"
         )}>
           <div className={cx(
@@ -301,12 +301,12 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
             )}
           </div>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-2 mb-2.5">
           <div className={cx(
             "p-2 rounded-lg border",
-            darkMode 
-              ? "bg-purple-900/30 border-purple-700" 
+            darkMode
+              ? "bg-purple-900/30 border-purple-700"
               : "bg-purple-50/90 border-purple-200"
           )}>
             <div className={cx(
@@ -335,9 +335,9 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
               "text-[10px] mt-1",
               darkMode ? "text-gray-400" : "text-gray-700"
             )}>
-              Rate: {formatPercentage(currentWithdrawalRate)} 
-              <span className={currentWithdrawalRate <= safeWithdrawalThreshold 
-                ? darkMode ? "text-green-400" : "text-green-600" 
+              Rate: {formatPercentage(currentWithdrawalRate)}
+              <span className={currentWithdrawalRate <= safeWithdrawalThreshold
+                ? darkMode ? "text-green-400" : "text-green-600"
                 : darkMode ? "text-red-400" : "text-red-600"
               }>
                 ({currentWithdrawalRate <= safeWithdrawalThreshold ? `within safe ${safeWithdrawalThreshold}%` : `exceeds ${safeWithdrawalThreshold}%`})
@@ -346,8 +346,8 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
           </div>
           <div className={cx(
             "p-2 rounded-lg border",
-            darkMode 
-              ? "bg-purple-900/50 border-purple-700" 
+            darkMode
+              ? "bg-purple-900/50 border-purple-700"
               : "bg-purple-100/80 border-purple-200"
           )}>
             <div className={cx(
@@ -380,11 +380,11 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
             </div>
           </div>
         </div>
-        
+
         <div className={cx(
           "rounded-lg p-2.5 border mb-2.5",
-          darkMode 
-            ? "bg-gray-800 border-gray-700" 
+          darkMode
+            ? "bg-gray-800 border-gray-700"
             : "bg-blue-100/70 border-blue-200"
         )}>
           <div className={cx(
@@ -393,7 +393,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
           )}>
             <div className="flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className={cx(
-                "h-3.5 w-3.5 mr-1.5", 
+                "h-3.5 w-3.5 mr-1.5",
                 darkMode ? "text-blue-400" : "text-blue-600"
               )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -410,7 +410,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
               Target age: <span className="font-semibold">{targetAge}</span>
             </div>
           </div>
-          
+
           <div className={cx(
             "relative mt-1 mb-4 h-6 overflow-hidden rounded-lg",
             darkMode ? "bg-gray-700" : "bg-gray-100"
@@ -421,57 +421,57 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
                 "h-full w-full",
                 darkMode ? "bg-gray-600" : "bg-gray-200"
               )}></div>
-              
+
               {/* Red section for capital depletion gap (if there is one) */}
               {Math.max(newExhaustionAge, idealExhaustionAge) < targetAge && (
-                <div 
+                <div
                   className={cx(
                     "absolute h-full right-0",
                     darkMode ? "bg-red-900/60" : "bg-red-200"
                   )}
-                  style={{ 
-                    width: `${Math.min(100, ((targetAge - Math.max(newExhaustionAge, idealExhaustionAge)) / targetAge) * 100)}%` 
+                  style={{
+                    width: `${Math.min(100, ((targetAge - Math.max(newExhaustionAge, idealExhaustionAge)) / targetAge) * 100)}%`
                   }}
                 ></div>
               )}
-              
+
               {/* Blue section for current plan */}
-              <div 
+              <div
                 className={cx(
                   "absolute h-full left-0",
                   darkMode ? "bg-blue-800" : "bg-blue-400"
                 )}
                 style={{ width: `${Math.min(100, (currentExhaustionAge / targetAge) * 100)}%` }}
               ></div>
-              
+
               {/* Green section for recommended plan (additional years) */}
               {newExhaustionAge > currentExhaustionAge && (
-                <div 
+                <div
                   className={cx(
                     "absolute h-full opacity-80",
                     darkMode ? "bg-green-700" : "bg-green-500"
                   )}
-                  style={{ 
+                  style={{
                     left: `${Math.min(100, (currentExhaustionAge / targetAge) * 100)}%`,
-                    width: `${Math.min(100, ((newExhaustionAge - currentExhaustionAge) / targetAge) * 100)}%` 
+                    width: `${Math.min(100, ((newExhaustionAge - currentExhaustionAge) / targetAge) * 100)}%`
                   }}
                 ></div>
               )}
-              
+
               {/* Purple section for ideal plan (additional years beyond recommended) */}
               {idealExhaustionAge > newExhaustionAge && (
-                <div 
+                <div
                   className={cx(
                     "absolute h-full opacity-80",
                     darkMode ? "bg-purple-700" : "bg-purple-500"
                   )}
-                  style={{ 
+                  style={{
                     left: `${Math.min(100, (newExhaustionAge / targetAge) * 100)}%`,
-                    width: `${Math.min(100, ((idealExhaustionAge - newExhaustionAge) / targetAge) * 100)}%` 
+                    width: `${Math.min(100, ((idealExhaustionAge - newExhaustionAge) / targetAge) * 100)}%`
                   }}
                 ></div>
               )}
-              
+
               {/* Target age line */}
               <div
                 className={cx(
@@ -482,7 +482,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
               ></div>
             </div>
           </div>
-          
+
           <div className={cx(
             "grid grid-cols-3 gap-2 text-[10px]",
             darkMode ? "text-gray-300" : ""
@@ -502,7 +502,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
                 darkMode ? "text-gray-200" : "text-gray-700"
               )}>{currentExhaustionAge} years</span>
             </div>
-            
+
             <div className="flex flex-col items-center">
               <div className="flex items-center mb-1">
                 <div className={cx(
@@ -518,7 +518,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
                 darkMode ? "text-gray-200" : "text-gray-700"
               )}>{newExhaustionAge} years</span>
             </div>
-            
+
             <div className="flex flex-col items-center">
               <div className="flex items-center mb-1">
                 <div className={cx(
@@ -539,7 +539,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
 
         <div className={cx(
           "rounded-lg p-2.5 border",
-          darkMode 
+          darkMode
             ? getRiskColorClasses(effectiveRiskLevel, true)
             : getRiskColorClasses(effectiveRiskLevel, false)
         )}>
@@ -582,7 +582,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
                       darkMode ? "bg-purple-900/30 border-purple-500" : "bg-purple-50 border-purple-500"
                     )}>
                       <svg xmlns="http://www.w3.org/2000/svg" className={cx(
-                        "h-3.5 w-3.5 inline mr-1", 
+                        "h-3.5 w-3.5 inline mr-1",
                         darkMode ? "text-purple-400" : "text-purple-700"
                       )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -620,7 +620,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
                       darkMode ? "bg-purple-900/30 border-purple-500" : "bg-purple-50 border-purple-500"
                     )}>
                       <svg xmlns="http://www.w3.org/2000/svg" className={cx(
-                        "h-3.5 w-3.5 inline mr-1", 
+                        "h-3.5 w-3.5 inline mr-1",
                         darkMode ? "text-purple-400" : "text-purple-700"
                       )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -658,7 +658,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
                       darkMode ? "bg-purple-900/30 border-purple-500" : "bg-purple-50 border-purple-500"
                     )}>
                       <svg xmlns="http://www.w3.org/2000/svg" className={cx(
-                        "h-3.5 w-3.5 inline mr-1", 
+                        "h-3.5 w-3.5 inline mr-1",
                         darkMode ? "text-purple-400" : "text-purple-700"
                       )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -696,7 +696,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
                       darkMode ? "bg-purple-900/30 border-purple-500" : "bg-purple-50 border-purple-500"
                     )}>
                       <svg xmlns="http://www.w3.org/2000/svg" className={cx(
-                        "h-3.5 w-3.5 inline mr-1", 
+                        "h-3.5 w-3.5 inline mr-1",
                         darkMode ? "text-purple-400" : "text-purple-700"
                       )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -726,8 +726,8 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
                         "font-semibold",
                         darkMode ? "text-green-400" : "text-green-600"
                       )}>{formatPercentage(currentWithdrawalRate)}</span> withdrawal rate</li>
-                      <li><span className="font-medium">Alternative option:</span> {currentWithdrawalRate < optimalRate * 100 
-                        ? <>Increase to <span className="font-semibold">{formatDisplayValue(optimizedMonthlyWithdrawal)}/month</span> for more enjoyment</> 
+                      <li><span className="font-medium">Alternative option:</span> {currentWithdrawalRate < optimalRate * 100
+                        ? <>Increase to <span className="font-semibold">{formatDisplayValue(optimizedMonthlyWithdrawal)}/month</span> for more enjoyment</>
                         : <>Continue your current <span className="font-semibold">{formatDisplayValue(effectiveMonthlyWithdrawal)}/month</span> approach</>
                       }</li>
                       <li><span className="font-medium">Consider charitable giving:</span> Your surplus retirement funds could benefit others</li>
@@ -736,9 +736,9 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
                 )}
               </div>
             </div>
-            
+
             <div className={cx(
-              "border-t pt-2", 
+              "border-t pt-2",
               darkMode ? "border-red-700" : "border-green-700"
             )}>
               <div className="flex items-center mb-2">
@@ -767,7 +767,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
                 )}>
                   {formatDisplayValue(idealMonthlyWithdrawal)}/month
                 </div>
-                
+
                 <div className={cx(
                   "text-xs",
                   darkMode ? "text-gray-400" : "text-gray-600"
@@ -778,7 +778,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
                 )}>
                   {formatDisplayValue(optimizedMonthlyWithdrawal)}/month
                 </div>
-                
+
                 <div className={cx(
                   "text-xs",
                   darkMode ? "text-gray-400" : "text-gray-600"
@@ -789,7 +789,7 @@ export const WithdrawalStrategyCard: React.FC<WithdrawalStrategyCardProps> = ({
                 )}>
                   {formatPercentage(idealRate * 100)} vs {formatPercentage(optimalRate * 100)}
                 </div>
-                
+
                 <div className={cx(
                   "text-xs",
                   darkMode ? "text-gray-400" : "text-gray-600"

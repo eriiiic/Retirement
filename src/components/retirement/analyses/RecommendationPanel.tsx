@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { FormatAmountFunction, WithdrawalMode } from '../types';
 import { colors, typography, spacing, components, cx } from '../../../styles/styleGuide';
 import { SectionTitle, Card } from '../../common/StyledComponents';
-import { 
+import {
   calculateDelayedScenario,
   calculateOptimalDelayYears,
   calculateSuggestedWithdrawal
@@ -15,20 +15,10 @@ const formatPercentage = (value: number): string => {
   return `${value.toFixed(1)}%`;
 };
 
-// Add the formatCurrency function if it doesn't exist
-const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(value);
-};
-
 interface Recommendation {
-  change: string; 
-  impact: string; 
-  impact_detail?: string; 
+  change: string;
+  impact: string;
+  impact_detail?: string;
   priority: 'High' | 'Medium' | 'Low';
 }
 
@@ -43,6 +33,7 @@ interface RecommendationPanelProps {
   totalNeededCapital: number;
   monthlyRetirementWithdrawal: number;
   annualReturnRate: number;
+  formatDisplayValue: (value: number) => string;
   params: {
     initialCapital: number;
     monthlyInvestment: number;
@@ -84,7 +75,7 @@ const RecommendationModal: React.FC<{
   const { darkMode } = useTheme();
 
   return (
-    <div 
+    <div
       className="fixed shadow-xl z-50 pointer-events-auto"
       style={{
         left: `${position.x + 10}px`,
@@ -93,8 +84,8 @@ const RecommendationModal: React.FC<{
     >
       <div className={cx(
         "p-3 rounded-lg shadow-lg border w-64",
-        darkMode 
-          ? "bg-gray-800 border-indigo-700 text-gray-200" 
+        darkMode
+          ? "bg-gray-800 border-indigo-700 text-gray-200"
           : "bg-white border-indigo-200"
       )}>
         <h3 className={cx(
@@ -166,25 +157,25 @@ const getImplementationSteps = (recommendation: Recommendation): string[] => {
 };
 
 // Update RecommendationItem component
-const RecommendationItem = React.memo(({ 
-  recommendation, 
-  index 
-}: { 
-  recommendation: Recommendation; 
-  index: number 
+const RecommendationItem = React.memo(({
+  recommendation,
+  index
+}: {
+  recommendation: Recommendation;
+  index: number
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const { change, impact, impact_detail, priority } = recommendation;
   const { darkMode } = useTheme();
-  
+
   // More descriptive labels for the priority
-  const priorityLabel = priority === 'High' 
-    ? 'Critical' 
-    : priority === 'Medium' 
-      ? 'Recommended' 
+  const priorityLabel = priority === 'High'
+    ? 'Critical'
+    : priority === 'Medium'
+      ? 'Recommended'
       : 'Beneficial';
-      
+
   // More specific tooltip text for each priority level  
   const priorityDescription = priority === 'High'
     ? 'Critical action for financial security'
@@ -220,7 +211,7 @@ const RecommendationItem = React.memo(({
       );
     }
   };
-  
+
   // Handle mouse enter with position
   const handleMouseEnter = (e: React.MouseEvent) => {
     setIsModalOpen(true);
@@ -234,17 +225,17 @@ const RecommendationItem = React.memo(({
 
   return (
     <>
-      <div 
+      <div
         className={cx(
           "flex items-center p-2 sm:p-2.5 rounded-lg border group transition-all duration-200 cursor-help",
           darkMode ? (
-            priority === 'High' ? "border-red-700 bg-red-900/30 hover:bg-red-900/50" : 
-            priority === 'Medium' ? "border-yellow-700 bg-yellow-900/30 hover:bg-yellow-900/50" : 
-            "border-indigo-700 bg-indigo-900/30 hover:bg-indigo-900/50"
+            priority === 'High' ? "border-red-700 bg-red-900/30 hover:bg-red-900/50" :
+              priority === 'Medium' ? "border-yellow-700 bg-yellow-900/30 hover:bg-yellow-900/50" :
+                "border-indigo-700 bg-indigo-900/30 hover:bg-indigo-900/50"
           ) : (
-            priority === 'High' ? "border-red-200 bg-red-50/50 hover:bg-red-100/70" : 
-            priority === 'Medium' ? "border-yellow-200 bg-yellow-50/50 hover:bg-yellow-100/70" : 
-            "border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/70"
+            priority === 'High' ? "border-red-200 bg-red-50/50 hover:bg-red-100/70" :
+              priority === 'Medium' ? "border-yellow-200 bg-yellow-50/50 hover:bg-yellow-100/70" :
+                "border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/70"
           )
         )}
         onMouseEnter={handleMouseEnter}
@@ -253,13 +244,13 @@ const RecommendationItem = React.memo(({
         <div className={cx(
           "w-7 sm:w-8 h-7 sm:h-8 rounded-full flex items-center justify-center mr-2 sm:mr-3 flex-shrink-0",
           darkMode ? (
-            priority === 'High' ? "bg-red-800 text-red-300" : 
-            priority === 'Medium' ? "bg-yellow-800 text-yellow-300" : 
-            "bg-indigo-800 text-indigo-300"
+            priority === 'High' ? "bg-red-800 text-red-300" :
+              priority === 'Medium' ? "bg-yellow-800 text-yellow-300" :
+                "bg-indigo-800 text-indigo-300"
           ) : (
-            priority === 'High' ? "bg-red-200 text-red-700" : 
-            priority === 'Medium' ? "bg-yellow-200 text-yellow-700" : 
-            "bg-indigo-200 text-indigo-700"
+            priority === 'High' ? "bg-red-200 text-red-700" :
+              priority === 'Medium' ? "bg-yellow-200 text-yellow-700" :
+                "bg-indigo-200 text-indigo-700"
           )
         )}>
           {getIcon()}
@@ -283,19 +274,19 @@ const RecommendationItem = React.memo(({
         <div className={cx(
           "ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap",
           darkMode ? (
-            priority === 'High' ? "bg-red-900 text-red-300" : 
-            priority === 'Medium' ? "bg-yellow-900 text-yellow-300" : 
-            "bg-indigo-900 text-indigo-300"
+            priority === 'High' ? "bg-red-900 text-red-300" :
+              priority === 'Medium' ? "bg-yellow-900 text-yellow-300" :
+                "bg-indigo-900 text-indigo-300"
           ) : (
-            priority === 'High' ? "bg-red-100 text-red-700" : 
-            priority === 'Medium' ? "bg-yellow-100 text-yellow-700" : 
-            "bg-indigo-100 text-indigo-700"
+            priority === 'High' ? "bg-red-100 text-red-700" :
+              priority === 'Medium' ? "bg-yellow-100 text-yellow-700" :
+                "bg-indigo-100 text-indigo-700"
           )
         )}>
           {priorityLabel}
         </div>
       </div>
-      
+
       <RecommendationModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -313,6 +304,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
   totalNeededCapital,
   monthlyRetirementWithdrawal,
   annualReturnRate,
+  formatDisplayValue,
   params,
   statistics,
   currentAge,
@@ -320,7 +312,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
   riskAssessment
 }) => {
   const { darkMode } = useTheme();
-  
+
   // Use centralized function for optimal delay years calculation
   const optimalDelayYears = useMemo(() => {
     return calculateOptimalDelayYears(
@@ -367,7 +359,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
 
   // Map legacy risk levels to new standardized levels
   const mapRiskLevel = (legacyRisk: 'High' | 'Medium' | 'Low'): 'Critical' | 'High' | 'Significant' | 'Moderate' | 'Low' => {
-    switch(legacyRisk) {
+    switch (legacyRisk) {
       case 'High':
         return 'Critical';
       case 'Medium':
@@ -382,7 +374,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
 
   // Get risk color classes based on standardized risk level
   const getRiskColorClasses = (level: string, isDark: boolean = false) => {
-    switch(level) {
+    switch (level) {
       case 'Critical':
         return isDark ? "bg-red-900/50 border-red-700 text-red-300" : "bg-red-50 border-red-200 text-red-700";
       case 'High':
@@ -400,7 +392,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
 
   // Get priority label based on risk level
   const getPriorityLabel = (level: string): string => {
-    switch(level) {
+    switch (level) {
       case 'Critical':
       case 'High':
         return 'Critical';
@@ -416,7 +408,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
 
   // Get recommendation priority based on risk level
   const getRecommendationPriority = (level: string): 'High' | 'Medium' | 'Low' => {
-    switch(level) {
+    switch (level) {
       case 'Critical':
       case 'High':
         return 'High';
@@ -442,8 +434,8 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
     <Card className="overflow-hidden lg:col-span-2">
       <div className={cx(
         "px-3 sm:px-4 py-2 sm:py-3 border-b flex items-center",
-        darkMode 
-          ? "bg-indigo-900/50 border-indigo-700" 
+        darkMode
+          ? "bg-indigo-900/50 border-indigo-700"
           : "bg-gradient-to-r from-indigo-50 to-indigo-100 border-indigo-200"
       )}>
         <svg xmlns="http://www.w3.org/2000/svg" className={cx(
@@ -467,8 +459,8 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
             darkMode ? "text-indigo-300" : "text-indigo-700"
           )}>
             {effectiveRiskLevel === 'Critical' || effectiveRiskLevel === 'High' ? 'Critical Actions Required' :
-             effectiveRiskLevel === 'Significant' || effectiveRiskLevel === 'Moderate' ? 'Recommended Actions to Improve Security' :
-             'Top Priorities'}
+              effectiveRiskLevel === 'Significant' || effectiveRiskLevel === 'Moderate' ? 'Recommended Actions to Improve Security' :
+                'Top Priorities'}
           </div>
           <div className={cx(
             "text-xs font-medium flex items-center gap-1",
@@ -484,7 +476,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
             </svg>
           </div>
         </div>
-        
+
         {/* Show top 3 recommendations (highest priority first) */}
         {enhancedRecommendations
           .slice()
@@ -494,9 +486,9 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
           })
           .slice(0, 3)
           .map((rec, index) => (
-            <RecommendationItem 
-              key={index} 
-              recommendation={rec} 
+            <RecommendationItem
+              key={index}
+              recommendation={rec}
               index={index}
             />
           ))
@@ -514,35 +506,35 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
             <div className={cx(
               "text-sm font-bold flex items-center",
               darkMode ? (
-                withdrawalRate.current <= 4 ? "text-green-400" : 
-                withdrawalRate.current <= 6 ? "text-yellow-400" : 
-                "text-red-400"
+                withdrawalRate.current <= 4 ? "text-green-400" :
+                  withdrawalRate.current <= 6 ? "text-yellow-400" :
+                    "text-red-400"
               ) : (
-                withdrawalRate.current <= 4 ? "text-green-600" : 
-                withdrawalRate.current <= 6 ? "text-yellow-600" : 
-                "text-red-600"
+                withdrawalRate.current <= 4 ? "text-green-600" :
+                  withdrawalRate.current <= 6 ? "text-yellow-600" :
+                    "text-red-600"
               )
             )}>
               {formatPercentage(withdrawalRate.current)}
               <span className="ml-1.5">
-                {withdrawalRate.current <= 4 
+                {withdrawalRate.current <= 4
                   ? <svg xmlns="http://www.w3.org/2000/svg" className={cx(
-                      "h-4 w-4",
-                      darkMode ? "text-green-400" : "text-green-500"
-                    )} viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
+                    "h-4 w-4",
+                    darkMode ? "text-green-400" : "text-green-500"
+                  )} viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
                   : <svg xmlns="http://www.w3.org/2000/svg" className={cx(
-                      "h-4 w-4",
-                      darkMode ? "text-red-400" : "text-red-500"
-                    )} viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
+                    "h-4 w-4",
+                    darkMode ? "text-red-400" : "text-red-500"
+                  )} viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
                 }
               </span>
             </div>
           </div>
-          
+
           {/* Withdrawal rate progress bar container */}
           <div className="relative">
             {/* Safe zone indicator */}
@@ -552,7 +544,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
             )} style={{ width: '50%' }}></div>
             {/* Warning zone indicator */}
             <div className={cx(
-              "absolute inset-y-0 left-[50%]", 
+              "absolute inset-y-0 left-[50%]",
               darkMode ? "bg-yellow-900/50" : "bg-yellow-100"
             )} style={{ width: '25%' }}></div>
             {/* Danger zone indicator */}
@@ -560,37 +552,37 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
               "absolute inset-y-0 left-[75%] rounded-r-full",
               darkMode ? "bg-red-900/50" : "bg-red-100"
             )} style={{ width: '25%' }}></div>
-            
+
             {/* Main progress bar */}
-            <div 
+            <div
               className="relative w-full bg-transparent h-2 rounded-full"
-              role="progressbar" 
+              role="progressbar"
               aria-valuenow={Math.round(withdrawalRate.current * 10) / 10}
               aria-valuemin={0}
               aria-valuemax={8}
             >
               {/* Current rate indicator */}
-              <div 
+              <div
                 className={cx(
                   "absolute -top-[3px] w-2 h-8 rounded-full transition-all",
                   darkMode ? (
-                    withdrawalRate.current <= 4 ? "bg-green-400" : 
-                    withdrawalRate.current <= 6 ? "bg-yellow-400" : 
-                    "bg-red-400"
+                    withdrawalRate.current <= 4 ? "bg-green-400" :
+                      withdrawalRate.current <= 6 ? "bg-yellow-400" :
+                        "bg-red-400"
                   ) : (
-                    withdrawalRate.current <= 4 ? "bg-green-600" : 
-                    withdrawalRate.current <= 6 ? "bg-yellow-600" : 
-                    "bg-red-600"
+                    withdrawalRate.current <= 4 ? "bg-green-600" :
+                      withdrawalRate.current <= 6 ? "bg-yellow-600" :
+                        "bg-red-600"
                   )
                 )}
-                style={{ 
+                style={{
                   left: `${Math.min(100, (withdrawalRate.current / 8) * 100)}%`,
-                  transform: 'translateX(-50%)' 
+                  transform: 'translateX(-50%)'
                 }}
               ></div>
             </div>
           </div>
-          
+
           {/* Legend */}
           <div className="flex justify-between mt-2 text-[10px]">
             <div className={cx(
@@ -625,7 +617,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
             </div>
           </div>
         </div>
-        
+
         <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-lg p-2.5 border border-indigo-100">
           <div className="text-xs space-y-2">
             <div>
@@ -638,7 +630,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                 </svg>
                 Implementation Strategy
               </div>
-              
+
               <div className={cx(
                 "text-xs",
                 darkMode ? "text-gray-300" : "text-gray-600"
@@ -670,7 +662,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                       darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
                     )}>
                       <svg xmlns="http://www.w3.org/2000/svg" className={cx(
-                        "h-3.5 w-3.5 inline mr-1", 
+                        "h-3.5 w-3.5 inline mr-1",
                         darkMode ? "text-blue-400" : "text-blue-700"
                       )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -678,7 +670,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                       <span className={cx(
                         "font-medium",
                         darkMode ? "text-blue-300" : "text-blue-800"
-                      )}>Action:</span> 
+                      )}>Action:</span>
                       <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
                         Maintain your current withdrawal rate and review annually
                       </span>
@@ -706,7 +698,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                       <li>Consider a moderate reduction to <span className={cx(
                         "font-medium",
                         darkMode ? "text-green-400" : "text-green-600"
-                      )}>{formatCurrency(suggestedMonthlyWithdrawal)}</span> per month ({formatPercentage(suggestedWithdrawalRate)})</li>
+                      )}>{formatDisplayValue(suggestedMonthlyWithdrawal)}</span> per month ({formatPercentage(suggestedWithdrawalRate)})</li>
                       <li>This adjustment would significantly improve the long-term sustainability of your retirement plan</li>
                     </ul>
                     <div className={cx(
@@ -714,7 +706,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                       darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
                     )}>
                       <svg xmlns="http://www.w3.org/2000/svg" className={cx(
-                        "h-3.5 w-3.5 inline mr-1", 
+                        "h-3.5 w-3.5 inline mr-1",
                         darkMode ? "text-blue-400" : "text-blue-700"
                       )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -722,7 +714,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                       <span className={cx(
                         "font-medium",
                         darkMode ? "text-blue-300" : "text-blue-800"
-                      )}>Recommended Action:</span> 
+                      )}>Recommended Action:</span>
                       <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
                         Gradually reduce withdrawal rate over the next 6 months
                       </span>
@@ -751,7 +743,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                       <li>Consider reducing your monthly withdrawals to <span className={cx(
                         "font-medium",
                         darkMode ? "text-green-400" : "text-green-600"
-                      )}>{formatCurrency(suggestedMonthlyWithdrawal)}</span> ({formatPercentage(suggestedWithdrawalRate)})</li>
+                      )}>{formatDisplayValue(suggestedMonthlyWithdrawal)}</span> ({formatPercentage(suggestedWithdrawalRate)})</li>
                       <li>Review your budget to identify potential areas for expense reduction</li>
                     </ul>
                     <div className={cx(
@@ -759,7 +751,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                       darkMode ? "bg-blue-900/30 border-blue-500" : "bg-blue-50 border-blue-500"
                     )}>
                       <svg xmlns="http://www.w3.org/2000/svg" className={cx(
-                        "h-3.5 w-3.5 inline mr-1", 
+                        "h-3.5 w-3.5 inline mr-1",
                         darkMode ? "text-blue-400" : "text-blue-700"
                       )} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -767,7 +759,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({
                       <span className={cx(
                         "font-medium",
                         darkMode ? "text-blue-300" : "text-blue-800"
-                      )}>Immediate Action:</span> 
+                      )}>Immediate Action:</span>
                       <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
                         Reduce withdrawal rate by {formatPercentage(withdrawalRate.current - suggestedWithdrawalRate)} within the next 3 months
                       </span>
