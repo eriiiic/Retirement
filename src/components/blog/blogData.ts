@@ -1,10 +1,10 @@
 // Define blog topic type
-export type BlogTopic = 
-  | 'Investing' 
-  | 'Savings' 
-  | 'Retirement Planning' 
-  | 'Tax Optimization' 
-  | 'Early Retirement' 
+export type BlogTopic =
+  | 'Investing'
+  | 'Savings'
+  | 'Retirement Planning'
+  | 'Tax Optimization'
+  | 'Early Retirement'
   | 'Financial Independence'
   | 'Passive Income'
   | 'Real Estate'
@@ -114,5 +114,35 @@ export const blogPosts: BlogPost[] = [
     topics: ['Financial Independence', 'Lifestyle', 'Early Retirement'],
     image: 'https://images.unsplash.com/photo-1473186578172-c141e6798cf4?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
     readTime: 10
+  },
+  {
+    id: 'healthcare-early-retirement',
+    title: 'Navigating Healthcare Costs in Early Retirement',
+    excerpt: 'A comprehensive guide to managing one of the biggest expenses in early retirement: health insurance and medical costs.',
+    date: '2025-03-05',
+    author: 'Emma Richardson',
+    topics: ['Early Retirement', 'Financial Independence', 'Budget'],
+    image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    readTime: 8
+  },
+  {
+    id: 'dynamic-withdrawal-strategies',
+    title: 'Beyond the 4% Rule: Dynamic Withdrawal Strategies',
+    excerpt: 'Move beyond static withdrawal rates and learn about dynamic strategies like CAPE-based rules and guardrails to ensure your money lasts.',
+    date: '2025-03-20',
+    author: 'Sophia Blake',
+    topics: ['Retirement Planning', 'Investing', 'Financial Independence'],
+    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    readTime: 10
+  },
+  {
+    id: 'inflation-protection-fire',
+    title: 'Inflation-Proofing Your Early Retirement Plan',
+    excerpt: 'Learn how to construct a portfolio and spending plan that remains resilient even in high-inflation environments.',
+    date: '2025-04-02',
+    author: 'Ryan Miller',
+    topics: ['Investing', 'Savings', 'Early Retirement'],
+    image: 'https://images.unsplash.com/photo-1741520965035-263d8a2fc652?q=80&w=2670&auto=format&fit=crop',
+    readTime: 7
   }
 ]; 

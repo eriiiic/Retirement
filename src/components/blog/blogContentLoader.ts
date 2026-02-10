@@ -17,6 +17,9 @@ import { content as passiveincomefireContent } from './blogPost-passive-income-f
 import { content as psychologyfinancialindependenceContent } from './blogPost-psychology-financial-independence';
 import { content as internationalfireContent } from './blogPost-international-fire';
 import { content as coastfireapproachContent } from './blogPost-coast-fire-approach';
+import { content as healthcareearlyretirementContent } from './blogPost-healthcare-early-retirement';
+import { content as dynamicwithdrawalstrategiesContent } from './blogPost-dynamic-withdrawal-strategies';
+import { content as inflationprotectionfireContent } from './blogPost-inflation-protection-fire';
 
 /**
  * Map of blog post IDs to their content
@@ -32,6 +35,9 @@ const blogContentMap: Record<string, string> = {
   'psychology-financial-independence': psychologyfinancialindependenceContent,
   'international-fire': internationalfireContent,
   'coast-fire-approach': coastfireapproachContent,
+  'healthcare-early-retirement': healthcareearlyretirementContent,
+  'dynamic-withdrawal-strategies': dynamicwithdrawalstrategiesContent,
+  'inflation-protection-fire': inflationprotectionfireContent,
 };
 
 /**
@@ -60,9 +66,9 @@ export function hasBlogPostContent(id: string): boolean {
 export function getBlogPostWithContent(id: string) {
   const post = blogPosts.find(post => post.id === id);
   if (!post) return null;
-  
+
   const content = getBlogPostContent(id);
   if (!content) return { ...post, content: null };
-  
+
   return { ...post, content };
 } 
